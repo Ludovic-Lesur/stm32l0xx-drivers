@@ -93,7 +93,7 @@ typedef struct {
 } SPI_gpio_t;
 
 /*!******************************************************************
- * \enum SPI_configuration_t
+ * \struct SPI_configuration_t
  * \brief SPI configuration structure.
  *******************************************************************/
 typedef struct {

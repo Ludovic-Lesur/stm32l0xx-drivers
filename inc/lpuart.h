@@ -33,7 +33,7 @@ typedef enum {
 } LPUART_status_t;
 
 /*!******************************************************************
- * \enum LPUART_gpio_t
+ * \struct LPUART_gpio_t
  * \brief LPUART GPIO pins list.
  *******************************************************************/
 typedef struct {

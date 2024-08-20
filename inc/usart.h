@@ -33,7 +33,10 @@ typedef enum {
 	USART_ERROR_BASE_LAST = 0x0100
 } USART_status_t;
 
-/*******************************************************************/
+/*!******************************************************************
+ * \enum USART_instance_t
+ * \brief USART instances list.
+ *******************************************************************/
 typedef enum {
 	USART_INSTANCE_USART2 = 0,
 #if (STM32L0XX_REGISTERS_MCU_CATEGORY == 3) || (STM32L0XX_REGISTERS_MCU_CATEGORY == 5)
@@ -47,7 +50,7 @@ typedef enum {
 } USART_instance_t;
 
 /*!******************************************************************
- * \enum USART_gpio_t
+ * \struct USART_gpio_t
  * \brief USART GPIO pins list.
  *******************************************************************/
 typedef struct {

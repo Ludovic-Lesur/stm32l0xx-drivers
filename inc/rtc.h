@@ -71,7 +71,7 @@ typedef enum {
 
 #if (STM32L0XX_DRIVERS_RTC_ALARM_MASK != 0)
 /*!******************************************************************
- * \enum RTC_alarm_field_t
+ * \union RTC_alarm_field_t
  * \brief RTC alarm field type.
  *******************************************************************/
 typedef union {
@@ -85,7 +85,7 @@ typedef union {
 
 #if (STM32L0XX_DRIVERS_RTC_ALARM_MASK != 0)
 /*!******************************************************************
- * \enum RTC_alarm_configuration_t
+ * \struct RTC_alarm_configuration_t
  * \brief RTC alarm configuration structure.
  *******************************************************************/
 typedef struct {
@@ -98,7 +98,7 @@ typedef struct {
 #endif
 
 /*!******************************************************************
- * \enum RTC_time_t
+ * \struct RTC_time_t
  * \brief RTC time structure.
  *******************************************************************/
 typedef struct {

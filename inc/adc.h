@@ -73,7 +73,7 @@ typedef enum {
 } ADC_channel_t;
 
 /*!******************************************************************
- * \enum ADC_gpio_t
+ * \struct ADC_gpio_t
  * \brief ADC GPIO pins list.
  *******************************************************************/
 typedef struct {

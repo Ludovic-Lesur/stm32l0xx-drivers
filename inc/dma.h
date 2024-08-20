@@ -60,7 +60,7 @@ typedef enum {
 } DMA_direction_t;
 
 /*!******************************************************************
- * \enum DMA_flags_t
+ * \union DMA_flags_t
  * \brief DMA configuration flags.
  *******************************************************************/
 typedef union {
@@ -102,7 +102,7 @@ typedef enum {
 typedef void (*DMA_transfer_complete_irq_cb_t)(void);
 
 /*!******************************************************************
- * \enum DMA_configuration_t
+ * \struct DMA_configuration_t
  * \brief DMA configuration structure.
  *******************************************************************/
 typedef struct {

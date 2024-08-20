@@ -42,6 +42,7 @@ typedef struct {
 
 /*** EXTI local global variables ***/
 
+#if (STM32L0XX_DRIVERS_EXTI_GPIO_MASK != 0)
 static const EXTI_descriptor_t EXTI_DESCRIPTOR[GPIO_PINS_PER_PORT] = {
 	{NVIC_INTERRUPT_EXTI_0_1,  EXTI_NVIC_SHARED_MASK_0_1},
 	{NVIC_INTERRUPT_EXTI_0_1,  EXTI_NVIC_SHARED_MASK_0_1},
@@ -64,6 +65,7 @@ static EXTI_context_t exti_ctx = {
 	.enabled_gpio_mask = 0,
 	.gpio_irq_callbacks = {NULL}
 };
+#endif
 
 /*** EXTI local functions ***/
 
@@ -117,7 +119,7 @@ void __attribute__((optimize("-O0"))) EXTI4_15_IRQHandler(void) {
 	_EXTI_irq_handler(5);
 #endif
 #if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & 0x0040) != 0)
-	_EXTI_irq_handler(6);EXTI_clear_flag
+	_EXTI_irq_handler(6);
 #endif
 #if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & 0x0080) != 0)
 	_EXTI_irq_handler(7);
@@ -182,64 +184,12 @@ errors:
 
 /*******************************************************************/
 void EXTI_init(void) {
-	// Local variables.
-	uint8_t idx = 0;
 	// Enable peripheral clock.
 	RCC -> APB2ENR |= (0b1 << 0); // SYSCFEN='1'.
 	// Mask all sources by default.
 	EXTI -> IMR = 0;
 	// Clear all flags.
 	EXTI -> PR |= 0x007BFFFF; // PIFx='1'.
-	// Reset callbacks.
-	for (idx=0 ; idx<GPIO_PINS_PER_PORT ; idx++) {
-		exti_ctx.gpio_irq_callbacks[idx] = NULL;
-	}
-}
-
-/*******************************************************************/
-void EXTI_configure_gpio(const GPIO_pin_t* gpio, EXTI_trigger_t trigger, EXTI_gpio_irq_cb_t irq_callback, uint8_t nvic_priority) {
-	// Select GPIO port.
-	SYSCFG -> EXTICR[((gpio -> pin) >> 2)] &= ~(0b1111 << (((gpio -> pin) % 4) << 2));
-	SYSCFG -> EXTICR[((gpio -> pin) >> 2)] |= ((gpio -> port_index) << (((gpio -> pin) % 4) << 2));
-	// Select triggers.
-	_EXTI_set_trigger(trigger, (gpio -> pin));
-	// Set mask.
-	EXTI -> IMR |= (0b1 << ((gpio -> pin))); // IMx='1'.
-	// Set interrupt priority.
-	NVIC_set_priority(EXTI_DESCRIPTOR[gpio -> pin].nvic_interrupt, nvic_priority);
-	// Register callback.
-	exti_ctx.gpio_irq_callbacks[gpio -> pin] = irq_callback;
-
-}
-
-/*******************************************************************/
-void EXTI_release_gpio(const GPIO_pin_t* gpio) {
-	// Set mask.
-	EXTI -> IMR &= ~(0b1 << ((gpio -> pin))); // IMx='0'.
-}
-
-/*******************************************************************/
-void EXTI_clear_gpio_flag(const GPIO_pin_t* gpio) {
-	// Clear flag.
-	EXTI -> PR |= (gpio -> pin); // PIFx='1'.
-}
-
-/*******************************************************************/
-void EXTI_enable_gpio_interrupt(const GPIO_pin_t* gpio) {
-	// Enable interrupt.
-	NVIC_enable_interrupt(EXTI_DESCRIPTOR[gpio -> pin].nvic_interrupt);
-	// Update mask.
-	exti_ctx.enabled_gpio_mask |= (0b1 << (gpio -> pin));
-}
-
-/*******************************************************************/
-void EXTI_disable_gpio_interrupt(const GPIO_pin_t* gpio) {
-	// Update mask.
-	exti_ctx.enabled_gpio_mask &= ~(0b1 << (gpio -> pin));
-	// Disable interrupt.
-	if ((exti_ctx.enabled_gpio_mask & EXTI_DESCRIPTOR[gpio -> pin].nvic_shared_mask) == 0) {
-		NVIC_disable_interrupt(EXTI_DESCRIPTOR[gpio -> pin].nvic_interrupt);
-	}
 }
 
 /*******************************************************************/
@@ -261,3 +211,59 @@ void EXTI_clear_line_flag(EXTI_line_t line) {
 	// Clear flag.
 	EXTI -> PR |= line; // PIFx='1'.
 }
+
+#if (STM32L0XX_DRIVERS_EXTI_GPIO_MASK != 0)
+/*******************************************************************/
+void EXTI_configure_gpio(const GPIO_pin_t* gpio, EXTI_trigger_t trigger, EXTI_gpio_irq_cb_t irq_callback, uint8_t nvic_priority) {
+	// Select GPIO port.
+	SYSCFG -> EXTICR[((gpio -> pin) >> 2)] &= ~(0b1111 << (((gpio -> pin) % 4) << 2));
+	SYSCFG -> EXTICR[((gpio -> pin) >> 2)] |= ((gpio -> port_index) << (((gpio -> pin) % 4) << 2));
+	// Select triggers.
+	_EXTI_set_trigger(trigger, (gpio -> pin));
+	// Set mask.
+	EXTI -> IMR |= (0b1 << ((gpio -> pin))); // IMx='1'.
+	// Set interrupt priority.
+	NVIC_set_priority(EXTI_DESCRIPTOR[gpio -> pin].nvic_interrupt, nvic_priority);
+	// Register callback.
+	exti_ctx.gpio_irq_callbacks[gpio -> pin] = irq_callback;
+
+}
+#endif
+
+#if (STM32L0XX_DRIVERS_EXTI_GPIO_MASK != 0)
+/*******************************************************************/
+void EXTI_release_gpio(const GPIO_pin_t* gpio) {
+	// Set mask.
+	EXTI -> IMR &= ~(0b1 << ((gpio -> pin))); // IMx='0'.
+}
+#endif
+
+#if (STM32L0XX_DRIVERS_EXTI_GPIO_MASK != 0)
+/*******************************************************************/
+void EXTI_clear_gpio_flag(const GPIO_pin_t* gpio) {
+	// Clear flag.
+	EXTI -> PR |= (gpio -> pin); // PIFx='1'.
+}
+#endif
+
+#if (STM32L0XX_DRIVERS_EXTI_GPIO_MASK != 0)
+/*******************************************************************/
+void EXTI_enable_gpio_interrupt(const GPIO_pin_t* gpio) {
+	// Enable interrupt.
+	NVIC_enable_interrupt(EXTI_DESCRIPTOR[gpio -> pin].nvic_interrupt);
+	// Update mask.
+	exti_ctx.enabled_gpio_mask |= (0b1 << (gpio -> pin));
+}
+#endif
+
+#if (STM32L0XX_DRIVERS_EXTI_GPIO_MASK != 0)
+/*******************************************************************/
+void EXTI_disable_gpio_interrupt(const GPIO_pin_t* gpio) {
+	// Update mask.
+	exti_ctx.enabled_gpio_mask &= ~(0b1 << (gpio -> pin));
+	// Disable interrupt.
+	if ((exti_ctx.enabled_gpio_mask & EXTI_DESCRIPTOR[gpio -> pin].nvic_shared_mask) == 0) {
+		NVIC_disable_interrupt(EXTI_DESCRIPTOR[gpio -> pin].nvic_interrupt);
+	}
+}
+#endif

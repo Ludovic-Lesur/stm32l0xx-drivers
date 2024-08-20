@@ -43,6 +43,7 @@ typedef struct {
 
 /*** DMA local global variables ***/
 
+#if (STM32L0XX_DRIVERS_DMA_CHANNEL_MASK != 0)
 static const DMA_descriptor_t DMA_DESCRIPTOR[DMA_CHANNEL_LAST] = {
 	{NVIC_INTERRUPT_DMA1_CH_1,   DMA_NVIC_SHARED_MASK_1},
 	{NVIC_INTERRUPT_DMA1_CH_2_3, DMA_NVIC_SHARED_MASK_2_3},
@@ -59,6 +60,7 @@ static DMA_context_t dma_ctx = {
 	.started_channels_mask = 0,
 	.channel_irq_callbacks = {NULL}
 };
+#endif
 
 /*** DMA local functions ***/
 
@@ -125,6 +127,7 @@ void __attribute__((optimize("-O0"))) DMA1_Channel4_5_6_7_IRQHandler(void) {
 
 /*** DMA functions ***/
 
+#if (STM32L0XX_DRIVERS_DMA_CHANNEL_MASK != 0)
 /*******************************************************************/
 DMA_status_t DMA_init(DMA_channel_t channel, DMA_configuration_t* configuration) {
 	// Local variables.
@@ -144,16 +147,6 @@ DMA_status_t DMA_init(DMA_channel_t channel, DMA_configuration_t* configuration)
 	RCC -> AHBENR |= (0b1 << 0); // DMAEN='1'.
 	// Reset configuration register.
 	DMA1 -> CH[channel].CCR = 0;
-#if (STM32L0XX_DRIVERS_DMA_MODE == 0)
-	// Memory and peripheral data size are 8 bits (MSIZE='00' and PSIZE='00').
-	// Disable memory to memory mode (MEM2MEM='0').
-	// Peripheral increment mode disabled (PINC='0').
-	// Circular mode disabled (CIRC='0').
-	// Read from peripheral (DIR='0').
-	// Very high priority (PL='11').
-	// Memory increment mode enabled (MINC='1').
-	DMA1 -> CH[channel].CCR |= (0b11 << 12) | (0b1 << 7) | (0b1 << 1);
-#else
 	// Direction.
 	switch (configuration -> direction) {
 	case DMA_DIRECTION_PERIPHERAL_TO_MEMORY:
@@ -203,7 +196,6 @@ DMA_status_t DMA_init(DMA_channel_t channel, DMA_configuration_t* configuration)
 		status = DMA_ERROR_PRIORITY;
 		goto errors;
 	}
-#endif
 	// Number of data.
 	DMA1 -> CH[channel].CNDTR = (configuration -> number_of_data);
 	DMA1 -> CSELR &= ~(0b1111 << (channel << 2));
@@ -223,7 +215,9 @@ DMA_status_t DMA_init(DMA_channel_t channel, DMA_configuration_t* configuration)
 errors:
 	return status;
 }
+#endif
 
+#if (STM32L0XX_DRIVERS_DMA_CHANNEL_MASK != 0)
 /*******************************************************************/
 DMA_status_t DMA_de_init(DMA_channel_t channel) {
 	// Local variables.
@@ -242,7 +236,9 @@ DMA_status_t DMA_de_init(DMA_channel_t channel) {
 errors:
 	return status;
 }
+#endif
 
+#if (STM32L0XX_DRIVERS_DMA_CHANNEL_MASK != 0)
 /*******************************************************************/
 DMA_status_t DMA_start(DMA_channel_t channel) {
 	// Local variables.
@@ -260,7 +256,9 @@ DMA_status_t DMA_start(DMA_channel_t channel) {
 errors:
 	return status;
 }
+#endif
 
+#if (STM32L0XX_DRIVERS_DMA_CHANNEL_MASK != 0)
 /*******************************************************************/
 DMA_status_t DMA_stop(DMA_channel_t channel) {
 	// Local variables.
@@ -278,7 +276,9 @@ DMA_status_t DMA_stop(DMA_channel_t channel) {
 errors:
 	return status;
 }
+#endif
 
+#if (STM32L0XX_DRIVERS_DMA_CHANNEL_MASK != 0)
 /*******************************************************************/
 DMA_status_t DMA_set_memory_address(DMA_channel_t channel, uint32_t memory_addr, uint16_t number_of_data) {
 	// Local variables.
@@ -291,7 +291,9 @@ DMA_status_t DMA_set_memory_address(DMA_channel_t channel, uint32_t memory_addr,
 errors:
 	return status;
 }
+#endif
 
+#if (STM32L0XX_DRIVERS_DMA_CHANNEL_MASK != 0)
 /*******************************************************************/
 DMA_status_t DMA_set_peripheral_address(DMA_channel_t channel, uint32_t peripheral_addr, uint16_t number_of_data) {
 	// Local variables.
@@ -304,3 +306,4 @@ DMA_status_t DMA_set_peripheral_address(DMA_channel_t channel, uint32_t peripher
 errors:
 	return status;
 }
+#endif

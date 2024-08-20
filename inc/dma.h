@@ -106,12 +106,10 @@ typedef void (*DMA_transfer_complete_irq_cb_t)(void);
  * \brief DMA configuration structure.
  *******************************************************************/
 typedef struct {
-#if (STM32L0XX_DRIVERS_DMA_MODE > 0)
 	DMA_direction_t direction;
 	DMA_flags_t flags;
 	DMA_transfer_size_t transfer_size;
 	DMA_priority_t priority;
-#endif
 	uint16_t number_of_data;
 	uint8_t request_number;
 	uint32_t memory_address;
@@ -122,6 +120,7 @@ typedef struct {
 
 /*** DMA functions ***/
 
+#if (STM32L0XX_DRIVERS_DMA_CHANNEL_MASK != 0)
 /*!******************************************************************
  * \fn DMA_status_t DMA_init(DMA_channel_t_t channel, DMA_configuration_t* configuration)
  * \brief Init DMA channel.
@@ -131,7 +130,9 @@ typedef struct {
  * \retval		Function execution status.
  *******************************************************************/
 DMA_status_t DMA_init(DMA_channel_t channel, DMA_configuration_t* configuration);
+#endif
 
+#if (STM32L0XX_DRIVERS_DMA_CHANNEL_MASK != 0)
 /*!******************************************************************
  * \fn DMA_status_t DMA_de_init(DMA_channel_t_t channel)
  * \brief Release a DMA channel.
@@ -140,7 +141,9 @@ DMA_status_t DMA_init(DMA_channel_t channel, DMA_configuration_t* configuration)
  * \retval		Function execution status.
  *******************************************************************/
 DMA_status_t DMA_de_init(DMA_channel_t channel);
+#endif
 
+#if (STM32L0XX_DRIVERS_DMA_CHANNEL_MASK != 0)
 /*!******************************************************************
  * \fn DMA_status_t DMA_start(DMA_channel_t_t channel)
  * \brief Start a DMA channel.
@@ -149,7 +152,9 @@ DMA_status_t DMA_de_init(DMA_channel_t channel);
  * \retval		Function execution status.
  *******************************************************************/
 DMA_status_t DMA_start(DMA_channel_t channel);
+#endif
 
+#if (STM32L0XX_DRIVERS_DMA_CHANNEL_MASK != 0)
 /*!******************************************************************
  * \fn DMA_status_t DMA_stop(DMA_channel_t_t channel)
  * \brief Stop a DMA channel.
@@ -158,7 +163,9 @@ DMA_status_t DMA_start(DMA_channel_t channel);
  * \retval		Function execution status.
  *******************************************************************/
 DMA_status_t DMA_stop(DMA_channel_t channel);
+#endif
 
+#if (STM32L0XX_DRIVERS_DMA_CHANNEL_MASK != 0)
 /*!******************************************************************
  * \fn DMA_status_t DMA_set_memory_address(DMA_channel_t_t channel, uint32_t memory_addr, uint16_t number_of_data)
  * \brief Set DMA channel memory address.
@@ -169,7 +176,9 @@ DMA_status_t DMA_stop(DMA_channel_t channel);
  * \retval		Function execution status.
  *******************************************************************/
 DMA_status_t DMA_set_memory_address(DMA_channel_t channel, uint32_t memory_addr, uint16_t number_of_data);
+#endif
 
+#if (STM32L0XX_DRIVERS_DMA_CHANNEL_MASK != 0)
 /*!******************************************************************
  * \fn DMA_status_t DMA_set_peripheral_address(DMA_channel_t_t channel, uint32_t peripheral_addr, uint16_t number_of_data)
  * \brief Set DMA channel peripheral address.
@@ -180,6 +189,7 @@ DMA_status_t DMA_set_memory_address(DMA_channel_t channel, uint32_t memory_addr,
  * \retval		Function execution status.
  *******************************************************************/
 DMA_status_t DMA_set_peripheral_address(DMA_channel_t channel, uint32_t peripheral_addr, uint16_t number_of_data);
+#endif
 
 /*******************************************************************/
 #define DMA_exit_error(base) { if (dma_status != DMA_SUCCESS) { status = (base + dma_status); goto errors; } }

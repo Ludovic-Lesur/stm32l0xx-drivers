@@ -10,7 +10,6 @@
 
 /*** STM32L0xx drivers compilation flags ***/
 
-#define STM32L0XX_DRIVERS_DMA_MODE						0
 #define STM32L0XX_DRIVERS_DMA_CHANNEL_MASK				0x00
 
 #define STM32L0XX_DRIVERS_EXTI_GPIO_MASK				0x0000

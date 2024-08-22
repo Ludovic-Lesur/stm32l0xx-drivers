@@ -273,10 +273,7 @@ RCC_status_t RCC_calibrate(uint8_t nvic_priority) {
 	temp_u64 = ((uint64_t) STM32L0XX_DRIVERS_RCC_LSE_FREQUENCY_HZ * (uint64_t) ref_clock_pulse_count);
 	clock_frequency_hz = (uint32_t) ((temp_u64) / ((uint64_t) mco_pulse_count));
 	// Check value.
-	if ((clock_frequency_hz < RCC_HSI_FREQUENCY_MIN_HZ) || (clock_frequency_hz > RCC_HSI_FREQUENCY_MAX_HZ)) {
-		// Set to default value if out of expected range
-		clock_frequency_hz = RCC_HSI_FREQUENCY_DEFAULT_HZ;
-		// Exit with error.
+	if ((tim_status != TIM_SUCCESS) || (clock_frequency_hz < RCC_HSI_FREQUENCY_MIN_HZ) || (clock_frequency_hz > RCC_HSI_FREQUENCY_MAX_HZ)) {
 		status = RCC_ERROR_HSI_CALIBRATION;
 		goto errors;
 	}
@@ -294,9 +291,6 @@ lsi_calibration:
 	clock_frequency_hz = (uint32_t) ((temp_u64) / ((uint64_t) ref_clock_pulse_count));
 	// Check value.
 	if ((tim_status != TIM_SUCCESS) || (clock_frequency_hz < RCC_LSI_FREQUENCY_MIN_HZ) || (clock_frequency_hz > RCC_LSI_FREQUENCY_MAX_HZ)) {
-		// Set to default value if out of expected range
-		clock_frequency_hz = RCC_LSI_FREQUENCY_DEFAULT_HZ;
-		// Exit with error.
 		status = RCC_ERROR_LSI_CALIBRATION;
 		goto errors;
 	}

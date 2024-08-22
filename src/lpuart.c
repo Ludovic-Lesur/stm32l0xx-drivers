@@ -172,9 +172,10 @@ LPUART_status_t LPUART_init(const LPUART_gpio_t* pins, LPUART_configuration_t* c
 		goto errors;
 	}
 	// Enable peripheral clock.
-	RCC -> APB1ENR |= (0b1 << 18); // LPUARTEN='1'.
-	// Configure peripheral.
-	LPUART1 -> CR3 |= (0b1 << 12); // No overrun detection (OVRDIS='0').
+	RCC -> APB1ENR |= (0b1 << 18);
+	RCC -> APB1SMENR |= (0b1 << 18);
+	// Disable overrun detection (OVRDIS='1') and enable clock in stop mode (UCESM='1').
+	LPUART1 -> CR3 |= (0b1 << 12) | (0b1 << 23);
 	// Baud rate.
 	status = _LPUART1_set_baud_rate(configuration -> baud_rate);
 	if (status != LPUART_SUCCESS) goto errors;
@@ -187,7 +188,6 @@ LPUART_status_t LPUART_init(const LPUART_gpio_t* pins, LPUART_configuration_t* c
 	LPUART1 -> CR2 |= ((configuration -> match_character) << 24);
 	LPUART1 -> CR3 |= (0b1 << 6); // Transfer is performed after each RXNE event (see p.738 of RM0377 datasheet).
 	LPUART1 -> CR1 |= (0b1 << 14); // Enable CM interrupt (CMIE='1').
-	lpuart_ctx.cmf_callback = (configuration -> cmf_callback);
 #endif
 #if ((STM32L0XX_DRIVERS_LPUART_MODE == 2) || (STM32L0XX_DRIVERS_LPUART_MODE == 3))
 	LPUART1 -> CR1 |= 0x00002822;
@@ -204,7 +204,7 @@ LPUART_status_t LPUART_init(const LPUART_gpio_t* pins, LPUART_configuration_t* c
 	// Enable transmitter and receiver.
 	LPUART1 -> CR1 |= (0b11 << 2); // TE='1' and RE='1'.
 	// Enable peripheral.
-	LPUART1 -> CR1 |= (0b1 << 0); // UE='1'.
+	LPUART1 -> CR1 |= (0b11 << 0); // UE='1' and UESM='1'
 	// Configure GPIOs.
 	GPIO_configure((pins -> tx), GPIO_MODE_ALTERNATE_FUNCTION, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_LOW, GPIO_PULL_NONE);
 	GPIO_configure((pins -> rx), GPIO_MODE_ALTERNATE_FUNCTION, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_LOW, GPIO_PULL_NONE);
@@ -212,6 +212,13 @@ LPUART_status_t LPUART_init(const LPUART_gpio_t* pins, LPUART_configuration_t* c
 	// Put NRE pin in high impedance since it is directly connected to the DE pin.
 	GPIO_configure((pins -> de), GPIO_MODE_ALTERNATE_FUNCTION, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_LOW, GPIO_PULL_NONE);
 	GPIO_configure((pins -> nre), GPIO_MODE_ANALOG, GPIO_TYPE_OPEN_DRAIN, GPIO_SPEED_LOW, GPIO_PULL_NONE);
+#endif
+	// Register callback.
+#if (STM32L0XX_DRIVERS_LPUART_MODE == 0)
+	lpuart_ctx.rxne_callback = (configuration -> rxne_callback);
+#endif
+#if (STM32L0XX_DRIVERS_LPUART_MODE == 1)
+	lpuart_ctx.cmf_callback = (configuration -> cmf_callback);
 #endif
 errors:
 	return status;

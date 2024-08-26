@@ -13,6 +13,7 @@ Here is the versions compatibility table:
 
 | **stm32l0xx-drivers** | **stm32l0xx-registers** | **embedded-utils** |
 |:---:|:---:|:---:|
+| [sw1.1](https://github.com/Ludovic-Lesur/stm32l0xx-drivers/releases/tag/sw1.1) | >= [sw1.1](https://github.com/Ludovic-Lesur/stm32l0xx-registers/releases/tag/sw1.1) | >= [sw1.0](https://github.com/Ludovic-Lesur/embedded-utils/releases/tag/sw1.0) |
 | [sw1.0](https://github.com/Ludovic-Lesur/stm32l0xx-drivers/releases/tag/sw1.0) | >= [sw1.1](https://github.com/Ludovic-Lesur/stm32l0xx-registers/releases/tag/sw1.1) | >= [sw1.0](https://github.com/Ludovic-Lesur/embedded-utils/releases/tag/sw1.0) |
 
 # Compilation flags

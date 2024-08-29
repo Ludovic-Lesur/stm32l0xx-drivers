@@ -61,12 +61,12 @@ void LPTIM_init(uint8_t nvic_priority);
 LPTIM_status_t LPTIM_delay_milliseconds(uint32_t delay_ms, LPTIM_delay_mode_t delay_mode);
 
 /*******************************************************************/
-#define LPTIM_exit_error(base) { if (lptim_status != LPTIM_SUCCESS) { status = (base + lptim_status); goto errors; } }
+#define LPTIM_exit_error(base) { ERROR_check_exit(lptim_status, LPTIM_SUCCESS, base) }
 
 /*******************************************************************/
-#define LPTIM_stack_error(base) { if (lptim_status != LPTIM_SUCCESS) { ERROR_stack_add(base + lptim_status); } }
+#define LPTIM_stack_error(base) { ERROR_check_stack(lptim_status, LPTIM_SUCCESS, base) }
 
 /*******************************************************************/
-#define LPTIM_stack_exit_error(base, code) { if (lptim_status != LPTIM_SUCCESS) { ERROR_stack_add(base + lptim_status); status = code; goto errors; } }
+#define LPTIM_stack_exit_error(base, code) { ERROR_check_stack_exit(lptim_status, LPTIM_SUCCESS, base, code) }
 
 #endif /* __LPTIM_H__ */

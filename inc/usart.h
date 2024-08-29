@@ -143,12 +143,12 @@ USART_status_t USART_disable_rx(USART_instance_t instance);
 USART_status_t USART_write(USART_instance_t instance, uint8_t* data, uint32_t data_size_bytes);
 
 /*******************************************************************/
-#define USART_exit_error(base) { if (usart_status != USART_SUCCESS) { status = (base + usart_status); goto errors; } }
+#define USART_exit_error(base) { ERROR_check_exit(usart_status, USART_SUCCESS, base) }
 
 /*******************************************************************/
-#define USART_stack_error(base) { if (usart_status != USART_SUCCESS) { ERROR_stack_add(base + usart_status); } }
+#define USART_stack_error(base) { ERROR_check_stack(usart_status, USART_SUCCESS, base) }
 
 /*******************************************************************/
-#define USART_stack_exit_error(base, code) { if (usart_status != USART_SUCCESS) { ERROR_stack_add(base + usart_status); status = code; goto errors; } }
+#define USART_stack_exit_error(base, code) { ERROR_check_stack_exit(usart_status, USART_SUCCESS, base, code) }
 
 #endif /* __USART_H__ */

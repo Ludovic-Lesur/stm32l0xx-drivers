@@ -128,12 +128,12 @@ RCC_status_t RCC_get_frequency_hz(RCC_clock_t clock, uint32_t* frequency_hz);
 RCC_status_t RCC_get_status(RCC_clock_t clock, uint8_t* clock_is_ready);
 
 /*******************************************************************/
-#define RCC_exit_error(base) { if (rcc_status != RCC_SUCCESS) { status = (base + rcc_status); goto errors; } }
+#define RCC_exit_error(base) { ERROR_check_exit(rcc_status, RCC_SUCCESS, base) }
 
 /*******************************************************************/
-#define RCC_stack_error(base) { if (rcc_status != RCC_SUCCESS) { ERROR_stack_add(base + rcc_status); } }
+#define RCC_stack_error(base) { ERROR_check_stack(rcc_status, RCC_SUCCESS, base) }
 
 /*******************************************************************/
-#define RCC_stack_exit_error(base, code) { if (rcc_status != RCC_SUCCESS) { ERROR_stack_add(base + rcc_status); status = code; goto errors; } }
+#define RCC_stack_exit_error(base, code) { ERROR_check_stack_exit(rcc_status, RCC_SUCCESS, base, code) }
 
 #endif /* __RCC_H__ */

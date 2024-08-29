@@ -10,6 +10,7 @@
 #ifndef STM32L0XX_REGISTERS_DISABLE_FLAGS_FILE
 #include "stm32l0xx_registers_flags.h"
 #endif
+#include "error.h"
 #include "gpio.h"
 #include "i2c_reg.h"
 #include "lptim.h"

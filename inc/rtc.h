@@ -186,12 +186,12 @@ RTC_status_t RTC_get_time(RTC_time_t* time);
 #endif
 
 /*******************************************************************/
-#define RTC_exit_error(base) { if (rtc_status != RTC_SUCCESS) { status = (base + rtc_status); goto errors; } }
+#define RTC_exit_error(base) { ERROR_check_exit(rtc_status, RTC_SUCCESS, base) }
 
 /*******************************************************************/
-#define RTC_stack_error(base) { if (rtc_status != RTC_SUCCESS) { ERROR_stack_add(base + rtc_status); } }
+#define RTC_stack_error(base) { ERROR_check_stack(rtc_status, RTC_SUCCESS, base) }
 
 /*******************************************************************/
-#define RTC_stack_exit_error(base, code) { if (rtc_status != RTC_SUCCESS) { ERROR_stack_add(base + rtc_status); status = code; goto errors; } }
+#define RTC_stack_exit_error(base, code) { ERROR_check_stack_exit(rtc_status, RTC_SUCCESS, base, code) }
 
 #endif /* __RTC_H__ */

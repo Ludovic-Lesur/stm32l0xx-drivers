@@ -51,12 +51,12 @@ IWDG_status_t IWDG_init(void);
 void IWDG_reload(void);
 
 /*******************************************************************/
-#define IWDG_exit_error(base) { if (iwdg_status != IWDG_SUCCESS) { status = (base + iwdg_status); goto errors; } }
+#define IWDG_exit_error(base) { ERROR_check_exit(iwdg_status, IWDG_SUCCESS, base) }
 
 /*******************************************************************/
-#define IWDG_stack_error(base) { if (iwdg_status != IWDG_SUCCESS) { ERROR_stack_add(base + iwdg_status); } }
+#define IWDG_stack_error(base) { ERROR_check_stack(iwdg_status, IWDG_SUCCESS, base) }
 
 /*******************************************************************/
-#define IWDG_stack_exit_error(base, code) { if (iwdg_status != IWDG_SUCCESS) { ERROR_stack_add(base + iwdg_status); status = code; goto errors; } }
+#define IWDG_stack_exit_error(base, code) { ERROR_check_stack_exit(iwdg_status, IWDG_SUCCESS, base, code) }
 
 #endif /* __IWDG_H__ */

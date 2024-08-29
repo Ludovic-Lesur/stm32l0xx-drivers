@@ -156,12 +156,12 @@ LPUART_status_t LPUART_set_configuration(LPUART_configuration_t* configuration);
 #endif
 
 /*******************************************************************/
-#define LPUART_exit_error(base) { if (lpuart_status != LPUART_SUCCESS) { status = (base + lpuart_status); goto errors; } }
+#define LPUART_exit_error(base) { ERROR_check_exit(lpuart_status, LPUART_SUCCESS, base) }
 
 /*******************************************************************/
-#define LPUART_stack_error(base) { if (lpuart_status != LPUART_SUCCESS) { ERROR_stack_add(base + lpuart_status); } }
+#define LPUART_stack_error(base) { ERROR_check_stack(lpuart_status, LPUART_SUCCESS, base) }
 
 /*******************************************************************/
-#define LPUART_stack_exit_error(base, code) { if (lpuart_status != LPUART_SUCCESS) { ERROR_stack_add(base + lpuart_status); status = code; goto errors; } }
+#define LPUART_stack_exit_error(base, code) { ERROR_check_stack_exit(lpuart_status, LPUART_SUCCESS, base, code) }
 
 #endif /* __LPUART_H__ */

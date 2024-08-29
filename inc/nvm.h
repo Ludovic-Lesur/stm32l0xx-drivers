@@ -60,12 +60,12 @@ NVM_status_t NVM_read_byte(NVM_address_t address, uint8_t* data);
 NVM_status_t NVM_write_byte(NVM_address_t address, uint8_t data);
 
 /*******************************************************************/
-#define NVM_exit_error(base) { if (nvm_status != NVM_SUCCESS) { status = (base + nvm_status); goto errors; } }
+#define NVM_exit_error(base) { ERROR_check_exit(nvm_status, NVM_SUCCESS, base) }
 
 /*******************************************************************/
-#define NVM_stack_error(base) { if (nvm_status != NVM_SUCCESS) { ERROR_stack_add(base + nvm_status); } }
+#define NVM_stack_error(base) { ERROR_check_stack(nvm_status, NVM_SUCCESS, base) }
 
 /*******************************************************************/
-#define NVM_stack_exit_error(base, code) { if (nvm_status != NVM_SUCCESS) { ERROR_stack_add(base + nvm_status); status = code; goto errors; } }
+#define NVM_stack_exit_error(base, code) { ERROR_check_stack_exit(nvm_status, NVM_SUCCESS, base, code) }
 
 #endif /* __NVM_H__ */

@@ -140,12 +140,12 @@ ADC_status_t ADC_compute_tmcu(int32_t vmcu_mv, uint16_t tmcu_12bits, int32_t* tm
 int32_t ADC_get_vrefint_voltage_mv(void);
 
 /*******************************************************************/
-#define ADC_exit_error(base) { if (adc_status != ADC_SUCCESS) { status = (base + adc_status); goto errors; } }
+#define ADC_exit_error(base) { ERROR_check_exit(adc_status, ADC_SUCCESS, base) }
 
 /*******************************************************************/
-#define ADC_stack_error(base) { if (adc_status != ADC_SUCCESS) { ERROR_stack_add(base + adc_status); } }
+#define ADC_stack_error(base) { ERROR_check_stack(adc_status, ADC_SUCCESS, base) }
 
 /*******************************************************************/
-#define ADC_stack_exit_error(base, code) { if (adc_status != ADC_SUCCESS) { ERROR_stack_add(base + adc_status); status = code; goto errors; } }
+#define ADC_stack_exit_error(base, code) { ERROR_check_stack_exit(adc_status, ADC_SUCCESS, base, code) }
 
 #endif /* __ADC_H__ */

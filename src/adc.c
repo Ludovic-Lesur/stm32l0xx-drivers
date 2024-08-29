@@ -8,6 +8,7 @@
 #include "adc.h"
 
 #include "adc_reg.h"
+#include "error.h"
 #include "gpio.h"
 #include "lptim.h"
 #include "math.h"

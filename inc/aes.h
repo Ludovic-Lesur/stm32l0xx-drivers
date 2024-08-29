@@ -56,12 +56,12 @@ void AES_de_init(void);
 AES_status_t AES_encrypt(uint8_t* data_in, uint8_t* data_out, uint8_t* key);
 
 /*******************************************************************/
-#define AES_exit_error(base) { if (aes_status != AES_SUCCESS) { status = (base + aes_status); goto errors; } }
+#define AES_exit_error(base) { ERROR_check_exit(aes_status, AES_SUCCESS, base) }
 
 /*******************************************************************/
-#define AES_stack_error(base) { if (aes_status != AES_SUCCESS) { ERROR_stack_add(base + aes_status); } }
+#define AES_stack_error(base) { ERROR_check_stack(aes_status, AES_SUCCESS, base) }
 
 /*******************************************************************/
-#define AES_stack_exit_error(base, code) { if (aes_status != AES_SUCCESS) { ERROR_stack_add(base + aes_status); status = code; goto errors; } }
+#define AES_stack_exit_error(base, code) { ERROR_check_stack_exit(aes_status, AES_SUCCESS, base, code) }
 
 #endif /* __AES_H__ */

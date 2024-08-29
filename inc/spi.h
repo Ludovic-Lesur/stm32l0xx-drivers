@@ -168,12 +168,12 @@ void SPI_write_8(SPI_instance_t instance, uint8_t tx_data);
 void SPI_write_16(SPI_instance_t instance, uint16_t tx_data);
 
 /*******************************************************************/
-#define SPI_exit_error(base) { if (spi_status != SPI_SUCCESS) { status = (base + spi_status); goto errors; } }
+#define SPI_exit_error(base) { ERROR_check_exit(spi_status, SPI_SUCCESS, base) }
 
 /*******************************************************************/
-#define SPI_stack_error(base) { if (spi_status != SPI_SUCCESS) { ERROR_stack_add(base + spi_status); } }
+#define SPI_stack_error(base) { ERROR_check_stack(spi_status, SPI_SUCCESS, base) }
 
 /*******************************************************************/
-#define SPI_stack_exit_error(base, code) { if (spi_status != SPI_SUCCESS) { ERROR_stack_add(base + spi_status); status = code; goto errors; } }
+#define SPI_stack_exit_error(base, code) { ERROR_check_stack_exit(spi_status, SPI_SUCCESS, base, code) }
 
 #endif /* __SPI_H__ */

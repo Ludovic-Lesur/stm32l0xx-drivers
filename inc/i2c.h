@@ -92,7 +92,7 @@ I2C_status_t I2C_de_init(I2C_instance_t instance, const I2C_gpio_t* pins);
  * \param[in]  	slave_address: 7-bits destination slave address.
  * \param[in]	data: Byte array to send.
  * \param[in]	data_size_bytes: Number of bytes to send.
- * \param[in]	stop_flag: Generate stop condition at the end of the transfer is non zero.
+ * \param[in]	stop_flag: Generate stop condition at the end of the transfer if non zero.
  * \param[out] 	none
  * \retval		Function execution status.
  *******************************************************************/
@@ -103,20 +103,19 @@ I2C_status_t I2C_write(I2C_instance_t instance, uint8_t slave_address, uint8_t* 
  * \brief Read data on I2C bus.
  * \param[in]  	instance: Peripheral instance to use.
  * \param[in]  	slave_address: 7-bits destination slave address.
- * \param[in]	data: Byte array that will contain the read data.
  * \param[in]	data_size_bytes: Number of bytes to read.
- * \param[out] 	none
+ * \param[out]	data: Byte array that will contain the read data.
  * \retval		Function execution status.
  *******************************************************************/
 I2C_status_t I2C_read(I2C_instance_t instance, uint8_t slave_address, uint8_t* data, uint8_t data_size_bytes);
 
 /*******************************************************************/
-#define I2C_exit_error(base) { if (i2c_status != I2C_SUCCESS) { status = (base + i2c_status); goto errors; } }
+#define I2C_exit_error(base) { ERROR_check_exit(i2c_status, I2C_SUCCESS, base) }
 
 /*******************************************************************/
-#define I2C_stack_error(base) { if (i2c_status != I2C_SUCCESS) { ERROR_stack_add(base + i2c_status); } }
+#define I2C_stack_error(base) { ERROR_check_stack(i2c_status, I2C_SUCCESS, base) }
 
 /*******************************************************************/
-#define I2C_stack_exit_error(base, code) { if (i2c_status != I2C_SUCCESS) { ERROR_stack_add(base + i2c_status); status = code; goto errors; } }
+#define I2C_stack_exit_error(base, code) { ERROR_check_stack_exit(i2c_status, I2C_SUCCESS, base, code) }
 
 #endif /* __I2C_H__ */

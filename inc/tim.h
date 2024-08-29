@@ -260,12 +260,12 @@ TIM_status_t TIM_set_pwm_duty_cycle(TIM_instance_t instance, TIM_channel_t chann
 #endif
 
 /*******************************************************************/
-#define TIM_exit_error(base) { if (tim_status != TIM_SUCCESS) { status = (base + tim_status); goto errors; } }
+#define TIM_exit_error(base) { ERROR_check_exit(tim_status, TIM_SUCCESS, base) }
 
 /*******************************************************************/
-#define TIM_stack_error(base) { if (tim_status != TIM_SUCCESS) { ERROR_stack_add(base + tim_status); } }
+#define TIM_stack_error(base) { ERROR_check_stack(tim_status, TIM_SUCCESS, base) }
 
 /*******************************************************************/
-#define TIM_stack_exit_error(base, code) { if (tim_status != TIM_SUCCESS) { ERROR_stack_add(base + tim_status); status = code; goto errors; } }
+#define TIM_stack_exit_error(base, code) { ERROR_check_stack_exit(tim_status, TIM_SUCCESS, base, code) }
 
 #endif /* __TIM_H__ */

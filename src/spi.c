@@ -98,8 +98,8 @@ errors: \
 	/* Send TX data */ \
 	volatile type* spi_dr_ptr = ((volatile type*) &(SPI_DESCRIPTOR[instance].peripheral -> DR)); \
 	(*spi_dr_ptr) = tx_data; \
-	/* Wait for TXE flag */ \
-	while (((SPI_DESCRIPTOR[instance].peripheral -> SR) & (0b1 << 1)) == 0); \
+	/* Wait for BSY flag */ \
+	while (((SPI_DESCRIPTOR[instance].peripheral -> SR) & (0b1 << 7)) != 0); \
 }
 
 /*** SPI functions ***/

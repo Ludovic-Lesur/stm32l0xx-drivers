@@ -65,26 +65,6 @@ typedef enum {
 } TIM_instance_t;
 
 /*!******************************************************************
- * \enum TIM_mode_t
- * \brief Timer modes list.
- *******************************************************************/
-typedef enum {
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x01) != 0)
-	TIM_MODE_STANDARD,
-#endif
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x02) != 0)
-	TIM_MODE_MULTI_CHANNEL,
-#endif
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x04) != 0)
-	TIM_MODE_CALIBRATION,
-#endif
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x08) != 0)
-	TIM_MODE_PWM,
-#endif
-	TIM_MODE_LAST
-} TIM_mode_t;
-
-/*!******************************************************************
  * \enum TIM_channel_t
  * \brief Timer channels list.
  *******************************************************************/
@@ -124,69 +104,81 @@ typedef struct {
 	const GPIO_pin_t* ch4;
 } TIM_gpio_t;
 
-/*!******************************************************************
- * \struct TIM_configuration_t
- * \brief Timer configuration structure.
- *******************************************************************/
-typedef struct {
-	TIM_mode_t mode;
-	uint8_t nvic_priority;
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x01) != 0)
-	uint32_t period_ns;
-	TIM_completion_irq_cb_t irq_callback;
-#endif
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x08) != 0)
-	uint32_t pwm_frequency_hz;
-#endif
-} TIM_configuration_t;
-
 /*** TIM functions ***/
 
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x01) != 0)
 /*!******************************************************************
- * \fn TIM_status_t TIM_init(TIM_instance_t instance, TIM_gpio_t* pins, TIM_configuration_t* configuration)
- * \brief Init a timer peripheral.
+ * \fn TIM_status_t TIM_STD_init(TIM_instance_t instance, uint32_t period_ns, uint8_t nvic_priority, TIM_completion_irq_cb_t irq_callback)
+ * \brief Init a timer peripheral in standard mode.
  * \param[in]  	instance: Timer instance to use.
- * \param[in]	pins: Pointer to the timer pins to use (only for LED mode, can be NULL otherwise).
+ * \param[in]	period_ns: Timer period in ns.
+ * \param[in]	nvic_priority: Interrupt priority.
+ * \param[in]	irq_callback: Function to call on timer completion interrupt.
  * \param[out] 	none
  * \retval		Function execution status.
  *******************************************************************/
-TIM_status_t TIM_init(TIM_instance_t instance, TIM_gpio_t* pins, TIM_configuration_t* configuration);
-
-/*!******************************************************************
- * \fn TIM_status_t TIM_de_init(TIM_instance_t instance, TIM_gpio_t* pins)
- * \brief Release a timer peripheral.
- * \param[in]  	instance: Timer instance to use.
- * \param[in]	pins: Pointer to the timer pins to release (only for LED mode, can be NULL otherwise).
- * \param[out] 	none
- * \retval		Function execution status.
- *******************************************************************/
-TIM_status_t TIM_de_init(TIM_instance_t instance, TIM_gpio_t* pins);
+TIM_status_t TIM_STD_init(TIM_instance_t instance, uint32_t period_ns, uint8_t nvic_priority, TIM_completion_irq_cb_t irq_callback);
+#endif
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x01) != 0)
 /*!******************************************************************
- * \fn TIM_status_t TIM_start(TIM_instance_t instance)
+ * \fn TIM_status_t TIM_STD_de_init(TIM_instance_t instance)
+ * \brief Release a timer peripheral.
+ * \param[in]  	instance: Timer instance to release.
+ * \param[out] 	none
+ * \retval		Function execution status.
+ *******************************************************************/
+TIM_status_t TIM_STD_de_init(TIM_instance_t instance);
+#endif
+
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x01) != 0)
+/*!******************************************************************
+ * \fn TIM_status_t TIM_STD_start(TIM_instance_t instance)
  * \brief Start a timer in standard mode.
  * \param[in]  	instance: Timer instance to use.
  * \param[out] 	none
  * \retval		none
  *******************************************************************/
-TIM_status_t TIM_start(TIM_instance_t instance);
+TIM_status_t TIM_STD_start(TIM_instance_t instance);
 #endif
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x01) != 0)
 /*!******************************************************************
- * \fn TIM_status_t TIM_stop(TIM_instance_t instance)
+ * \fn TIM_status_t TIM_STD_stop(TIM_instance_t instance)
  * \brief Stop a timer in standard mode.
- * \param[in]  	none
+ * \param[in]  	instance: Timer instance to use.
  * \param[out] 	none
  * \retval		none
  *******************************************************************/
-TIM_status_t TIM_stop(TIM_instance_t instance);
+TIM_status_t TIM_STD_stop(TIM_instance_t instance);
 #endif
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x02) != 0)
 /*!******************************************************************
- * \fn TTIM_status_t TIM_start_channel(TIM_instance_t instance, TIM_channel_t channel, uint32_t duration_ms, TIM_waiting_mode_t waiting_mode)
+ * \fn TIM_status_t TIM_MCH_init(TIM_instance_t instance, uint8_t nvic_priority)
+ * \brief Init a timer peripheral in multi-channel mode.
+ * \param[in]  	instance: Timer instance to use.
+ * \param[in]	nvic_priority: Interrupt priority.
+ * \param[out] 	none
+ * \retval		Function execution status.
+ *******************************************************************/
+TIM_status_t TIM_MCH_init(TIM_instance_t instance, uint8_t nvic_priority);
+#endif
+
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x02) != 0)
+/*!******************************************************************
+ * \fn TIM_status_t TIM_MCH_de_init(TIM_instance_t instance)
+ * \brief Release a timer peripheral.
+ * \param[in]  	instance: Timer instance to release.
+ * \param[out] 	none
+ * \retval		Function execution status.
+ *******************************************************************/
+TIM_status_t TIM_MCH_de_init(TIM_instance_t instance);
+#endif
+
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x02) != 0)
+/*!******************************************************************
+ * \fn TIM_status_t TIM_MCH_start_channel(TIM_instance_t instance, TIM_channel_t channel, uint32_t duration_ms, TIM_waiting_mode_t waiting_mode)
  * \brief Start a timer in multi-channel mode.
  * \param[in]  	instance: Timer instance to use.
  * \param[in]  	channel: Channel to start.
@@ -195,7 +187,7 @@ TIM_status_t TIM_stop(TIM_instance_t instance);
  * \param[out] 	none
  * \retval		none
  *******************************************************************/
-TIM_status_t TIM_start_channel(TIM_instance_t instance, TIM_channel_t channel, uint32_t duration_ms, TIM_waiting_mode_t waiting_mode);
+TIM_status_t TIM_MCH_start_channel(TIM_instance_t instance, TIM_channel_t channel, uint32_t duration_ms, TIM_waiting_mode_t waiting_mode);
 #endif
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x02) != 0)
@@ -207,7 +199,7 @@ TIM_status_t TIM_start_channel(TIM_instance_t instance, TIM_channel_t channel, u
  * \param[out] 	none
  * \retval		Function execution status.
  *******************************************************************/
-TIM_status_t TIM_stop_channel(TIM_instance_t instance, TIM_channel_t channel);
+TIM_status_t TIM_MCH_stop_channel(TIM_instance_t instance, TIM_channel_t channel);
 #endif
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x02) != 0)
@@ -219,7 +211,7 @@ TIM_status_t TIM_stop_channel(TIM_instance_t instance, TIM_channel_t channel);
  * \param[out]	timer_has_elapsed: Pointer to bit that will contain the timer status (0 for running, 1 for complete).
  * \retval		Function execution status.
  *******************************************************************/
-TIM_status_t TIM_get_channel_status(TIM_instance_t instance, TIM_channel_t channel, uint8_t* timer_has_elapsed);
+TIM_status_t TIM_MCH_get_channel_status(TIM_instance_t instance, TIM_channel_t channel, uint8_t* timer_has_elapsed);
 #endif
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x02) != 0)
@@ -231,7 +223,30 @@ TIM_status_t TIM_get_channel_status(TIM_instance_t instance, TIM_channel_t chann
  * \param[out] 	none
  * \retval		Function execution status.
  *******************************************************************/
-TIM_status_t TIM_wait_channel_completion(TIM_instance_t instance, TIM_channel_t channel);
+TIM_status_t TIM_MCH_wait_channel_completion(TIM_instance_t instance, TIM_channel_t channel);
+#endif
+
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x04) != 0)
+/*!******************************************************************
+ * \fn TIM_status_t TIM_CAL_init(TIM_instance_t instance, uint8_t nvic_priority)
+ * \brief Init a timer peripheral in calibration mode.
+ * \param[in]  	instance: Timer instance to use.
+ * \param[in]	nvic_priority: Interrupt priority.
+ * \param[out] 	none
+ * \retval		Function execution status.
+ *******************************************************************/
+TIM_status_t TIM_CAL_init(TIM_instance_t instance, uint8_t nvic_priority);
+#endif
+
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x04) != 0)
+/*!******************************************************************
+ * \fn TIM_status_t TIM_CAL_de_init(TIM_instance_t instance)
+ * \brief Release a timer peripheral.
+ * \param[in]  	instance: Timer instance to release.
+ * \param[out] 	none
+ * \retval		Function execution status.
+ *******************************************************************/
+TIM_status_t TIM_CAL_de_init(TIM_instance_t instance);
 #endif
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x04) != 0)
@@ -243,12 +258,37 @@ TIM_status_t TIM_wait_channel_completion(TIM_instance_t instance, TIM_channel_t 
  * \param[out]	mco_pulse_count: Pointer to the number of pulses of the MCO clock during the capture.
  * \retval		Function execution status.
  *******************************************************************/
-TIM_status_t TIM_mco_capture(TIM_instance_t instance, uint16_t* ref_clock_pulse_count, uint16_t* mco_pulse_count);
+TIM_status_t TIM_CAL_mco_capture(TIM_instance_t instance, uint16_t* ref_clock_pulse_count, uint16_t* mco_pulse_count);
 #endif
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x08) != 0)
 /*!******************************************************************
- * \fn TIM_status_t TIM_set_pwm_duty_cycle(TIM_instance_t instance, TIM_channel_t channel, uint8_t duty_cycle_percent)
+ * \fn TIM_status_t TIM_PWM_init(TIM_instance_t instance, TIM_gpio_t* pins, uint32_t pwm_frequency_hz)
+ * \brief Init a timer peripheral in PWM mode.
+ * \param[in]  	instance: Timer instance to use.
+ * \param[in]	pins: Pointer to the timer pins to use.
+ * \param[in]	pwm_frequency_hz: PWM signal frequency in Hz.
+ * \param[out] 	none
+ * \retval		Function execution status.
+ *******************************************************************/
+TIM_status_t TIM_PWM_init(TIM_instance_t instance, TIM_gpio_t* pins, uint32_t pwm_frequency_hz);
+#endif
+
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x08) != 0)
+/*!******************************************************************
+ * \fn TIM_status_t TIM_de_init(TIM_instance_t instance, TIM_gpio_t* pins)
+ * \brief Release a timer peripheral.
+ * \param[in]  	instance: Timer instance to release.
+ * \param[in]	pins: Pointer to the timer pins to release.
+ * \param[out] 	none
+ * \retval		Function execution status.
+ *******************************************************************/
+TIM_status_t TIM_PWM_de_init(TIM_instance_t instance, TIM_gpio_t* pins);
+#endif
+
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x08) != 0)
+/*!******************************************************************
+ * \fn TIM_status_t TIM_PWM_set_duty_cycle(TIM_instance_t instance, TIM_channel_t channel, uint8_t duty_cycle_percent)
  * \brief Set channel duty cycle of a timer configured in PWM mode.
  * \param[in]  	instance: Timer instance to use.
  * \param[in]  	channel: Channel to configure.
@@ -256,7 +296,7 @@ TIM_status_t TIM_mco_capture(TIM_instance_t instance, uint16_t* ref_clock_pulse_
  * \param[out] 	none
  * \retval		Function execution status.
  *******************************************************************/
-TIM_status_t TIM_set_pwm_duty_cycle(TIM_instance_t instance, TIM_channel_t channel, uint8_t duty_cycle_percent);
+TIM_status_t TIM_PWM_set_duty_cycle(TIM_instance_t instance, TIM_channel_t channel, uint8_t duty_cycle_percent);
 #endif
 
 /*******************************************************************/

@@ -136,7 +136,7 @@ RCC_status_t RCC_init(uint8_t nvic_priority) {
 	NVIC_set_priority(NVIC_INTERRUPT_RCC_CRS, nvic_priority);
 	// Start low speed oscillators.
 	_RCC_enable_lsi();
-#if (STM32L0XX_DRIVERS_RCC_LSE_MODE >= 1)
+#if (STM32L0XX_DRIVERS_RCC_LSE_MODE == 1)
 	status = _RCC_enable_lse();
 #endif
 #if (STM32L0XX_DRIVERS_RCC_LSE_MODE == 2)
@@ -243,7 +243,6 @@ RCC_status_t RCC_calibrate(uint8_t nvic_priority) {
 	// Local variables.
 	RCC_status_t status = RCC_SUCCESS;
 	TIM_status_t tim_status = TIM_SUCCESS;
-	TIM_configuration_t tim_configuration;
 	uint16_t ref_clock_pulse_count = 0;
 	uint16_t mco_pulse_count = 0;
 	uint64_t temp_u64 = 0;
@@ -252,13 +251,7 @@ RCC_status_t RCC_calibrate(uint8_t nvic_priority) {
 	uint8_t lse_status = 0;
 #endif
 	// Init measurement timer.
-	tim_configuration.mode = TIM_MODE_CALIBRATION;
-	tim_configuration.nvic_priority = nvic_priority;
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x01) != 0)
-	tim_configuration.period_ns = 0;
-	tim_configuration.irq_callback = NULL;
-#endif
-	TIM_init(TIM_INSTANCE_TIM21, NULL, &tim_configuration);
+	TIM_CAL_init(TIM_INSTANCE_TIM21, nvic_priority);
 #if (STM32L0XX_DRIVERS_RCC_LSE_MODE > 0)
 	// Check LSE status.
 	status = RCC_get_status(RCC_CLOCK_LSE, &lse_status);
@@ -269,7 +262,7 @@ RCC_status_t RCC_calibrate(uint8_t nvic_priority) {
 	RCC -> CFGR &= ~(0x7F << 24);
 	RCC -> CFGR |= (0b0111 << 24);
 	// Perform measurement.
-	tim_status = TIM_mco_capture(TIM_INSTANCE_TIM21, &ref_clock_pulse_count, &mco_pulse_count);
+	tim_status = TIM_CAL_mco_capture(TIM_INSTANCE_TIM21, &ref_clock_pulse_count, &mco_pulse_count);
 	// Compute HSI frequency.
 	temp_u64 = ((uint64_t) STM32L0XX_DRIVERS_RCC_LSE_FREQUENCY_HZ * (uint64_t) ref_clock_pulse_count);
 	clock_frequency_hz = (uint32_t) ((temp_u64) / ((uint64_t) mco_pulse_count));
@@ -286,7 +279,7 @@ lsi_calibration:
 	RCC -> CFGR &= ~(0x7F << 24);
 	RCC -> CFGR |= (0b0110 << 24);
 	// Perform measurement.
-	tim_status = TIM_mco_capture(TIM_INSTANCE_TIM21, &ref_clock_pulse_count, &mco_pulse_count);
+	tim_status = TIM_CAL_mco_capture(TIM_INSTANCE_TIM21, &ref_clock_pulse_count, &mco_pulse_count);
 	// Compute LSI frequency.
 	temp_u64 = ((uint64_t) rcc_ctx.clock_frequency[RCC_CLOCK_HSI] * (uint64_t) mco_pulse_count);
 	clock_frequency_hz = (uint32_t) ((temp_u64) / ((uint64_t) ref_clock_pulse_count));
@@ -299,7 +292,7 @@ lsi_calibration:
 	rcc_ctx.clock_frequency[RCC_CLOCK_LSI] = clock_frequency_hz;
 errors:
 	// Release timer.
-	TIM_de_init(TIM_INSTANCE_TIM21, NULL);
+	TIM_CAL_de_init(TIM_INSTANCE_TIM21);
 	// Update system clock.
 	rcc_ctx.clock_frequency[RCC_CLOCK_SYSTEM] = rcc_ctx.clock_frequency[rcc_ctx.sysclk_source];
 	return status;

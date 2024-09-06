@@ -28,7 +28,7 @@
 /*** ADC local functions ***/
 
 /*******************************************************************/
-static ADC_status_t _ADC_single_conversion(ADC_channel_t channel, uint16_t* adc_data_12bits) {
+static ADC_status_t _ADC_single_conversion(ADC_channel_t channel, int32_t* adc_data_12bits) {
 	// Local variables.
 	ADC_status_t status = ADC_SUCCESS;
 	uint32_t loop_count = 0;
@@ -47,7 +47,7 @@ static ADC_status_t _ADC_single_conversion(ADC_channel_t channel, uint16_t* adc_
 			goto errors;
 		}
 	}
-	(*adc_data_12bits) = (ADC1 -> DR);
+	(*adc_data_12bits) = (int32_t) ((ADC1 -> DR) & ADC_FULL_SCALE);
 errors:
 	return status;
 }
@@ -149,11 +149,12 @@ ADC_status_t ADC_de_init(void) {
 }
 
 /*******************************************************************/
-ADC_status_t ADC_convert_channel(ADC_channel_t channel, uint16_t* adc_data_12bits) {
+ADC_status_t ADC_convert_channel(ADC_channel_t channel, int32_t* adc_data_12bits) {
 	// Local variables.
 	ADC_status_t status = ADC_SUCCESS;
 	MATH_status_t math_status = MATH_SUCCESS;
-	uint16_t adc_sample_buf[ADC_MEDIAN_FILTER_LENGTH] = {0x00};
+	int32_t adc_sample_buf[ADC_MEDIAN_FILTER_LENGTH] = {0x00};
+	int32_t result = 0;
 	uint8_t idx = 0;
 	// Check parameters.
 	if (channel >= ADC_CHANNEL_LAST) {
@@ -170,14 +171,16 @@ ADC_status_t ADC_convert_channel(ADC_channel_t channel, uint16_t* adc_data_12bit
 		if (status != ADC_SUCCESS) goto errors;
 	}
 	// Apply median filter.
-	math_status = MATH_median_filter_u16(adc_sample_buf, ADC_MEDIAN_FILTER_LENGTH, ADC_CENTER_AVERAGE_LENGTH, adc_data_12bits);
+	math_status = MATH_median_filter(adc_sample_buf, ADC_MEDIAN_FILTER_LENGTH, ADC_CENTER_AVERAGE_LENGTH, &result);
 	MATH_exit_error(ADC_ERROR_BASE_MATH);
+	// Cast to integer.
+	(*adc_data_12bits) = (int32_t) result;
 errors:
 	return status;
 }
 
 /*******************************************************************/
-ADC_status_t ADC_compute_vmcu(uint16_t ref_voltage_12bits, uint16_t ref_voltage_mv, int32_t* vmcu_mv) {
+ADC_status_t ADC_compute_vmcu(int32_t ref_voltage_12bits, int32_t ref_voltage_mv, int32_t* vmcu_mv) {
 	// Local variables.
 	ADC_status_t status = ADC_SUCCESS;
 	// Check parameters.
@@ -189,13 +192,13 @@ ADC_status_t ADC_compute_vmcu(uint16_t ref_voltage_12bits, uint16_t ref_voltage_
 		status = ADC_ERROR_NULL_PARAMETER;
 		goto errors;
 	}
-	(*vmcu_mv) = (((int32_t) ref_voltage_mv * (int32_t) ADC_FULL_SCALE) / ((int32_t) ref_voltage_12bits));
+	(*vmcu_mv) = (ref_voltage_mv * ADC_FULL_SCALE) / (ref_voltage_12bits);
 errors:
 	return status;
 }
 
 /*******************************************************************/
-ADC_status_t ADC_compute_tmcu(int32_t vmcu_mv, uint16_t tmcu_12bits, int32_t* tmcu_degrees) {
+ADC_status_t ADC_compute_tmcu(int32_t vmcu_mv, int32_t tmcu_12bits, int32_t* tmcu_degrees) {
 	// Local variables.
 	ADC_status_t status = ADC_SUCCESS;
 	int32_t raw_temp_calib_mv = 0;

@@ -15,6 +15,7 @@
 #include "stm32l0xx_drivers_flags.h"
 #endif
 #include "gpio.h"
+#include "math.h"
 #include "rcc.h"
 #include "types.h"
 
@@ -40,8 +41,9 @@ typedef enum {
 	TIM_ERROR_DUTY_CYCLE,
 	// Low level drivers errors.
 	TIM_ERROR_BASE_RCC = 0x0100,
+	TIM_ERROR_BASE_MATH = (TIM_ERROR_BASE_RCC + RCC_ERROR_BASE_LAST),
 	// Last base value.
-	TIM_ERROR_BASE_LAST = (TIM_ERROR_BASE_RCC + RCC_ERROR_BASE_LAST)
+	TIM_ERROR_BASE_LAST = (TIM_ERROR_BASE_MATH + MATH_ERROR_BASE_LAST)
 } TIM_status_t;
 
 /*!******************************************************************
@@ -251,14 +253,14 @@ TIM_status_t TIM_CAL_de_init(TIM_instance_t instance);
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x04) != 0)
 /*!******************************************************************
- * \fn TIM_status_t TIM_mco_capture(TIM_instance_t instance, uint16_t* ref_clock_pulse_count, uint16_t* mco_pulse_count)
+ * \fn TIM_status_t TIM_mco_capture(TIM_instance_t instance, int32_t* ref_clock_pulse_count, int32_t* mco_pulse_count)
  * \brief Perform MCO clock capture.
  * \param[in]  	instance: Timer instance to use.
  * \param[out] 	ref_clock_pulse_count: Pointer to the number of pulses of the timer reference clock during the capture.
  * \param[out]	mco_pulse_count: Pointer to the number of pulses of the MCO clock during the capture.
  * \retval		Function execution status.
  *******************************************************************/
-TIM_status_t TIM_CAL_mco_capture(TIM_instance_t instance, uint16_t* ref_clock_pulse_count, uint16_t* mco_pulse_count);
+TIM_status_t TIM_CAL_mco_capture(TIM_instance_t instance, int32_t* ref_clock_pulse_count, int32_t* mco_pulse_count);
 #endif
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x08) != 0)

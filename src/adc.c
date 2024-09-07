@@ -17,8 +17,8 @@
 
 /*** ADC local macros ***/
 
-#define ADC_MEDIAN_FILTER_LENGTH		9
-#define ADC_CENTER_AVERAGE_LENGTH		3
+#define ADC_MEDIAN_FILTER_SIZE			9
+#define ADC_CENTER_AVERAGE_SIZE			3
 
 #define ADC_VREFINT_VOLTAGE_MV			((VREFINT_CAL * VREFINT_VCC_CALIB_MV) / (ADC_FULL_SCALE_12BITS))
 #define ADC_VREFINT_DEFAULT_12BITS		((VREFINT_CAL * VREFINT_VCC_CALIB_MV) / (ADC_VMCU_DEFAULT_MV))
@@ -39,8 +39,9 @@ static ADC_status_t _ADC_single_conversion(ADC_channel_t channel, int32_t* adc_d
 	ADC1 -> ISR |= (0b1111 << 1);
 	// Start conversion.
 	ADC1 -> CR |= (0b1 << 2); // ADSTART='1'.
+	// Wait for the conversion to complete.
 	while (((ADC1 -> ISR) & (0b1 << 2)) == 0) {
-		// Wait end of conversion ('EOC='1') or timeout.
+		// Exit if timeout.
 		loop_count++;
 		if (loop_count > ADC_TIMEOUT_COUNT) {
 			status = ADC_ERROR_CONVERSION_TIMEOUT;
@@ -153,8 +154,7 @@ ADC_status_t ADC_convert_channel(ADC_channel_t channel, int32_t* adc_data_12bits
 	// Local variables.
 	ADC_status_t status = ADC_SUCCESS;
 	MATH_status_t math_status = MATH_SUCCESS;
-	int32_t adc_sample_buf[ADC_MEDIAN_FILTER_LENGTH] = {0x00};
-	int32_t result = 0;
+	int32_t adc_sample_buf[ADC_MEDIAN_FILTER_SIZE] = {0x00};
 	uint8_t idx = 0;
 	// Check parameters.
 	if (channel >= ADC_CHANNEL_LAST) {
@@ -166,15 +166,13 @@ ADC_status_t ADC_convert_channel(ADC_channel_t channel, int32_t* adc_data_12bits
 		goto errors;
 	}
 	// Perform all conversions.
-	for (idx=0 ; idx<ADC_MEDIAN_FILTER_LENGTH ; idx++) {
+	for (idx=0 ; idx<ADC_MEDIAN_FILTER_SIZE ; idx++) {
 		status = _ADC_single_conversion(channel, &(adc_sample_buf[idx]));
 		if (status != ADC_SUCCESS) goto errors;
 	}
 	// Apply median filter.
-	math_status = MATH_median_filter(adc_sample_buf, ADC_MEDIAN_FILTER_LENGTH, ADC_CENTER_AVERAGE_LENGTH, &result);
+	math_status = MATH_median_filter(adc_sample_buf, ADC_MEDIAN_FILTER_SIZE, ADC_CENTER_AVERAGE_SIZE, adc_data_12bits);
 	MATH_exit_error(ADC_ERROR_BASE_MATH);
-	// Cast to integer.
-	(*adc_data_12bits) = (int32_t) result;
 errors:
 	return status;
 }

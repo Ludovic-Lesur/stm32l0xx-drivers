@@ -15,6 +15,7 @@
 #endif
 #include "error.h"
 #include "iwdg.h"
+#include "math.h"
 #include "nvic.h"
 #include "pwr.h"
 #include "rcc_reg.h"
@@ -46,6 +47,8 @@
 #define TIM_MCH_WATCHDOG_PERIOD_SECONDS		((TIM_MCH_TIMER_DURATION_MS_MAX / 1000) + 5)
 
 #define TIM_CAL_INPUT_CAPTURE_PRESCALER		8
+#define TIM_CAL_MEDIAN_FILTER_SIZE			9
+#define TIM_CAL_CENTER_AVERAGE_SIZE			3
 
 #define TIM_PWM_DUTY_CYCLE_PERCENT_MAX		100
 
@@ -313,6 +316,46 @@ static void __attribute__((optimize("-O0"))) _TIM_CAL_irq_handler(TIM_instance_t
 	}
 }
 #endif
+
+/*******************************************************************/
+static TIM_status_t _TIM_CAL_single_capture(TIM_instance_t instance, int32_t* ref_clock_pulse_count, int32_t* mco_pulse_count) {
+	// Local variables.
+	TIM_status_t status = TIM_SUCCESS;
+	uint32_t loop_count = 0;
+	// Reset timer context.
+	tim_cal_ctx.ccr1_start = 0;
+	tim_cal_ctx.ccr1_end = 0;
+	tim_cal_ctx.capture_count = 0;
+	tim_cal_ctx.capture_done = 0;
+	// Reset counter.
+	TIM_DESCRIPTOR[instance].peripheral -> CNT = 0;
+	TIM_DESCRIPTOR[instance].peripheral -> CCR1 = 0;
+	// Enable interrupt.
+	TIM_DESCRIPTOR[instance].peripheral -> SR &= 0xFFFFF9B8; // Clear all flags.
+	NVIC_enable_interrupt(TIM_DESCRIPTOR[instance].nvic_interrupt);
+	// Enable TIM peripheral.
+	TIM_DESCRIPTOR[instance].peripheral -> CR1 |= (0b1 << 0); // CEN='1'.
+	TIM_DESCRIPTOR[instance].peripheral -> CCER |= (0b1 << 0); // CC1E='1'.
+	// Wait for capture to complete.
+	while (tim_cal_ctx.capture_done == 0) {
+		// Manage timeout.
+		loop_count++;
+		if (loop_count > TIM_TIMEOUT_COUNT) {
+			status = TIM_ERROR_CAPTURE_TIMEOUT;
+			goto errors;
+		}
+	}
+	// Update results.
+	(*ref_clock_pulse_count) = (int32_t) (tim_cal_ctx.ccr1_end - tim_cal_ctx.ccr1_start);
+	(*mco_pulse_count) = (int32_t) (TIM_CAL_INPUT_CAPTURE_PRESCALER * (tim_cal_ctx.capture_count - 1));
+	// Disable interrupt.
+	NVIC_disable_interrupt(TIM_DESCRIPTOR[instance].nvic_interrupt);
+	// Stop counter.
+	TIM_DESCRIPTOR[instance].peripheral -> CR1 &= ~(0b1 << 0); // CEN='0'.
+	TIM_DESCRIPTOR[instance].peripheral -> CCER &= ~(0b1 << 0); // CC1E='0'.
+errors:
+	return status;
+}
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x09) != 0)
 /*******************************************************************/
@@ -749,10 +792,13 @@ errors:
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x04) != 0)
 /*******************************************************************/
-TIM_status_t TIM_CAL_mco_capture(TIM_instance_t instance, uint16_t* ref_clock_pulse_count, uint16_t* mco_pulse_count) {
+TIM_status_t TIM_CAL_mco_capture(TIM_instance_t instance, int32_t* ref_clock_pulse_count, int32_t* mco_pulse_count) {
 	// Local variables.
 	TIM_status_t status = TIM_SUCCESS;
-	uint32_t loop_count = 0;
+	MATH_status_t math_status = MATH_SUCCESS;
+	int32_t ref_clock_pulse_count_buffer[TIM_CAL_MEDIAN_FILTER_SIZE] = {0x00};
+	int32_t mco_pulse_count_buffer[TIM_CAL_MEDIAN_FILTER_SIZE] = {0x00};
+	uint8_t idx = 0;
 	// Check instance.
 	_TIM_check_instance(instance);
 	// Check parameters.
@@ -760,37 +806,16 @@ TIM_status_t TIM_CAL_mco_capture(TIM_instance_t instance, uint16_t* ref_clock_pu
 		status = TIM_ERROR_NULL_PARAMETER;
 		goto errors;
 	}
-	// Reset timer context.
-	tim_cal_ctx.ccr1_start = 0;
-	tim_cal_ctx.ccr1_end = 0;
-	tim_cal_ctx.capture_count = 0;
-	tim_cal_ctx.capture_done = 0;
-	// Reset counter.
-	TIM_DESCRIPTOR[instance].peripheral -> CNT = 0;
-	TIM_DESCRIPTOR[instance].peripheral -> CCR1 = 0;
-	// Enable interrupt.
-	TIM_DESCRIPTOR[instance].peripheral -> SR &= 0xFFFFF9B8; // Clear all flags.
-	NVIC_enable_interrupt(TIM_DESCRIPTOR[instance].nvic_interrupt);
-	// Enable TIM peripheral.
-	TIM_DESCRIPTOR[instance].peripheral -> CR1 |= (0b1 << 0); // CEN='1'.
-	TIM_DESCRIPTOR[instance].peripheral -> CCER |= (0b1 << 0); // CC1E='1'.
-	// Wait for capture to complete.
-	while (tim_cal_ctx.capture_done == 0) {
-		// Manage timeout.
-		loop_count++;
-		if (loop_count > TIM_TIMEOUT_COUNT) {
-			status = TIM_ERROR_CAPTURE_TIMEOUT;
-			goto errors;
-		}
+	// Captures loop.
+	for (idx=0 ; idx<TIM_CAL_MEDIAN_FILTER_SIZE ; idx++) {
+		status = _TIM_CAL_single_capture(instance, &(ref_clock_pulse_count_buffer[idx]), &(mco_pulse_count_buffer[idx]));
+		if (status != TIM_SUCCESS) goto errors;
 	}
-	// Update results.
-	(*ref_clock_pulse_count) = (tim_cal_ctx.ccr1_end - tim_cal_ctx.ccr1_start);
-	(*mco_pulse_count) = (TIM_CAL_INPUT_CAPTURE_PRESCALER * (tim_cal_ctx.capture_count - 1));
-	// Disable interrupt.
-	NVIC_disable_interrupt(TIM_DESCRIPTOR[instance].nvic_interrupt);
-	// Stop counter.
-	TIM_DESCRIPTOR[instance].peripheral -> CR1 &= ~(0b1 << 0); // CEN='0'.
-	TIM_DESCRIPTOR[instance].peripheral -> CCER &= ~(0b1 << 0); // CC1E='0'.
+	// Apply median filter.
+	math_status = MATH_median_filter(ref_clock_pulse_count_buffer, TIM_CAL_MEDIAN_FILTER_SIZE, TIM_CAL_CENTER_AVERAGE_SIZE, ref_clock_pulse_count);
+	MATH_exit_error(TIM_ERROR_BASE_MATH);
+	math_status = MATH_median_filter(mco_pulse_count_buffer, TIM_CAL_MEDIAN_FILTER_SIZE, TIM_CAL_CENTER_AVERAGE_SIZE, mco_pulse_count);
+	MATH_exit_error(TIM_ERROR_BASE_MATH);
 errors:
 	return status;
 }

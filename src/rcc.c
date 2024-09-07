@@ -243,8 +243,8 @@ RCC_status_t RCC_calibrate(uint8_t nvic_priority) {
 	// Local variables.
 	RCC_status_t status = RCC_SUCCESS;
 	TIM_status_t tim_status = TIM_SUCCESS;
-	uint16_t ref_clock_pulse_count = 0;
-	uint16_t mco_pulse_count = 0;
+	int32_t ref_clock_pulse_count = 0;
+	int32_t mco_pulse_count = 0;
 	uint64_t temp_u64 = 0;
 	uint32_t clock_frequency_hz = 0;
 #if (STM32L0XX_DRIVERS_RCC_LSE_MODE > 0)

@@ -317,6 +317,7 @@ static void __attribute__((optimize("-O0"))) _TIM_CAL_irq_handler(TIM_instance_t
 }
 #endif
 
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x04) != 0)
 /*******************************************************************/
 static TIM_status_t _TIM_CAL_single_capture(TIM_instance_t instance, int32_t* ref_clock_pulse_count, int32_t* mco_pulse_count) {
 	// Local variables.
@@ -356,6 +357,7 @@ static TIM_status_t _TIM_CAL_single_capture(TIM_instance_t instance, int32_t* re
 errors:
 	return status;
 }
+#endif
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x09) != 0)
 /*******************************************************************/

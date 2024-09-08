@@ -47,7 +47,7 @@ static RCC_context_t rcc_ctx;
 
 /*******************************************************************/
 void __attribute__((optimize("-O0"))) RCC_IRQHandler(void) {
-	// Clear flag.
+	// Clear flags.
 	RCC -> CICR |= (0b11 << 0);
 }
 

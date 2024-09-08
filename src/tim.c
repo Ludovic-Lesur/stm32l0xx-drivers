@@ -361,15 +361,30 @@ errors:
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x09) != 0)
 /*******************************************************************/
-static TIM_status_t _TIM_write_arr(TIM_instance_t instance, uint64_t arr) {
+static TIM_status_t _TIM_compute_psc_arr(TIM_instance_t instance, uint32_t tim_clock_hz, uint32_t expected_period_ns) {
 	// Local variables.
-	TIM_status_t status = TIM_SUCCESS;
-	// Check value.
-	if ((arr < TIM_ARR_VALUE_MIN) || (arr > TIM_ARR_VALUE_MAX)) {
-		status = TIM_ERROR_ARR_VALUE;
-		goto errors;
+	TIM_status_t status = TIM_ERROR_ARR_VALUE;
+	uint64_t arr = 0;
+	uint32_t psc = 0;
+	uint8_t idx = 0;
+	// Check parameter.
+	if ((expected_period_ns == 0) || (tim_clock_hz == 0)) goto errors;
+	// Search prescaler to reach PWM frequency.
+	for (idx=0 ; idx<=MATH_U16_SIZE_BITS ; idx++) {
+		// Try next power of 2.
+		psc = (0b1 << idx);
+		// Compute ARR.
+		arr = ((uint64_t) expected_period_ns) * ((uint64_t) tim_clock_hz);
+		arr /= (((uint64_t) MATH_POWER_10[9]) * ((uint64_t) psc));
+		// Check value.
+		if ((arr > TIM_ARR_VALUE_MIN) && (arr < TIM_ARR_VALUE_MAX)) {
+			// Write registers.
+			TIM_DESCRIPTOR[instance].peripheral -> PSC = (uint32_t) (psc - 1);
+			TIM_DESCRIPTOR[instance].peripheral -> ARR = (uint32_t) arr;
+			status = TIM_SUCCESS;
+			break;
+		}
 	}
-	TIM_DESCRIPTOR[instance].peripheral -> ARR = arr;
 errors:
 	return status;
 }
@@ -395,7 +410,6 @@ TIM_status_t TIM_STD_init(TIM_instance_t instance, uint32_t period_ns, uint8_t n
 	// Local variables.
 	TIM_status_t status = TIM_SUCCESS;
 	uint32_t tim_clock_hz = 0;
-	uint64_t arr  = 0;
 	// Check instance.
 	_TIM_check_instance(instance);
 	// Update local interrupt handler.
@@ -407,13 +421,9 @@ TIM_status_t TIM_STD_init(TIM_instance_t instance, uint32_t period_ns, uint8_t n
 	// Enable peripheral clock.
 	(*TIM_DESCRIPTOR[instance].rcc_enr) |= TIM_DESCRIPTOR[instance].rcc_mask;
 	(*TIM_DESCRIPTOR[instance].rcc_smenr) |= TIM_DESCRIPTOR[instance].rcc_mask;
-	// Compute ARR value.
-	arr = ((uint64_t) period_ns) * ((uint64_t) tim_clock_hz);
-	arr /= (uint64_t) (1000000000);
-	status = _TIM_write_arr(instance, arr);
+	// Compute ARR and PSC values.
+	status = _TIM_compute_psc_arr(instance, tim_clock_hz, period_ns);
 	if (status != TIM_SUCCESS) goto errors;
-	// No prescaler.
-	TIM_DESCRIPTOR[instance].peripheral -> PSC = 0;
 	// Enable interrupt.
 	TIM_DESCRIPTOR[instance].peripheral -> DIER |= (0b1 << 0);
 	NVIC_set_priority(TIM_DESCRIPTOR[instance].nvic_interrupt, nvic_priority);
@@ -585,10 +595,10 @@ TIM_status_t TIM_MCH_start_channel(TIM_instance_t instance, TIM_channel_t channe
 	TIM_status_t status = TIM_SUCCESS;
 	uint32_t local_duration_ms = duration_ms;
 	uint32_t duration_min_ms = TIM_MCH_TIMER_DURATION_MS_MIN;
-	// Check instance.
+	// Check instance and channel.
 	_TIM_check_instance(instance);
-	// Check parameters.
 	_TIM_check_channel(channel);
+	// Check parameters.
 	if (waiting_mode >= TIM_WAITING_MODE_LAST) {
 		status = TIM_ERROR_WAITING_MODE;
 		goto errors;
@@ -633,9 +643,8 @@ errors:
 TIM_status_t TIM_MCH_stop_channel(TIM_instance_t instance, TIM_channel_t channel) {
 	// Local variables.
 	TIM_status_t status = TIM_SUCCESS;
-	// Check instance.
+	// Check instance and channel.
 	_TIM_check_instance(instance);
-	// Check parameters.
 	_TIM_check_channel(channel);
 	// Disable interrupt.
 	TIM_DESCRIPTOR[instance].peripheral -> DIER &= ~(0b1 << (channel + 1));
@@ -661,10 +670,10 @@ errors:
 TIM_status_t TIM_MCH_get_channel_status(TIM_instance_t instance, TIM_channel_t channel, uint8_t* timer_has_elapsed) {
 	// Local variables.
 	TIM_status_t status = TIM_SUCCESS;
-	// Check instance.
+	// Check instance and channel.
 	_TIM_check_instance(instance);
-	// Check parameters.
 	_TIM_check_channel(channel);
+	// Check parameters.
 	if (timer_has_elapsed == NULL) {
 		status = TIM_ERROR_NULL_PARAMETER;
 		goto errors;
@@ -684,9 +693,8 @@ TIM_status_t TIM_MCH_wait_channel_completion(TIM_instance_t instance, TIM_channe
 	RCC_status_t rcc_status = RCC_SUCCESS;
 	uint32_t time_start = RTC_get_uptime_seconds();
 	uint32_t time_reference = 0;
-	// Check instance.
+	// Check instance and channel.
 	_TIM_check_instance(instance);
-	// Check parameters.
 	_TIM_check_channel(channel);
 	// Directly exit if the IRQ already occurred.
 	if ((tim_mch_ctx.channel[channel].running_flag == 0) || (tim_mch_ctx.channel[channel].irq_flag != 0)) goto errors;
@@ -825,11 +833,9 @@ errors:
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x08) != 0)
 /*******************************************************************/
-TIM_status_t TIM_PWM_init(TIM_instance_t instance, TIM_gpio_t* pins, uint32_t pwm_frequency_hz) {
+TIM_status_t TIM_PWM_init(TIM_instance_t instance, TIM_gpio_t* pins) {
 	// Local variables.
 	TIM_status_t status = TIM_SUCCESS;
-	uint32_t tim_clock_hz = 0;
-	uint64_t arr  = 0;
 	uint8_t idx = 0;
 	// Check instance.
 	_TIM_check_instance(instance);
@@ -854,25 +860,22 @@ TIM_status_t TIM_PWM_init(TIM_instance_t instance, TIM_gpio_t* pins, uint32_t pw
 #endif
 	// Update local interrupt handler.
 	tim_irq_handler[instance] = NULL;
-	// Get clock source frequency.
-	RCC_get_frequency_hz(RCC_CLOCK_SYSTEM, &tim_clock_hz);
 	// Enable peripheral clock.
 	(*TIM_DESCRIPTOR[instance].rcc_enr) |= TIM_DESCRIPTOR[instance].rcc_mask;
 	(*TIM_DESCRIPTOR[instance].rcc_smenr) |= TIM_DESCRIPTOR[instance].rcc_mask;
-	// Set PWM frequency.
-	arr = (uint64_t) (tim_clock_hz / pwm_frequency_hz);
-	status = _TIM_write_arr(instance, arr);
-	if (status != TIM_SUCCESS) goto errors;
 	// Reset counter.
+	TIM_DESCRIPTOR[instance].peripheral -> PSC = 0;
+	TIM_DESCRIPTOR[instance].peripheral -> ARR = TIM_ARR_VALUE_MAX;
 	TIM_DESCRIPTOR[instance].peripheral -> CNT = 0;
 	// Configure channels 1-4 in PWM mode 1 (OCxM='110' and OCxPE='1').
 	TIM_DESCRIPTOR[instance].peripheral -> CCMR1 |= (0b110 << 12) | (0b1 << 11) | (0b110 << 4) | (0b1 << 3);
 	TIM_DESCRIPTOR[instance].peripheral -> CCMR2 |= (0b110 << 12) | (0b1 << 11) | (0b110 << 4) | (0b1 << 3);
 	TIM_DESCRIPTOR[instance].peripheral -> CR1 |= (0b1 << 7);
+	TIM_DESCRIPTOR[instance].peripheral -> CCER &= 0xFFFFEEEE;
+	TIM_DESCRIPTOR[instance].peripheral -> CCER |= 0x00002222;
 	// Disable all channels by default.
+	for (idx=0 ; idx<TIM_CHANNEL_LAST ; idx++) TIM_DESCRIPTOR[instance].peripheral -> CCRx[idx] = TIM_ARR_VALUE_MAX;
 	tim_pwm_ctx[instance].channels_duty_cycle = 0;
-	for (idx=0 ; idx<TIM_CHANNEL_LAST ; idx++) TIM_DESCRIPTOR[instance].peripheral -> CCRx[idx] = ((TIM_DESCRIPTOR[instance].peripheral -> ARR) + 1);
-	TIM_DESCRIPTOR[instance].peripheral -> CCER |= 0x00001111;
 	// Generate event to update registers.
 	TIM_DESCRIPTOR[instance].peripheral -> EGR |= (0b1 << 0); // UG='1'.
 	// Configure GPIOs.
@@ -926,33 +929,49 @@ errors:
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x08) != 0)
 /*******************************************************************/
-TIM_status_t TIM_PWM_set_duty_cycle(TIM_instance_t instance, TIM_channel_t channel, uint8_t duty_cycle_percent) {
+TIM_status_t TIM_PWM_set_waveform(TIM_instance_t instance, TIM_channel_t channel, uint32_t frequency_hz, uint8_t duty_cycle_percent) {
 	// Local variables.
 	TIM_status_t status = TIM_SUCCESS;
-	uint32_t arr_plus_one = 0;
-	// Check instance.
+	uint32_t tim_clock_hz = 0;
+	uint32_t arr = 0;
+	// Check instance and channel.
 	_TIM_check_instance(instance);
-	// Check parameters.
 	_TIM_check_channel(channel);
+	// Check parameters.
+	if (frequency_hz == 0) {
+		status = TIM_ERROR_FREQUENCY;
+		goto errors;
+	}
 	if (duty_cycle_percent > TIM_PWM_DUTY_CYCLE_PERCENT_MAX) {
 		status = TIM_ERROR_DUTY_CYCLE;
 		goto errors;
 	}
-	// Update duty cycle.
-	tim_pwm_ctx[instance].channels_duty_cycle &= ~(0xFF << (channel << 3));
-	tim_pwm_ctx[instance].channels_duty_cycle |= (duty_cycle_percent << (channel << 3));
+	// Stop channel.
+	TIM_DESCRIPTOR[instance].peripheral -> CCER &= ~(0b1 << (channel << 2));
+	// Get clock source frequency.
+	RCC_get_frequency_hz(RCC_CLOCK_SYSTEM, &tim_clock_hz);
+	// Compute ARR and PSC values.
+	status = _TIM_compute_psc_arr(instance, tim_clock_hz, (MATH_POWER_10[9] / frequency_hz));
+	if (status != TIM_SUCCESS) goto errors;
 	// Set duty cycle.
-	arr_plus_one = ((TIM_DESCRIPTOR[instance].peripheral -> ARR) + 1);
-	TIM_DESCRIPTOR[instance].peripheral -> CCRx[channel] = arr_plus_one - ((arr_plus_one * duty_cycle_percent) / (TIM_PWM_DUTY_CYCLE_PERCENT_MAX));
-	// Check channels status.
-	if (tim_pwm_ctx[instance].channels_duty_cycle == 0) {
-		// Disable and reset counter.
-		TIM_DESCRIPTOR[instance].peripheral -> CR1 &= ~(0b1 << 0); // CEN='0'.
-		TIM_DESCRIPTOR[instance].peripheral -> CNT = 0;
+	arr = (TIM_DESCRIPTOR[instance].peripheral -> ARR);
+	TIM_DESCRIPTOR[instance].peripheral -> CCRx[channel] = arr - ((arr * duty_cycle_percent) / (TIM_PWM_DUTY_CYCLE_PERCENT_MAX));
+	// Update duty cycle word.
+	tim_pwm_ctx[instance].channels_duty_cycle &= ~(MATH_U8_MASK << (channel << 3));
+	tim_pwm_ctx[instance].channels_duty_cycle |= (duty_cycle_percent << (channel << 3));
+	// Restart channel.
+	if (duty_cycle_percent > 0) {
+		// Enable counter and start channel.
+		TIM_DESCRIPTOR[instance].peripheral -> CR1 |= (0b1 << 0); // CEN='1'.
+		TIM_DESCRIPTOR[instance].peripheral -> CCER |= (0b1 << (channel << 2));
 	}
 	else {
-		// Enable counter.
-		TIM_DESCRIPTOR[instance].peripheral -> CR1 |= (0b1 << 0); // CEN='1'.
+		// Check channels status.
+		if (tim_pwm_ctx[instance].channels_duty_cycle == 0) {
+			// Disable and reset counter.
+			TIM_DESCRIPTOR[instance].peripheral -> CR1 &= ~(0b1 << 0); // CEN='0'.
+			TIM_DESCRIPTOR[instance].peripheral -> CNT = 0;
+		}
 	}
 errors:
 	return status;

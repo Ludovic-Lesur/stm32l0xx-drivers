@@ -38,6 +38,7 @@ typedef enum {
 	TIM_ERROR_DURATION_OVERFLOW,
 	TIM_ERROR_COMPLETION_WATCHDOG,
 	TIM_ERROR_CAPTURE_TIMEOUT,
+	TIM_ERROR_FREQUENCY,
 	TIM_ERROR_DUTY_CYCLE,
 	// Low level drivers errors.
 	TIM_ERROR_BASE_RCC = 0x0100,
@@ -265,15 +266,14 @@ TIM_status_t TIM_CAL_mco_capture(TIM_instance_t instance, int32_t* ref_clock_pul
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x08) != 0)
 /*!******************************************************************
- * \fn TIM_status_t TIM_PWM_init(TIM_instance_t instance, TIM_gpio_t* pins, uint32_t pwm_frequency_hz)
+ * \fn TIM_status_t TIM_PWM_init(TIM_instance_t instance, TIM_gpio_t* pins)
  * \brief Init a timer peripheral in PWM mode.
  * \param[in]  	instance: Timer instance to use.
  * \param[in]	pins: Pointer to the timer pins to use.
- * \param[in]	pwm_frequency_hz: PWM signal frequency in Hz.
  * \param[out] 	none
  * \retval		Function execution status.
  *******************************************************************/
-TIM_status_t TIM_PWM_init(TIM_instance_t instance, TIM_gpio_t* pins, uint32_t pwm_frequency_hz);
+TIM_status_t TIM_PWM_init(TIM_instance_t instance, TIM_gpio_t* pins);
 #endif
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x08) != 0)
@@ -290,15 +290,16 @@ TIM_status_t TIM_PWM_de_init(TIM_instance_t instance, TIM_gpio_t* pins);
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x08) != 0)
 /*!******************************************************************
- * \fn TIM_status_t TIM_PWM_set_duty_cycle(TIM_instance_t instance, TIM_channel_t channel, uint8_t duty_cycle_percent)
+ * \fn TIM_status_t TIM_PWM_set_waveform(TIM_instance_t instance, TIM_channel_t channel, uint32_t frequency_hz, uint8_t duty_cycle_percent)
  * \brief Set channel duty cycle of a timer configured in PWM mode.
  * \param[in]  	instance: Timer instance to use.
  * \param[in]  	channel: Channel to configure.
- * \param[in]  	duty_cycle_percent: PWM duty cycle in percent.
+ * \param[in]	frequency_hz: PWM frequency in Hz.
+ * \param[in]  	duty_cycle_percent: PWM duty cycle in percent. Value 0 disables the signal.
  * \param[out] 	none
  * \retval		Function execution status.
  *******************************************************************/
-TIM_status_t TIM_PWM_set_duty_cycle(TIM_instance_t instance, TIM_channel_t channel, uint8_t duty_cycle_percent);
+TIM_status_t TIM_PWM_set_waveform(TIM_instance_t instance, TIM_channel_t channel, uint32_t frequency_hz, uint8_t duty_cycle_percent);
 #endif
 
 /*******************************************************************/

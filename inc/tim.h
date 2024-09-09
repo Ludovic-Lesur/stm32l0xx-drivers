@@ -278,7 +278,7 @@ TIM_status_t TIM_PWM_init(TIM_instance_t instance, TIM_gpio_t* pins);
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x08) != 0)
 /*!******************************************************************
- * \fn TIM_status_t TIM_de_init(TIM_instance_t instance, TIM_gpio_t* pins)
+ * \fn TIM_status_t TIM_PWM_de_init(TIM_instance_t instance, TIM_gpio_t* pins)
  * \brief Release a timer peripheral.
  * \param[in]  	instance: Timer instance to release.
  * \param[in]	pins: Pointer to the timer pins to release.
@@ -294,12 +294,62 @@ TIM_status_t TIM_PWM_de_init(TIM_instance_t instance, TIM_gpio_t* pins);
  * \brief Set channel duty cycle of a timer configured in PWM mode.
  * \param[in]  	instance: Timer instance to use.
  * \param[in]  	channel: Channel to configure.
- * \param[in]	frequency_hz: PWM frequency in Hz.
+ * \param[in]	frequency_hz: PWM frequency in Hz. Warning: this setting will be applied to all channels of the timer instance.
  * \param[in]  	duty_cycle_percent: PWM duty cycle in percent. Value 0 disables the signal.
  * \param[out] 	none
  * \retval		Function execution status.
  *******************************************************************/
 TIM_status_t TIM_PWM_set_waveform(TIM_instance_t instance, TIM_channel_t channel, uint32_t frequency_hz, uint8_t duty_cycle_percent);
+#endif
+
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x10) != 0)
+/*!******************************************************************
+ * \fn TIM_status_t TIM_OPM_init(TIM_instance_t instance, TIM_gpio_t* pins)
+ * \brief Init a timer peripheral in one pulse mode.
+ * \param[in]  	instance: Timer instance to use.
+ * \param[in]	pins: Pointer to the timer pins to use.
+ * \param[out] 	none
+ * \retval		Function execution status.
+ *******************************************************************/
+TIM_status_t TIM_OPM_init(TIM_instance_t instance, TIM_gpio_t* pins);
+#endif
+
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x10) != 0)
+/*!******************************************************************
+ * \fn TIM_status_t TIM_OPM_de_init(TIM_instance_t instance, TIM_gpio_t* pins)
+ * \brief Release a timer peripheral.
+ * \param[in]  	instance: Timer instance to release.
+ * \param[in]	pins: Pointer to the timer pins to release.
+ * \param[out] 	none
+ * \retval		Function execution status.
+ *******************************************************************/
+TIM_status_t TIM_OPM_de_init(TIM_instance_t instance, TIM_gpio_t* pins);
+#endif
+
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x10) != 0)
+/*!******************************************************************
+ * \fn TIM_status_t TIM_OPM_make_pulse(TIM_instance_t instance, TIM_channel_t channel, uint32_t delay_ns, uint32_t pulse_duration_ns)
+ * \brief Perform a single output pulse.
+ * \param[in]  	instance: Timer instance to use.
+ * \param[in]  	channel: Channel to use.
+ * \param[in]	delay_ns: Delay between function call and pulse start in ns. Warning: this setting will be applied to all channels of the timer instance.
+ * \param[in]  	pulse_duration_ns: Pulse duration in ns. Warning: this setting will be applied to all channels of the timer instance.
+ * \param[out] 	none
+ * \retval		Function execution status.
+ *******************************************************************/
+TIM_status_t TIM_OPM_make_pulse(TIM_instance_t instance, TIM_channel_t channel, uint32_t delay_ns, uint32_t pulse_duration_ns);
+#endif
+
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x10) != 0)
+/*!******************************************************************
+ * \fn TIM_status_t TIM_OPM_get_pulse_status(TIM_instance_t instance, TIM_channel_t channel, uint8_t* pulse_is_done)
+ * \brief Get single output pulse status
+ * \param[in]  	instance: Timer instance to use.
+ * \param[in]  	channel: Channel to read.
+ * \param[out]	pulse_is_done: Pointer to byte that will contain the pulse status.
+ * \retval		Function execution status.
+ *******************************************************************/
+TIM_status_t TIM_OPM_get_pulse_status(TIM_instance_t instance, TIM_channel_t channel, uint8_t* pulse_is_done);
 #endif
 
 /*******************************************************************/

@@ -57,6 +57,7 @@
 /*******************************************************************/
 typedef struct {
 	TIM_registers_t* peripheral;
+	volatile uint32_t* rcc_reset;
 	volatile uint32_t* rcc_enr;
 	volatile uint32_t* rcc_smenr;
 	uint32_t rcc_mask;
@@ -113,17 +114,17 @@ typedef struct {
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x0F) != 0)
 static const TIM_descriptor_t TIM_DESCRIPTOR[TIM_INSTANCE_LAST] = {
-	{TIM2,  &(RCC -> APB1SMENR), &(RCC -> APB1ENR), (0b1 << 0),  NVIC_INTERRUPT_TIM2},
-	{TIM21, &(RCC -> APB2SMENR), &(RCC -> APB2ENR), (0b1 << 2),  NVIC_INTERRUPT_TIM21},
+	{TIM2,  &(RCC -> APB1RSTR), &(RCC -> APB1SMENR), &(RCC -> APB1ENR), (0b1 << 0),  NVIC_INTERRUPT_TIM2},
+	{TIM21, &(RCC -> APB2RSTR), &(RCC -> APB2SMENR), &(RCC -> APB2ENR), (0b1 << 2),  NVIC_INTERRUPT_TIM21},
 #if (STM32L0XX_REGISTERS_MCU_CATEGORY == 2) || (STM32L0XX_REGISTERS_MCU_CATEGORY == 3) || (STM32L0XX_REGISTERS_MCU_CATEGORY == 5)
-	{TIM22, &(RCC -> APB2SMENR), &(RCC -> APB2ENR), (0b1 << 5),  NVIC_INTERRUPT_TIM22},
+	{TIM22, &(RCC -> APB2RSTR), &(RCC -> APB2SMENR), &(RCC -> APB2ENR), (0b1 << 5),  NVIC_INTERRUPT_TIM22},
 #endif
 #if (STM32L0XX_REGISTERS_MCU_CATEGORY == 3) || (STM32L0XX_REGISTERS_MCU_CATEGORY == 5)
-	{TIM6,  &(RCC -> APB1SMENR), &(RCC -> APB1ENR), (0b1 << 4),  NVIC_INTERRUPT_TIM6},
+	{TIM6,  &(RCC -> APB1RSTR), &(RCC -> APB1SMENR), &(RCC -> APB1ENR), (0b1 << 4),  NVIC_INTERRUPT_TIM6},
 #endif
 #if (STM32L0XX_REGISTERS_MCU_CATEGORY == 5)
-	{TIM3,  &(RCC -> APB1SMENR), &(RCC -> APB1ENR), (0b1 << 1),  NVIC_INTERRUPT_TIM3},
-	{TIM7,  &(RCC -> APB1SMENR), &(RCC -> APB1ENR), (0b1 << 5),  NVIC_INTERRUPT_TIM7},
+	{TIM3,  &(RCC -> APB1RSTR), &(RCC -> APB1SMENR), &(RCC -> APB1ENR), (0b1 << 1),  NVIC_INTERRUPT_TIM3},
+	{TIM7,  &(RCC -> APB1RSTR), &(RCC -> APB1SMENR), &(RCC -> APB1ENR), (0b1 << 5),  NVIC_INTERRUPT_TIM7},
 #endif
 };
 #endif
@@ -359,7 +360,19 @@ errors:
 }
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x09) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x1F) != 0)
+/*******************************************************************/
+static void __attribute__((optimize("-O0"))) _TIM_reset(TIM_instance_t instance) {
+	// Local variables.
+	uint8_t count = 0;
+	// Perform manual reset and delay.
+	(*TIM_DESCRIPTOR[instance].rcc_reset) |= (TIM_DESCRIPTOR[instance].rcc_mask);
+	for (count=0 ; count<100 ; count++);
+	(*TIM_DESCRIPTOR[instance].rcc_reset) &= ~(TIM_DESCRIPTOR[instance].rcc_mask);
+}
+#endif
+
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x19) != 0)
 /*******************************************************************/
 static TIM_status_t _TIM_compute_psc_arr(TIM_instance_t instance, uint32_t tim_clock_hz, uint32_t expected_period_ns) {
 	// Local variables.
@@ -390,7 +403,7 @@ errors:
 }
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x0F) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x1F) != 0)
 /*******************************************************************/
 static void _TIM_de_init(TIM_instance_t instance) {
 	// Disable interrupt.
@@ -399,6 +412,44 @@ static void _TIM_de_init(TIM_instance_t instance) {
 	TIM_DESCRIPTOR[instance].peripheral -> CR1 &= ~(0b1 << 0); // CEN='0'.
 	// Disable peripheral clock.
 	(*TIM_DESCRIPTOR[instance].rcc_enr) &= ~(TIM_DESCRIPTOR[instance].rcc_mask);
+}
+#endif
+
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x18) != 0)
+/*******************************************************************/
+static void _TIM_gpio_init(TIM_gpio_t* pins) {
+	// Init used GPIOs as alternate function.
+	if ((pins -> ch1) != NULL) {
+		GPIO_configure((pins -> ch1), GPIO_MODE_ALTERNATE_FUNCTION, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_HIGH, GPIO_PULL_NONE);
+	}
+	if ((pins -> ch2) != NULL) {
+		GPIO_configure((pins -> ch2), GPIO_MODE_ALTERNATE_FUNCTION, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_HIGH, GPIO_PULL_NONE);
+	}
+	if ((pins -> ch3) != NULL) {
+		GPIO_configure((pins -> ch3), GPIO_MODE_ALTERNATE_FUNCTION, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_HIGH, GPIO_PULL_NONE);
+	}
+	if ((pins -> ch4) != NULL) {
+		GPIO_configure((pins -> ch4), GPIO_MODE_ALTERNATE_FUNCTION, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_HIGH, GPIO_PULL_NONE);
+	}
+}
+#endif
+
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x18) != 0)
+/*******************************************************************/
+static void _TIM_gpio_de_init(TIM_gpio_t* pins) {
+	// Init used GPIOs.
+	if ((pins -> ch1) != NULL) {
+		GPIO_configure((pins -> ch1), GPIO_MODE_OUTPUT, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_LOW, GPIO_PULL_NONE);
+	}
+	if ((pins -> ch2) != NULL) {
+		GPIO_configure((pins -> ch2), GPIO_MODE_OUTPUT, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_LOW, GPIO_PULL_NONE);
+	}
+	if ((pins -> ch3) != NULL) {
+		GPIO_configure((pins -> ch3), GPIO_MODE_OUTPUT, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_LOW, GPIO_PULL_NONE);
+	}
+	if ((pins -> ch4) != NULL) {
+		GPIO_configure((pins -> ch4), GPIO_MODE_OUTPUT, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_LOW, GPIO_PULL_NONE);
+	}
 }
 #endif
 
@@ -412,6 +463,8 @@ TIM_status_t TIM_STD_init(TIM_instance_t instance, uint32_t period_ns, uint8_t n
 	uint32_t tim_clock_hz = 0;
 	// Check instance.
 	_TIM_check_instance(instance);
+	// Reset peripheral.
+	_TIM_reset(instance);
 	// Update local interrupt handler.
 	tim_irq_handler[instance] = &_TIM_STD_irq_handler;
 	// Register callback.
@@ -497,6 +550,8 @@ TIM_status_t TIM_MCH_init(TIM_instance_t instance, uint8_t nvic_priority) {
 		status = TIM_ERROR_INSTANCE;
 		goto errors;
 	}
+	// Reset peripheral.
+	_TIM_reset(instance);
 	// Init context.
 	for (idx=0 ; idx<TIM_CHANNEL_LAST ; idx++) {
 		tim_mch_ctx.channel[idx].duration_ms = 0;
@@ -768,6 +823,8 @@ TIM_status_t TIM_CAL_init(TIM_instance_t instance, uint8_t nvic_priority) {
 		status = TIM_ERROR_INSTANCE;
 		goto errors;
 	}
+	// Reset peripheral.
+	_TIM_reset(instance);
 	// Update local interrupt handler.
 	tim_irq_handler[instance] = &_TIM_CAL_irq_handler;
 	// Enable peripheral clock.
@@ -858,6 +915,8 @@ TIM_status_t TIM_PWM_init(TIM_instance_t instance, TIM_gpio_t* pins) {
 		goto errors;
 	}
 #endif
+	// Reset peripheral.
+	_TIM_reset(instance);
 	// Update local interrupt handler.
 	tim_irq_handler[instance] = NULL;
 	// Enable peripheral clock.
@@ -867,30 +926,18 @@ TIM_status_t TIM_PWM_init(TIM_instance_t instance, TIM_gpio_t* pins) {
 	TIM_DESCRIPTOR[instance].peripheral -> PSC = 0;
 	TIM_DESCRIPTOR[instance].peripheral -> ARR = TIM_ARR_VALUE_MAX;
 	TIM_DESCRIPTOR[instance].peripheral -> CNT = 0;
-	// Configure channels 1-4 in PWM mode 1 (OCxM='110' and OCxPE='1').
-	TIM_DESCRIPTOR[instance].peripheral -> CCMR1 |= (0b110 << 12) | (0b1 << 11) | (0b110 << 4) | (0b1 << 3);
-	TIM_DESCRIPTOR[instance].peripheral -> CCMR2 |= (0b110 << 12) | (0b1 << 11) | (0b110 << 4) | (0b1 << 3);
+	// Configure channels 1-4 in PWM mode 2 (OCxM='111', OCxPE='1' and OCxFE='1').
+	TIM_DESCRIPTOR[instance].peripheral -> CCMR1 |= (0b111 << 12) | (0b11 << 10) | (0b111 << 4) | (0b11 << 2);
+	TIM_DESCRIPTOR[instance].peripheral -> CCMR2 |= (0b111 << 12) | (0b11 << 10) | (0b111 << 4) | (0b11 << 2);
 	TIM_DESCRIPTOR[instance].peripheral -> CR1 |= (0b1 << 7);
 	TIM_DESCRIPTOR[instance].peripheral -> CCER &= 0xFFFFEEEE;
-	TIM_DESCRIPTOR[instance].peripheral -> CCER |= 0x00002222;
 	// Disable all channels by default.
 	for (idx=0 ; idx<TIM_CHANNEL_LAST ; idx++) TIM_DESCRIPTOR[instance].peripheral -> CCRx[idx] = TIM_ARR_VALUE_MAX;
 	tim_pwm_ctx[instance].channels_duty_cycle = 0;
 	// Generate event to update registers.
 	TIM_DESCRIPTOR[instance].peripheral -> EGR |= (0b1 << 0); // UG='1'.
 	// Configure GPIOs.
-	if ((pins -> ch1) != NULL) {
-		GPIO_configure((pins -> ch1), GPIO_MODE_ALTERNATE_FUNCTION, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_HIGH, GPIO_PULL_NONE);
-	}
-	if ((pins -> ch2) != NULL) {
-		GPIO_configure((pins -> ch2), GPIO_MODE_ALTERNATE_FUNCTION, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_HIGH, GPIO_PULL_NONE);
-	}
-	if ((pins -> ch3) != NULL) {
-		GPIO_configure((pins -> ch3), GPIO_MODE_ALTERNATE_FUNCTION, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_HIGH, GPIO_PULL_NONE);
-	}
-	if ((pins -> ch4) != NULL) {
-		GPIO_configure((pins -> ch4), GPIO_MODE_ALTERNATE_FUNCTION, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_HIGH, GPIO_PULL_NONE);
-	}
+	_TIM_gpio_init(pins);
 errors:
 	return status;
 }
@@ -908,19 +955,8 @@ TIM_status_t TIM_PWM_de_init(TIM_instance_t instance, TIM_gpio_t* pins) {
 		status = TIM_ERROR_NULL_PARAMETER;
 		goto errors;
 	}
-	// Release GPIOs.
-	if ((pins -> ch1) != NULL) {
-		GPIO_configure((pins -> ch1), GPIO_MODE_OUTPUT, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_LOW, GPIO_PULL_NONE);
-	}
-	if ((pins -> ch2) != NULL) {
-		GPIO_configure((pins -> ch2), GPIO_MODE_OUTPUT, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_LOW, GPIO_PULL_NONE);
-	}
-	if ((pins -> ch3) != NULL) {
-		GPIO_configure((pins -> ch3), GPIO_MODE_OUTPUT, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_LOW, GPIO_PULL_NONE);
-	}
-	if ((pins -> ch4) != NULL) {
-		GPIO_configure((pins -> ch4), GPIO_MODE_OUTPUT, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_LOW, GPIO_PULL_NONE);
-	}
+	// Release GPIOs and peripheral.
+	_TIM_gpio_de_init(pins);
 	_TIM_de_init(instance);
 errors:
 	return status;
@@ -973,6 +1009,127 @@ TIM_status_t TIM_PWM_set_waveform(TIM_instance_t instance, TIM_channel_t channel
 			TIM_DESCRIPTOR[instance].peripheral -> CNT = 0;
 		}
 	}
+errors:
+	return status;
+}
+#endif
+
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x10) != 0)
+/*******************************************************************/
+TIM_status_t TIM_OPM_init(TIM_instance_t instance, TIM_gpio_t* pins) {
+	// Local variables.
+	TIM_status_t status = TIM_SUCCESS;
+	uint8_t idx = 0;
+	// Check instance.
+	_TIM_check_instance(instance);
+	// Check parameter.
+	if (pins == NULL) {
+		status = TIM_ERROR_NULL_PARAMETER;
+		goto errors;
+	}
+#if (STM32L0XX_REGISTERS_MCU_CATEGORY == 3) || (STM32L0XX_REGISTERS_MCU_CATEGORY == 5)
+	// Check supported instance.
+	if (instance == TIM_INSTANCE_TIM6) {
+		status = TIM_ERROR_INSTANCE;
+		goto errors;
+	}
+#endif
+#if (STM32L0XX_REGISTERS_MCU_CATEGORY == 5)
+	// Check supported instance.
+	if (instance == TIM_INSTANCE_TIM7) {
+		status = TIM_ERROR_INSTANCE;
+		goto errors;
+	}
+#endif
+	// Reset peripheral.
+	_TIM_reset(instance);
+	// Update local interrupt handler.
+	tim_irq_handler[instance] = NULL;
+	// Enable peripheral clock.
+	(*TIM_DESCRIPTOR[instance].rcc_enr) |= TIM_DESCRIPTOR[instance].rcc_mask;
+	(*TIM_DESCRIPTOR[instance].rcc_smenr) |= TIM_DESCRIPTOR[instance].rcc_mask;
+	// Reset counter.
+	TIM_DESCRIPTOR[instance].peripheral -> PSC = 0;
+	TIM_DESCRIPTOR[instance].peripheral -> ARR = TIM_ARR_VALUE_MAX;
+	TIM_DESCRIPTOR[instance].peripheral -> CNT = 0;
+	// Configure channels 1-4 in PWM mode 2 (OCxM='111', OCxPE='1' and OCxFE='1').
+	TIM_DESCRIPTOR[instance].peripheral -> CCMR1 |= (0b111 << 12) | (0b11 << 10) | (0b111 << 4) | (0b11 << 2);
+	TIM_DESCRIPTOR[instance].peripheral -> CCMR2 |= (0b111 << 12) | (0b11 << 10) | (0b111 << 4) | (0b11 << 2);
+	TIM_DESCRIPTOR[instance].peripheral -> CR1 |= (0b1 << 7) | (0b1 << 3);
+	TIM_DESCRIPTOR[instance].peripheral -> CCER &= 0xFFFFEEEE;
+	// Disable all channels by default.
+	for (idx=0 ; idx<TIM_CHANNEL_LAST ; idx++) TIM_DESCRIPTOR[instance].peripheral -> CCRx[idx] = TIM_ARR_VALUE_MAX;
+	// Generate event to update registers.
+	TIM_DESCRIPTOR[instance].peripheral -> EGR |= (0b1 << 0); // UG='1'.
+	// Configure GPIOs.
+	_TIM_gpio_init(pins);
+errors:
+	return status;
+}
+#endif
+
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x10) != 0)
+/*******************************************************************/
+TIM_status_t TIM_OPM_de_init(TIM_instance_t instance, TIM_gpio_t* pins) {
+	// Local variables.
+	TIM_status_t status = TIM_SUCCESS;
+	// Check instance.
+	_TIM_check_instance(instance);
+	// Check parameter.
+	if (pins == NULL) {
+		status = TIM_ERROR_NULL_PARAMETER;
+		goto errors;
+	}
+	// Release GPIOs and peripheral.
+	_TIM_gpio_de_init(pins);
+	_TIM_de_init(instance);
+errors:
+	return status;
+}
+#endif
+
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x10) != 0)
+/*******************************************************************/
+TIM_status_t TIM_OPM_make_pulse(TIM_instance_t instance, TIM_channel_t channel, uint32_t delay_ns, uint32_t pulse_duration_ns) {
+	// Local variables.
+	TIM_status_t status = TIM_SUCCESS;
+	uint32_t tim_clock_hz = 0;
+	uint64_t ccr = 0;
+	// Check instance and channel.
+	_TIM_check_instance(instance);
+	_TIM_check_channel(channel);
+	// Get clock source frequency.
+	RCC_get_frequency_hz(RCC_CLOCK_SYSTEM, &tim_clock_hz);
+	// Compute ARR and PSC values.
+	status = _TIM_compute_psc_arr(instance, tim_clock_hz, (delay_ns + pulse_duration_ns));
+	if (status != TIM_SUCCESS) goto errors;
+	// Compute CCR value.
+	ccr = ((uint64_t) delay_ns) * ((uint64_t) (TIM_DESCRIPTOR[instance].peripheral -> ARR));
+	ccr /= (((uint64_t) delay_ns) + ((uint64_t) pulse_duration_ns));
+	TIM_DESCRIPTOR[instance].peripheral -> CCRx[channel] = (ccr == 0) ? 1 : ccr;
+	// Start channel and timer.
+	TIM_DESCRIPTOR[instance].peripheral -> CCER |= (0b1 << (channel << 2));
+	TIM_DESCRIPTOR[instance].peripheral -> CR1 |= (0b1 << 0); // CEN='1'.
+errors:
+	return status;
+}
+#endif
+
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x10) != 0)
+/*******************************************************************/
+TIM_status_t TIM_OPM_get_pulse_status(TIM_instance_t instance, TIM_channel_t channel, uint8_t* pulse_is_done) {
+	// Local variables.
+	TIM_status_t status = TIM_SUCCESS;
+	// Check instance and channel.
+	_TIM_check_instance(instance);
+	_TIM_check_channel(channel);
+	// Check parameter.
+	if (pulse_is_done == NULL) {
+		status = TIM_ERROR_NULL_PARAMETER;
+		goto errors;
+	}
+	// Update status.
+	(*pulse_is_done) = (((TIM_DESCRIPTOR[instance].peripheral -> CR1) & (0b1 << 0)) == 0) ? 1 : 0;
 errors:
 	return status;
 }

@@ -31,7 +31,7 @@ Here is the versions compatibility table:
 | `STM32L0XX_DRIVERS_RCC_LSE_FREQUENCY_HZ` | `<value>` | Defines the external crystal frequency in Hz (if used). |
 | `STM32L0XX_DRIVERS_RTC_WAKEUP_PERIOD_SECONDS` | `<value>` | RTC wakeup period in seconds. |
 | `STM32L0XX_DRIVERS_RTC_ALARM_MASK` | `0x00` to `0x03`| 2-bits field which defines the enabled RTC alarms. |
-| `STM32L0XX_DRIVERS_TIM_MODE_MASK` | `0x00` to `0x0F`| 4-bits field which defines the enabled timer operation modes: `0` = standard `1` = multi-channel `2` = calibration `3` = PWM. |
+| `STM32L0XX_DRIVERS_TIM_MODE_MASK` | `0x00` to `0x1F`| 5-bits field which defines the enabled timer operation modes: `0` = standard `1` = multi-channel `2` = calibration `3` = PWM `4` = one pulse. |
 | `STM32L0XX_DRIVERS_USART_MODE` | `0` / `1` | USART operation mode: `0` = RXNE interrupt `1` = CMF interrupt. |
 | `STM32L0XX_DRIVERS_USART_DISABLE_TX_0` | `defined` / `undefined` | Disable the transmission of byte 0x00 if defined. |
 

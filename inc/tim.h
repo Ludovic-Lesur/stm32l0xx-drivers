@@ -19,6 +19,16 @@
 #include "rcc.h"
 #include "types.h"
 
+/*** TIM macros ***/
+
+#define TIM_MODE_MASK_STANDARD		0x01
+#define TIM_MODE_MASK_MULTI_CHANNEL	0x02
+#define TIM_MODE_MASK_CALIBRATION	0x04
+#define TIM_MODE_MASK_PWM			0x08
+#define TIM_MODE_MASK_OPM			0x10
+
+#define TIM_MODE_MASK_ALL			0x1F
+
 /*** TIM structures ***/
 
 /*!******************************************************************
@@ -120,7 +130,7 @@ typedef struct {
 
 /*** TIM functions ***/
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x01) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_STANDARD) != 0)
 /*!******************************************************************
  * \fn TIM_status_t TIM_STD_init(TIM_instance_t instance, uint32_t period_ns, uint8_t nvic_priority, TIM_completion_irq_cb_t irq_callback)
  * \brief Init a timer peripheral in standard mode.
@@ -134,7 +144,7 @@ typedef struct {
 TIM_status_t TIM_STD_init(TIM_instance_t instance, uint32_t period_ns, uint8_t nvic_priority, TIM_completion_irq_cb_t irq_callback);
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x01) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_STANDARD) != 0)
 /*!******************************************************************
  * \fn TIM_status_t TIM_STD_de_init(TIM_instance_t instance)
  * \brief Release a timer peripheral.
@@ -145,7 +155,7 @@ TIM_status_t TIM_STD_init(TIM_instance_t instance, uint32_t period_ns, uint8_t n
 TIM_status_t TIM_STD_de_init(TIM_instance_t instance);
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x01) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_STANDARD) != 0)
 /*!******************************************************************
  * \fn TIM_status_t TIM_STD_start(TIM_instance_t instance)
  * \brief Start a timer in standard mode.
@@ -156,7 +166,7 @@ TIM_status_t TIM_STD_de_init(TIM_instance_t instance);
 TIM_status_t TIM_STD_start(TIM_instance_t instance);
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x01) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_STANDARD) != 0)
 /*!******************************************************************
  * \fn TIM_status_t TIM_STD_stop(TIM_instance_t instance)
  * \brief Stop a timer in standard mode.
@@ -167,7 +177,7 @@ TIM_status_t TIM_STD_start(TIM_instance_t instance);
 TIM_status_t TIM_STD_stop(TIM_instance_t instance);
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x02) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_MULTI_CHANNEL) != 0)
 /*!******************************************************************
  * \fn TIM_status_t TIM_MCH_init(TIM_instance_t instance, uint8_t nvic_priority)
  * \brief Init a timer peripheral in multi-channel mode.
@@ -179,7 +189,7 @@ TIM_status_t TIM_STD_stop(TIM_instance_t instance);
 TIM_status_t TIM_MCH_init(TIM_instance_t instance, uint8_t nvic_priority);
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x02) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_MULTI_CHANNEL) != 0)
 /*!******************************************************************
  * \fn TIM_status_t TIM_MCH_de_init(TIM_instance_t instance)
  * \brief Release a timer peripheral.
@@ -190,7 +200,7 @@ TIM_status_t TIM_MCH_init(TIM_instance_t instance, uint8_t nvic_priority);
 TIM_status_t TIM_MCH_de_init(TIM_instance_t instance);
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x02) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_MULTI_CHANNEL) != 0)
 /*!******************************************************************
  * \fn TIM_status_t TIM_MCH_start_channel(TIM_instance_t instance, TIM_channel_t channel, uint32_t duration_ms, TIM_waiting_mode_t waiting_mode)
  * \brief Start a timer in multi-channel mode.
@@ -204,7 +214,7 @@ TIM_status_t TIM_MCH_de_init(TIM_instance_t instance);
 TIM_status_t TIM_MCH_start_channel(TIM_instance_t instance, TIM_channel_t channel, uint32_t duration_ms, TIM_waiting_mode_t waiting_mode);
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x02) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_MULTI_CHANNEL) != 0)
 /*!******************************************************************
  * \fn TIM_status_t TIM_stop_channel(TIM_instance_t instance, TIM_channel_t channel)
  * \brief Stop a timer in multi-channel mode.
@@ -216,7 +226,7 @@ TIM_status_t TIM_MCH_start_channel(TIM_instance_t instance, TIM_channel_t channe
 TIM_status_t TIM_MCH_stop_channel(TIM_instance_t instance, TIM_channel_t channel);
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x02) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_MULTI_CHANNEL) != 0)
 /*!******************************************************************
  * \fn TIM_status_t TIM_get_channel_status(TIM_instance_t instance, TIM_channel_t channel, uint8_t* timer_has_elapsed)
  * \brief Get the status of a timer channel.
@@ -228,7 +238,7 @@ TIM_status_t TIM_MCH_stop_channel(TIM_instance_t instance, TIM_channel_t channel
 TIM_status_t TIM_MCH_get_channel_status(TIM_instance_t instance, TIM_channel_t channel, uint8_t* timer_has_elapsed);
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x02) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_MULTI_CHANNEL) != 0)
 /*!******************************************************************
  * \fn TIM_status_t TIM_wait_channel_completion(TIM_instance_t instance, TIM_channel_t channel)
  * \brief Blocking function waiting for a timer channel completion.
@@ -240,7 +250,7 @@ TIM_status_t TIM_MCH_get_channel_status(TIM_instance_t instance, TIM_channel_t c
 TIM_status_t TIM_MCH_wait_channel_completion(TIM_instance_t instance, TIM_channel_t channel);
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x04) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_CALIBRATION) != 0)
 /*!******************************************************************
  * \fn TIM_status_t TIM_CAL_init(TIM_instance_t instance, uint8_t nvic_priority)
  * \brief Init a timer peripheral in calibration mode.
@@ -252,7 +262,7 @@ TIM_status_t TIM_MCH_wait_channel_completion(TIM_instance_t instance, TIM_channe
 TIM_status_t TIM_CAL_init(TIM_instance_t instance, uint8_t nvic_priority);
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x04) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_CALIBRATION) != 0)
 /*!******************************************************************
  * \fn TIM_status_t TIM_CAL_de_init(TIM_instance_t instance)
  * \brief Release a timer peripheral.
@@ -263,7 +273,7 @@ TIM_status_t TIM_CAL_init(TIM_instance_t instance, uint8_t nvic_priority);
 TIM_status_t TIM_CAL_de_init(TIM_instance_t instance);
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x04) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_CALIBRATION) != 0)
 /*!******************************************************************
  * \fn TIM_status_t TIM_mco_capture(TIM_instance_t instance, int32_t* ref_clock_pulse_count, int32_t* mco_pulse_count)
  * \brief Perform MCO clock capture.
@@ -275,7 +285,7 @@ TIM_status_t TIM_CAL_de_init(TIM_instance_t instance);
 TIM_status_t TIM_CAL_mco_capture(TIM_instance_t instance, int32_t* ref_clock_pulse_count, int32_t* mco_pulse_count);
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x08) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_PWM) != 0)
 /*!******************************************************************
  * \fn TIM_status_t TIM_PWM_init(TIM_instance_t instance, TIM_gpio_t* pins_list, uint8_t number_of_pins)
  * \brief Init a timer peripheral in PWM mode.
@@ -288,7 +298,7 @@ TIM_status_t TIM_CAL_mco_capture(TIM_instance_t instance, int32_t* ref_clock_pul
 TIM_status_t TIM_PWM_init(TIM_instance_t instance, TIM_gpio_t* pins_list, uint8_t number_of_pins);
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x08) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_PWM) != 0)
 /*!******************************************************************
  * \fn TIM_status_t TIM_PWM_de_init(TIM_instance_t instance, TIM_gpio_t* pins)
  * \brief Release a timer peripheral.
@@ -301,7 +311,7 @@ TIM_status_t TIM_PWM_init(TIM_instance_t instance, TIM_gpio_t* pins_list, uint8_
 TIM_status_t TIM_PWM_de_init(TIM_instance_t instance, TIM_gpio_t* pins_list, uint8_t number_of_pins);
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x08) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_PWM) != 0)
 /*!******************************************************************
  * \fn TIM_status_t TIM_PWM_set_waveform(TIM_instance_t instance, TIM_channel_t channel, uint32_t frequency_hz, uint8_t duty_cycle_percent)
  * \brief Set channel duty cycle of a timer configured in PWM mode.
@@ -315,7 +325,7 @@ TIM_status_t TIM_PWM_de_init(TIM_instance_t instance, TIM_gpio_t* pins_list, uin
 TIM_status_t TIM_PWM_set_waveform(TIM_instance_t instance, TIM_channel_t channel, uint32_t frequency_hz, uint8_t duty_cycle_percent);
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x10) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_OPM) != 0)
 /*!******************************************************************
  * \fn TIM_status_t TIM_OPM_init(TIM_instance_t instance, TIM_gpio_t* pins_list, uint8_t number_of_pins)
  * \brief Init a timer peripheral in one pulse mode.
@@ -328,7 +338,7 @@ TIM_status_t TIM_PWM_set_waveform(TIM_instance_t instance, TIM_channel_t channel
 TIM_status_t TIM_OPM_init(TIM_instance_t instance, TIM_gpio_t* pins_list, uint8_t number_of_pins);
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x10) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_OPM) != 0)
 /*!******************************************************************
  * \fn TIM_status_t TIM_OPM_de_init(TIM_instance_t instance, TIM_gpio_t* pins_list, uint8_t number_of_pins)
  * \brief Release a timer peripheral.
@@ -341,7 +351,7 @@ TIM_status_t TIM_OPM_init(TIM_instance_t instance, TIM_gpio_t* pins_list, uint8_
 TIM_status_t TIM_OPM_de_init(TIM_instance_t instance, TIM_gpio_t* pins_list, uint8_t number_of_pins);
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x10) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_OPM) != 0)
 /*!******************************************************************
  * \fn TIM_status_t TIM_OPM_make_pulse(TIM_instance_t instance, TIM_channel_t channel, uint32_t delay_ns, uint32_t pulse_duration_ns)
  * \brief Perform a single output pulse.
@@ -355,7 +365,7 @@ TIM_status_t TIM_OPM_de_init(TIM_instance_t instance, TIM_gpio_t* pins_list, uin
 TIM_status_t TIM_OPM_make_pulse(TIM_instance_t instance, TIM_channel_t channel, uint32_t delay_ns, uint32_t pulse_duration_ns);
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x10) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_OPM) != 0)
 /*!******************************************************************
  * \fn TIM_status_t TIM_OPM_get_pulse_status(TIM_instance_t instance, TIM_channel_t channel, uint8_t* pulse_is_done)
  * \brief Get single output pulse status

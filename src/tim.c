@@ -67,14 +67,14 @@ typedef struct {
 /*******************************************************************/
 typedef void (*TIM_irq_handler_cb_t)(TIM_instance_t instance, TIM_registers_t* peripheral);
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x01) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_STANDARD) != 0)
 /*******************************************************************/
 typedef struct {
 	TIM_completion_irq_cb_t irq_callback;
 } TIM_STD_context_t;
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x02) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_MULTI_CHANNEL) != 0)
 /*******************************************************************/
 typedef struct {
 	uint32_t duration_ms;
@@ -84,7 +84,7 @@ typedef struct {
 } TIM_MCH_channel_context_t;
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x02) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_MULTI_CHANNEL) != 0)
 /*******************************************************************/
 typedef struct {
 	RCC_clock_t clock_source;
@@ -93,7 +93,7 @@ typedef struct {
 } TIM_MCH_context_t;
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x04) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_CALIBRATION) != 0)
 /*******************************************************************/
 typedef struct {
 	volatile uint16_t ccr1_start;
@@ -103,7 +103,7 @@ typedef struct {
 } TIM_CAL_context_t;
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x08) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_PWM) != 0)
 /*******************************************************************/
 typedef struct {
 	uint32_t channels_duty_cycle;
@@ -112,7 +112,7 @@ typedef struct {
 
 /*** TIM local global variables ***/
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x1F) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_ALL) != 0)
 static const TIM_descriptor_t TIM_DESCRIPTOR[TIM_INSTANCE_LAST] = {
 	{TIM2,  &(RCC -> APB1RSTR), &(RCC -> APB1SMENR), &(RCC -> APB1ENR), (0b1 << 0),  NVIC_INTERRUPT_TIM2},
 	{TIM21, &(RCC -> APB2RSTR), &(RCC -> APB2SMENR), &(RCC -> APB2ENR), (0b1 << 2),  NVIC_INTERRUPT_TIM21},
@@ -128,16 +128,16 @@ static const TIM_descriptor_t TIM_DESCRIPTOR[TIM_INSTANCE_LAST] = {
 #endif
 };
 #endif
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x01) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_STANDARD) != 0)
 static TIM_STD_context_t tim_std_ctx[TIM_INSTANCE_LAST];
 #endif
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x02) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_MULTI_CHANNEL) != 0)
 static TIM_MCH_context_t tim_mch_ctx; // Not defined as array because only supported by one instance (TIM2).
 #endif
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x04) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_CALIBRATION) != 0)
 static TIM_CAL_context_t tim_cal_ctx; // Not defined as array because only supported by one instance (TIM21).
 #endif
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x08) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_PWM) != 0)
 static TIM_PWM_context_t tim_pwm_ctx[TIM_INSTANCE_LAST];
 #endif
 static TIM_irq_handler_cb_t tim_irq_handler[TIM_INSTANCE_LAST];
@@ -183,7 +183,7 @@ static TIM_irq_handler_cb_t tim_irq_handler[TIM_INSTANCE_LAST];
 	} \
 }
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x1F) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_ALL) != 0)
 /*******************************************************************/
 void __attribute__((optimize("-O0"))) TIM2_IRQHandler(void) {
 	// Execute internal callback.
@@ -191,7 +191,7 @@ void __attribute__((optimize("-O0"))) TIM2_IRQHandler(void) {
 }
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x1F) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_ALL) != 0)
 /*******************************************************************/
 void __attribute__((optimize("-O0"))) TIM21_IRQHandler(void) {
 	// Execute internal callback.
@@ -199,7 +199,7 @@ void __attribute__((optimize("-O0"))) TIM21_IRQHandler(void) {
 }
 #endif
 
-#if (((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x1F) != 0) && ((STM32L0XX_REGISTERS_MCU_CATEGORY == 2) || (STM32L0XX_REGISTERS_MCU_CATEGORY == 3) || (STM32L0XX_REGISTERS_MCU_CATEGORY == 5)))
+#if (((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_ALL) != 0) && ((STM32L0XX_REGISTERS_MCU_CATEGORY == 2) || (STM32L0XX_REGISTERS_MCU_CATEGORY == 3) || (STM32L0XX_REGISTERS_MCU_CATEGORY == 5)))
 /*******************************************************************/
 void __attribute__((optimize("-O0"))) TIM22_IRQHandler(void) {
 	// Execute internal callback.
@@ -207,7 +207,7 @@ void __attribute__((optimize("-O0"))) TIM22_IRQHandler(void) {
 }
 #endif
 
-#if (((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x1F) != 0) && ((STM32L0XX_REGISTERS_MCU_CATEGORY == 3) || (STM32L0XX_REGISTERS_MCU_CATEGORY == 5)))
+#if (((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_ALL) != 0) && ((STM32L0XX_REGISTERS_MCU_CATEGORY == 3) || (STM32L0XX_REGISTERS_MCU_CATEGORY == 5)))
 /*******************************************************************/
 void __attribute__((optimize("-O0"))) TIM6_IRQHandler(void) {
 	// Execute internal callback.
@@ -215,7 +215,7 @@ void __attribute__((optimize("-O0"))) TIM6_IRQHandler(void) {
 }
 #endif
 
-#if (((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x1F) != 0) && (STM32L0XX_REGISTERS_MCU_CATEGORY == 5))
+#if (((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_ALL) != 0) && (STM32L0XX_REGISTERS_MCU_CATEGORY == 5))
 /*******************************************************************/
 void __attribute__((optimize("-O0"))) TIM3_IRQHandler(void) {
 	// Execute internal callback.
@@ -223,7 +223,7 @@ void __attribute__((optimize("-O0"))) TIM3_IRQHandler(void) {
 }
 #endif
 
-#if (((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x1F) != 0) && (STM32L0XX_REGISTERS_MCU_CATEGORY == 5))
+#if (((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_ALL) != 0) && (STM32L0XX_REGISTERS_MCU_CATEGORY == 5))
 /*******************************************************************/
 void __attribute__((optimize("-O0"))) TIM7_IRQHandler(void) {
 	// Execute internal callback.
@@ -231,7 +231,7 @@ void __attribute__((optimize("-O0"))) TIM7_IRQHandler(void) {
 }
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x01) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_STANDARD) != 0)
 /*******************************************************************/
 static void __attribute__((optimize("-O0"))) _TIM_STD_irq_handler(TIM_instance_t instance, TIM_registers_t* peripheral) {
 	// Update interrupt.
@@ -246,7 +246,7 @@ static void __attribute__((optimize("-O0"))) _TIM_STD_irq_handler(TIM_instance_t
 }
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x02) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_MULTI_CHANNEL) != 0)
 /*******************************************************************/
 static void __attribute__((optimize("-O0"))) _TIM_MCH_irq_handler(TIM_instance_t instance, TIM_registers_t* peripheral) {
 	// Local variables.
@@ -269,7 +269,7 @@ static void __attribute__((optimize("-O0"))) _TIM_MCH_irq_handler(TIM_instance_t
 }
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x02) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_MULTI_CHANNEL) != 0)
 /*******************************************************************/
 static void _TIM_MCH_compute_compare_value(TIM_instance_t instance, TIM_channel_t channel) {
 	// Update compare value.
@@ -277,7 +277,7 @@ static void _TIM_MCH_compute_compare_value(TIM_instance_t instance, TIM_channel_
 }
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x02) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_MULTI_CHANNEL) != 0)
 /*******************************************************************/
 static TIM_status_t _TIM_MCH_internal_watchdog(uint32_t time_start, uint32_t* time_reference) {
 	// Local variables.
@@ -298,7 +298,7 @@ static TIM_status_t _TIM_MCH_internal_watchdog(uint32_t time_start, uint32_t* ti
 }
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x04) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_CALIBRATION) != 0)
 /*******************************************************************/
 static void __attribute__((optimize("-O0"))) _TIM_CAL_irq_handler(TIM_instance_t instance, TIM_registers_t* peripheral) {
 	// Unused parameter.
@@ -331,7 +331,7 @@ static void __attribute__((optimize("-O0"))) _TIM_CAL_irq_handler(TIM_instance_t
 }
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x04) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_CALIBRATION) != 0)
 /*******************************************************************/
 static TIM_status_t _TIM_CAL_single_capture(TIM_instance_t instance, int32_t* ref_clock_pulse_count, int32_t* mco_pulse_count) {
 	// Local variables.
@@ -373,7 +373,7 @@ errors:
 }
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x1F) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_ALL) != 0)
 /*******************************************************************/
 static void __attribute__((optimize("-O0"))) _TIM_reset(TIM_instance_t instance) {
 	// Local variables.
@@ -421,7 +421,7 @@ errors:
 }
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x1F) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_ALL) != 0)
 /*******************************************************************/
 static void _TIM_de_init(TIM_instance_t instance) {
 	// Disable interrupt.
@@ -435,7 +435,7 @@ static void _TIM_de_init(TIM_instance_t instance) {
 
 /*** TIM functions ***/
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x01) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_STANDARD) != 0)
 /*******************************************************************/
 TIM_status_t TIM_STD_init(TIM_instance_t instance, uint32_t period_ns, uint8_t nvic_priority, TIM_completion_irq_cb_t irq_callback) {
 	// Local variables.
@@ -467,7 +467,7 @@ errors:
 }
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x01) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_STANDARD) != 0)
 /*******************************************************************/
 TIM_status_t TIM_STD_de_init(TIM_instance_t instance) {
 	// Local variables.
@@ -481,7 +481,7 @@ errors:
 }
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x01) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_STANDARD) != 0)
 /*******************************************************************/
 TIM_status_t TIM_STD_start(TIM_instance_t instance) {
 	// Local variables.
@@ -497,7 +497,7 @@ errors:
 }
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x01) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_STANDARD) != 0)
 /*******************************************************************/
 TIM_status_t TIM_STD_stop(TIM_instance_t instance) {
 	// Local variables.
@@ -513,7 +513,7 @@ errors:
 }
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x02) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_MULTI_CHANNEL) != 0)
 /*******************************************************************/
 TIM_status_t TIM_MCH_init(TIM_instance_t instance, uint8_t nvic_priority) {
 	// Local variables.
@@ -609,7 +609,7 @@ errors:
 }
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x02) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_MULTI_CHANNEL) != 0)
 /*******************************************************************/
 TIM_status_t TIM_MCH_de_init(TIM_instance_t instance) {
 	// Local variables.
@@ -623,7 +623,7 @@ errors:
 }
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x02) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_MULTI_CHANNEL) != 0)
 /*******************************************************************/
 TIM_status_t TIM_MCH_start_channel(TIM_instance_t instance, TIM_channel_t channel, uint32_t duration_ms, TIM_waiting_mode_t waiting_mode) {
 	// Local variables.
@@ -673,7 +673,7 @@ errors:
 }
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x02) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_MULTI_CHANNEL) != 0)
 /*******************************************************************/
 TIM_status_t TIM_MCH_stop_channel(TIM_instance_t instance, TIM_channel_t channel) {
 	// Local variables.
@@ -700,7 +700,7 @@ errors:
 }
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x02) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_MULTI_CHANNEL) != 0)
 /*******************************************************************/
 TIM_status_t TIM_MCH_get_channel_status(TIM_instance_t instance, TIM_channel_t channel, uint8_t* timer_has_elapsed) {
 	// Local variables.
@@ -720,7 +720,7 @@ errors:
 }
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x02) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_MULTI_CHANNEL) != 0)
 /*******************************************************************/
 TIM_status_t TIM_MCH_wait_channel_completion(TIM_instance_t instance, TIM_channel_t channel) {
 	// Local variables.
@@ -791,7 +791,7 @@ errors:
 }
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x04) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_CALIBRATION) != 0)
 /*******************************************************************/
 TIM_status_t TIM_CAL_init(TIM_instance_t instance, uint8_t nvic_priority) {
 	// Local variables.
@@ -823,7 +823,7 @@ errors:
 }
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x04) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_CALIBRATION) != 0)
 /*******************************************************************/
 TIM_status_t TIM_CAL_de_init(TIM_instance_t instance) {
 	// Local variables.
@@ -837,7 +837,7 @@ errors:
 }
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x04) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_CALIBRATION) != 0)
 /*******************************************************************/
 TIM_status_t TIM_CAL_mco_capture(TIM_instance_t instance, int32_t* ref_clock_pulse_count, int32_t* mco_pulse_count) {
 	// Local variables.
@@ -868,7 +868,7 @@ errors:
 }
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x08) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_PWM) != 0)
 /*******************************************************************/
 TIM_status_t TIM_PWM_init(TIM_instance_t instance, TIM_gpio_t* pins_list, uint8_t number_of_pins) {
 	// Local variables.
@@ -929,7 +929,7 @@ errors:
 }
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x08) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_PWM) != 0)
 /*******************************************************************/
 TIM_status_t TIM_PWM_de_init(TIM_instance_t instance, TIM_gpio_t* pins_list, uint8_t number_of_pins) {
 	// Local variables.
@@ -949,7 +949,7 @@ errors:
 }
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x08) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_PWM) != 0)
 /*******************************************************************/
 TIM_status_t TIM_PWM_set_waveform(TIM_instance_t instance, TIM_channel_t channel, uint32_t frequency_hz, uint8_t duty_cycle_percent) {
 	// Local variables.
@@ -1001,7 +1001,7 @@ errors:
 }
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x10) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_OPM) != 0)
 /*******************************************************************/
 TIM_status_t TIM_OPM_init(TIM_instance_t instance, TIM_gpio_t* pins_list, uint8_t number_of_pins) {
 	// Local variables.
@@ -1060,7 +1060,7 @@ errors:
 }
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x10) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_OPM) != 0)
 /*******************************************************************/
 TIM_status_t TIM_OPM_de_init(TIM_instance_t instance, TIM_gpio_t* pins_list, uint8_t number_of_pins) {
 	// Local variables.
@@ -1080,7 +1080,7 @@ errors:
 }
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x10) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_OPM) != 0)
 /*******************************************************************/
 TIM_status_t TIM_OPM_make_pulse(TIM_instance_t instance, TIM_channel_t channel, uint32_t delay_ns, uint32_t pulse_duration_ns) {
 	// Local variables.
@@ -1118,7 +1118,7 @@ errors:
 }
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x10) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_OPM) != 0)
 /*******************************************************************/
 TIM_status_t TIM_OPM_get_pulse_status(TIM_instance_t instance, TIM_channel_t channel, uint8_t* pulse_is_done) {
 	// Local variables.

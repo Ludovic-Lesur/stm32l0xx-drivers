@@ -19,12 +19,12 @@
 
 /*** EXTI local macros ***/
 
-#define EXTI_RTSR_FTSR_RESERVED_INDEX	18
-#define EXTI_RTSR_FTSR_MAX_INDEX		22
+#define EXTI_RTSR_FTSR_RESERVED_INDEX		18
+#define EXTI_RTSR_FTSR_MAX_INDEX			22
 
-#define EXTI_NVIC_SHARED_MASK_0_1		0x0003
-#define EXTI_NVIC_SHARED_MASK_2_3		0x000C
-#define EXTI_NVIC_SHARED_MASK_4_15		0xFFF0
+#define EXTI_NVIC_SHARED_GPIO_MASK_0_1		0x0003
+#define EXTI_NVIC_SHARED_GPIO_MASK_2_3		0x000C
+#define EXTI_NVIC_SHARED_GPIO_MASK_4_15		0xFFF0
 
 /*** EXTI local structures ***/
 
@@ -42,24 +42,24 @@ typedef struct {
 
 /*** EXTI local global variables ***/
 
-#if (STM32L0XX_DRIVERS_EXTI_GPIO_MASK != 0)
+#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_ALL) != 0)
 static const EXTI_descriptor_t EXTI_DESCRIPTOR[GPIO_PINS_PER_PORT] = {
-	{NVIC_INTERRUPT_EXTI_0_1,  EXTI_NVIC_SHARED_MASK_0_1},
-	{NVIC_INTERRUPT_EXTI_0_1,  EXTI_NVIC_SHARED_MASK_0_1},
-	{NVIC_INTERRUPT_EXTI_2_3,  EXTI_NVIC_SHARED_MASK_2_3},
-	{NVIC_INTERRUPT_EXTI_2_3,  EXTI_NVIC_SHARED_MASK_2_3},
-	{NVIC_INTERRUPT_EXTI_4_15, EXTI_NVIC_SHARED_MASK_4_15},
-	{NVIC_INTERRUPT_EXTI_4_15, EXTI_NVIC_SHARED_MASK_4_15},
-	{NVIC_INTERRUPT_EXTI_4_15, EXTI_NVIC_SHARED_MASK_4_15},
-	{NVIC_INTERRUPT_EXTI_4_15, EXTI_NVIC_SHARED_MASK_4_15},
-	{NVIC_INTERRUPT_EXTI_4_15, EXTI_NVIC_SHARED_MASK_4_15},
-	{NVIC_INTERRUPT_EXTI_4_15, EXTI_NVIC_SHARED_MASK_4_15},
-	{NVIC_INTERRUPT_EXTI_4_15, EXTI_NVIC_SHARED_MASK_4_15},
-	{NVIC_INTERRUPT_EXTI_4_15, EXTI_NVIC_SHARED_MASK_4_15},
-	{NVIC_INTERRUPT_EXTI_4_15, EXTI_NVIC_SHARED_MASK_4_15},
-	{NVIC_INTERRUPT_EXTI_4_15, EXTI_NVIC_SHARED_MASK_4_15},
-	{NVIC_INTERRUPT_EXTI_4_15, EXTI_NVIC_SHARED_MASK_4_15},
-	{NVIC_INTERRUPT_EXTI_4_15, EXTI_NVIC_SHARED_MASK_4_15},
+	{NVIC_INTERRUPT_EXTI_0_1,  EXTI_NVIC_SHARED_GPIO_MASK_0_1},
+	{NVIC_INTERRUPT_EXTI_0_1,  EXTI_NVIC_SHARED_GPIO_MASK_0_1},
+	{NVIC_INTERRUPT_EXTI_2_3,  EXTI_NVIC_SHARED_GPIO_MASK_2_3},
+	{NVIC_INTERRUPT_EXTI_2_3,  EXTI_NVIC_SHARED_GPIO_MASK_2_3},
+	{NVIC_INTERRUPT_EXTI_4_15, EXTI_NVIC_SHARED_GPIO_MASK_4_15},
+	{NVIC_INTERRUPT_EXTI_4_15, EXTI_NVIC_SHARED_GPIO_MASK_4_15},
+	{NVIC_INTERRUPT_EXTI_4_15, EXTI_NVIC_SHARED_GPIO_MASK_4_15},
+	{NVIC_INTERRUPT_EXTI_4_15, EXTI_NVIC_SHARED_GPIO_MASK_4_15},
+	{NVIC_INTERRUPT_EXTI_4_15, EXTI_NVIC_SHARED_GPIO_MASK_4_15},
+	{NVIC_INTERRUPT_EXTI_4_15, EXTI_NVIC_SHARED_GPIO_MASK_4_15},
+	{NVIC_INTERRUPT_EXTI_4_15, EXTI_NVIC_SHARED_GPIO_MASK_4_15},
+	{NVIC_INTERRUPT_EXTI_4_15, EXTI_NVIC_SHARED_GPIO_MASK_4_15},
+	{NVIC_INTERRUPT_EXTI_4_15, EXTI_NVIC_SHARED_GPIO_MASK_4_15},
+	{NVIC_INTERRUPT_EXTI_4_15, EXTI_NVIC_SHARED_GPIO_MASK_4_15},
+	{NVIC_INTERRUPT_EXTI_4_15, EXTI_NVIC_SHARED_GPIO_MASK_4_15},
+	{NVIC_INTERRUPT_EXTI_4_15, EXTI_NVIC_SHARED_GPIO_MASK_4_15},
 };
 static EXTI_context_t exti_ctx = {
 	.enabled_gpio_mask = 0,
@@ -83,69 +83,69 @@ static EXTI_context_t exti_ctx = {
 	} \
 }
 
-#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_NVIC_SHARED_MASK_0_1) != 0)
+#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_NVIC_SHARED_GPIO_MASK_0_1) != 0)
 /*******************************************************************/
 void __attribute__((optimize("-O0"))) EXTI0_1_IRQHandler(void) {
-#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & 0x0001) != 0)
+#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_PIN0) != 0)
 	// Px0.
 	_EXTI_irq_handler(0);
 #endif
-#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & 0x0002) != 0)
+#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_PIN1) != 0)
 	// Px1.
 	_EXTI_irq_handler(1);
 #endif
 }
 #endif
 
-#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_NVIC_SHARED_MASK_2_3) != 0)
+#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_NVIC_SHARED_GPIO_MASK_2_3) != 0)
 /*******************************************************************/
 void __attribute__((optimize("-O0"))) EXTI2_3_IRQHandler(void) {
-#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & 0x0004) != 0)
+#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_PIN2) != 0)
 	_EXTI_irq_handler(2);
 #endif
-#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & 0x0008) != 0)
+#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_PIN3) != 0)
 	_EXTI_irq_handler(3);
 #endif
 }
 #endif
 
-#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_NVIC_SHARED_MASK_4_15) != 0)
+#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_NVIC_SHARED_GPIO_MASK_4_15) != 0)
 /*******************************************************************/
 void __attribute__((optimize("-O0"))) EXTI4_15_IRQHandler(void) {
-#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & 0x0010) != 0)
+#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_PIN4) != 0)
 	_EXTI_irq_handler(4);
 #endif
-#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & 0x0020) != 0)
+#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_PIN5) != 0)
 	_EXTI_irq_handler(5);
 #endif
-#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & 0x0040) != 0)
+#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_PIN6) != 0)
 	_EXTI_irq_handler(6);
 #endif
-#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & 0x0080) != 0)
+#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_PIN7) != 0)
 	_EXTI_irq_handler(7);
 #endif
-#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & 0x0100) != 0)
+#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_PIN8) != 0)
 	_EXTI_irq_handler(8);
 #endif
-#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & 0x0200) != 0)
+#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_PIN9) != 0)
 	_EXTI_irq_handler(9);
 #endif
-#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & 0x0400) != 0)
+#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_PIN10) != 0)
 	_EXTI_irq_handler(10);
 #endif
-#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & 0x0800) != 0)
+#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_PIN11) != 0)
 	_EXTI_irq_handler(11);
 #endif
-#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & 0x1000) != 0)
+#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_PIN12) != 0)
 	_EXTI_irq_handler(12);
 #endif
-#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & 0x2000) != 0)
+#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_PIN13) != 0)
 	_EXTI_irq_handler(13);
 #endif
-#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & 0x4000) != 0)
+#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_PIN14) != 0)
 	_EXTI_irq_handler(14);
 #endif
-#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & 0x8000) != 0)
+#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_PIN15) != 0)
 	_EXTI_irq_handler(15);
 #endif
 }
@@ -212,7 +212,7 @@ void EXTI_clear_line_flag(EXTI_line_t line) {
 	EXTI -> PR |= line; // PIFx='1'.
 }
 
-#if (STM32L0XX_DRIVERS_EXTI_GPIO_MASK != 0)
+#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_ALL) != 0)
 /*******************************************************************/
 void EXTI_configure_gpio(const GPIO_pin_t* gpio, EXTI_trigger_t trigger, EXTI_gpio_irq_cb_t irq_callback, uint8_t nvic_priority) {
 	// Select GPIO port.
@@ -230,7 +230,7 @@ void EXTI_configure_gpio(const GPIO_pin_t* gpio, EXTI_trigger_t trigger, EXTI_gp
 }
 #endif
 
-#if (STM32L0XX_DRIVERS_EXTI_GPIO_MASK != 0)
+#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_ALL) != 0)
 /*******************************************************************/
 void EXTI_release_gpio(const GPIO_pin_t* gpio) {
 	// Set mask.
@@ -238,7 +238,7 @@ void EXTI_release_gpio(const GPIO_pin_t* gpio) {
 }
 #endif
 
-#if (STM32L0XX_DRIVERS_EXTI_GPIO_MASK != 0)
+#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_ALL) != 0)
 /*******************************************************************/
 void EXTI_clear_gpio_flag(const GPIO_pin_t* gpio) {
 	// Clear flag.
@@ -246,7 +246,7 @@ void EXTI_clear_gpio_flag(const GPIO_pin_t* gpio) {
 }
 #endif
 
-#if (STM32L0XX_DRIVERS_EXTI_GPIO_MASK != 0)
+#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_ALL) != 0)
 /*******************************************************************/
 void EXTI_enable_gpio_interrupt(const GPIO_pin_t* gpio) {
 	// Enable interrupt.
@@ -256,7 +256,7 @@ void EXTI_enable_gpio_interrupt(const GPIO_pin_t* gpio) {
 }
 #endif
 
-#if (STM32L0XX_DRIVERS_EXTI_GPIO_MASK != 0)
+#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_ALL) != 0)
 /*******************************************************************/
 void EXTI_disable_gpio_interrupt(const GPIO_pin_t* gpio) {
 	// Update mask.

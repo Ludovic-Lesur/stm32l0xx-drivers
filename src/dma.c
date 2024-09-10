@@ -20,11 +20,11 @@
 
 /*** DMA local macros ***/
 
-#define DMA_REQUEST_NUMBER_MAX		15
+#define DMA_REQUEST_NUMBER_MAX				15
 
-#define DMA_NVIC_SHARED_MASK_1		0x01
-#define DMA_NVIC_SHARED_MASK_2_3	0x06
-#define DMA_NVIC_SHARED_MASK_4_7	0x78
+#define DMA_NVIC_SHARED_CHANNEL_MASK_1		0x01
+#define DMA_NVIC_SHARED_CHANNEL_MASK_2_3	0x06
+#define DMA_NVIC_SHARED_CHANNEL_MASK_4_7	0x78
 
 /*** DMA local structures ***/
 
@@ -43,16 +43,16 @@ typedef struct {
 
 /*** DMA local global variables ***/
 
-#if (STM32L0XX_DRIVERS_DMA_CHANNEL_MASK != 0)
+#if ((STM32L0XX_DRIVERS_DMA_CHANNEL_MASK & DMA_CHANNEL_MASK_ALL) != 0)
 static const DMA_descriptor_t DMA_DESCRIPTOR[DMA_CHANNEL_LAST] = {
-	{NVIC_INTERRUPT_DMA1_CH_1,   DMA_NVIC_SHARED_MASK_1},
-	{NVIC_INTERRUPT_DMA1_CH_2_3, DMA_NVIC_SHARED_MASK_2_3},
-	{NVIC_INTERRUPT_DMA1_CH_2_3, DMA_NVIC_SHARED_MASK_2_3},
-	{NVIC_INTERRUPT_DMA1_CH_4_7, DMA_NVIC_SHARED_MASK_4_7},
-	{NVIC_INTERRUPT_DMA1_CH_4_7, DMA_NVIC_SHARED_MASK_4_7},
+	{NVIC_INTERRUPT_DMA1_CH_1,   DMA_NVIC_SHARED_CHANNEL_MASK_1},
+	{NVIC_INTERRUPT_DMA1_CH_2_3, DMA_NVIC_SHARED_CHANNEL_MASK_2_3},
+	{NVIC_INTERRUPT_DMA1_CH_2_3, DMA_NVIC_SHARED_CHANNEL_MASK_2_3},
+	{NVIC_INTERRUPT_DMA1_CH_4_7, DMA_NVIC_SHARED_CHANNEL_MASK_4_7},
+	{NVIC_INTERRUPT_DMA1_CH_4_7, DMA_NVIC_SHARED_CHANNEL_MASK_4_7},
 #if (STM32L0XX_REGISTERS_MCU_CATEGORY > 1)
-	{NVIC_INTERRUPT_DMA1_CH_4_7, DMA_NVIC_SHARED_MASK_4_7},
-	{NVIC_INTERRUPT_DMA1_CH_4_7, DMA_NVIC_SHARED_MASK_4_7},
+	{NVIC_INTERRUPT_DMA1_CH_4_7, DMA_NVIC_SHARED_CHANNEL_MASK_4_7},
+	{NVIC_INTERRUPT_DMA1_CH_4_7, DMA_NVIC_SHARED_CHANNEL_MASK_4_7},
 #endif
 };
 static DMA_context_t dma_ctx = {
@@ -86,39 +86,41 @@ static DMA_context_t dma_ctx = {
 	} \
 }
 
-#if ((STM32L0XX_DRIVERS_DMA_CHANNEL_MASK & DMA_NVIC_SHARED_MASK_1) != 0)
+#if ((STM32L0XX_DRIVERS_DMA_CHANNEL_MASK & DMA_NVIC_SHARED_CHANNEL_MASK_1) != 0)
 /*******************************************************************/
 void __attribute__((optimize("-O0"))) DMA1_Channel1_IRQHandler(void) {
+#if ((STM32L0XX_DRIVERS_DMA_CHANNEL_MASK & DMA_CHANNEL_MASK_CH1) != 0)
 	_DMA_irq_handler(DMA_CHANNEL_1);
+#endif
 }
 #endif
 
-#if ((STM32L0XX_DRIVERS_DMA_CHANNEL_MASK & DMA_NVIC_SHARED_MASK_2_3) != 0)
+#if ((STM32L0XX_DRIVERS_DMA_CHANNEL_MASK & DMA_NVIC_SHARED_CHANNEL_MASK_2_3) != 0)
 /*******************************************************************/
 void __attribute__((optimize("-O0"))) DMA1_Channel2_3_IRQHandler(void) {
-#if ((STM32L0XX_DRIVERS_DMA_CHANNEL_MASK & 0x02) != 0)
+#if ((STM32L0XX_DRIVERS_DMA_CHANNEL_MASK & DMA_CHANNEL_MASK_CH2) != 0)
 	_DMA_irq_handler(DMA_CHANNEL_2);
 #endif
-#if ((STM32L0XX_DRIVERS_DMA_CHANNEL_MASK & 0x04) != 0)
+#if ((STM32L0XX_DRIVERS_DMA_CHANNEL_MASK & DMA_CHANNEL_MASK_CH3) != 0)
 	_DMA_irq_handler(DMA_CHANNEL_3);
 #endif
 }
 #endif
 
-#if ((STM32L0XX_DRIVERS_DMA_CHANNEL_MASK & DMA_NVIC_SHARED_MASK_4_7) != 0)
+#if ((STM32L0XX_DRIVERS_DMA_CHANNEL_MASK & DMA_NVIC_SHARED_CHANNEL_MASK_4_7) != 0)
 /*******************************************************************/
 void __attribute__((optimize("-O0"))) DMA1_Channel4_5_6_7_IRQHandler(void) {
-#if ((STM32L0XX_DRIVERS_DMA_CHANNEL_MASK & 0x08) != 0)
+#if ((STM32L0XX_DRIVERS_DMA_CHANNEL_MASK & DMA_CHANNEL_MASK_CH4) != 0)
 	_DMA_irq_handler(DMA_CHANNEL_4);
 #endif
-#if ((STM32L0XX_DRIVERS_DMA_CHANNEL_MASK & 0x10) != 0)
+#if ((STM32L0XX_DRIVERS_DMA_CHANNEL_MASK & DMA_CHANNEL_MASK_CH5) != 0)
 	_DMA_irq_handler(DMA_CHANNEL_5);
 #endif
 #if (STM32L0XX_REGISTERS_MCU_CATEGORY > 1)
-#if ((STM32L0XX_DRIVERS_DMA_CHANNEL_MASK & 0x20) != 0)
+#if ((STM32L0XX_DRIVERS_DMA_CHANNEL_MASK & DMA_CHANNEL_MASK_CH6) != 0)
 	_DMA_irq_handler(DMA_CHANNEL_6);
 #endif
-#if ((STM32L0XX_DRIVERS_DMA_CHANNEL_MASK & 0x40) != 0)
+#if ((STM32L0XX_DRIVERS_DMA_CHANNEL_MASK & DMA_CHANNEL_MASK_CH7) != 0)
 	_DMA_irq_handler(DMA_CHANNEL_7);
 #endif
 #endif
@@ -127,7 +129,7 @@ void __attribute__((optimize("-O0"))) DMA1_Channel4_5_6_7_IRQHandler(void) {
 
 /*** DMA functions ***/
 
-#if (STM32L0XX_DRIVERS_DMA_CHANNEL_MASK != 0)
+#if ((STM32L0XX_DRIVERS_DMA_CHANNEL_MASK & DMA_CHANNEL_MASK_ALL) != 0)
 /*******************************************************************/
 DMA_status_t DMA_init(DMA_channel_t channel, DMA_configuration_t* configuration) {
 	// Local variables.
@@ -217,7 +219,7 @@ errors:
 }
 #endif
 
-#if (STM32L0XX_DRIVERS_DMA_CHANNEL_MASK != 0)
+#if ((STM32L0XX_DRIVERS_DMA_CHANNEL_MASK & DMA_CHANNEL_MASK_ALL) != 0)
 /*******************************************************************/
 DMA_status_t DMA_de_init(DMA_channel_t channel) {
 	// Local variables.
@@ -238,7 +240,7 @@ errors:
 }
 #endif
 
-#if (STM32L0XX_DRIVERS_DMA_CHANNEL_MASK != 0)
+#if ((STM32L0XX_DRIVERS_DMA_CHANNEL_MASK & DMA_CHANNEL_MASK_ALL) != 0)
 /*******************************************************************/
 DMA_status_t DMA_start(DMA_channel_t channel) {
 	// Local variables.
@@ -258,7 +260,7 @@ errors:
 }
 #endif
 
-#if (STM32L0XX_DRIVERS_DMA_CHANNEL_MASK != 0)
+#if ((STM32L0XX_DRIVERS_DMA_CHANNEL_MASK & DMA_CHANNEL_MASK_ALL) != 0)
 /*******************************************************************/
 DMA_status_t DMA_stop(DMA_channel_t channel) {
 	// Local variables.
@@ -278,7 +280,7 @@ errors:
 }
 #endif
 
-#if (STM32L0XX_DRIVERS_DMA_CHANNEL_MASK != 0)
+#if ((STM32L0XX_DRIVERS_DMA_CHANNEL_MASK & DMA_CHANNEL_MASK_ALL) != 0)
 /*******************************************************************/
 DMA_status_t DMA_set_memory_address(DMA_channel_t channel, uint32_t memory_addr, uint16_t number_of_data) {
 	// Local variables.
@@ -293,7 +295,7 @@ errors:
 }
 #endif
 
-#if (STM32L0XX_DRIVERS_DMA_CHANNEL_MASK != 0)
+#if ((STM32L0XX_DRIVERS_DMA_CHANNEL_MASK & DMA_CHANNEL_MASK_ALL) != 0)
 /*******************************************************************/
 DMA_status_t DMA_set_peripheral_address(DMA_channel_t channel, uint32_t peripheral_addr, uint16_t number_of_data) {
 	// Local variables.

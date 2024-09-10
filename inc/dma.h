@@ -13,6 +13,18 @@
 #endif
 #include "types.h"
 
+/*** DMA macros ***/
+
+#define DMA_CHANNEL_MASK_CH1	0x01
+#define DMA_CHANNEL_MASK_CH2	0x02
+#define DMA_CHANNEL_MASK_CH3	0x04
+#define DMA_CHANNEL_MASK_CH4	0x08
+#define DMA_CHANNEL_MASK_CH5	0x10
+#define DMA_CHANNEL_MASK_CH6	0x20
+#define DMA_CHANNEL_MASK_CH7	0x40
+
+#define DMA_CHANNEL_MASK_ALL	0x7F
+
 /*** DMA structures ***/
 
 /*!******************************************************************
@@ -120,7 +132,7 @@ typedef struct {
 
 /*** DMA functions ***/
 
-#if (STM32L0XX_DRIVERS_DMA_CHANNEL_MASK != 0)
+#if ((STM32L0XX_DRIVERS_DMA_CHANNEL_MASK & DMA_CHANNEL_MASK_ALL) != 0)
 /*!******************************************************************
  * \fn DMA_status_t DMA_init(DMA_channel_t_t channel, DMA_configuration_t* configuration)
  * \brief Init DMA channel.
@@ -132,7 +144,7 @@ typedef struct {
 DMA_status_t DMA_init(DMA_channel_t channel, DMA_configuration_t* configuration);
 #endif
 
-#if (STM32L0XX_DRIVERS_DMA_CHANNEL_MASK != 0)
+#if ((STM32L0XX_DRIVERS_DMA_CHANNEL_MASK & DMA_CHANNEL_MASK_ALL) != 0)
 /*!******************************************************************
  * \fn DMA_status_t DMA_de_init(DMA_channel_t_t channel)
  * \brief Release a DMA channel.
@@ -143,7 +155,7 @@ DMA_status_t DMA_init(DMA_channel_t channel, DMA_configuration_t* configuration)
 DMA_status_t DMA_de_init(DMA_channel_t channel);
 #endif
 
-#if (STM32L0XX_DRIVERS_DMA_CHANNEL_MASK != 0)
+#if ((STM32L0XX_DRIVERS_DMA_CHANNEL_MASK & DMA_CHANNEL_MASK_ALL) != 0)
 /*!******************************************************************
  * \fn DMA_status_t DMA_start(DMA_channel_t_t channel)
  * \brief Start a DMA channel.
@@ -154,7 +166,7 @@ DMA_status_t DMA_de_init(DMA_channel_t channel);
 DMA_status_t DMA_start(DMA_channel_t channel);
 #endif
 
-#if (STM32L0XX_DRIVERS_DMA_CHANNEL_MASK != 0)
+#if ((STM32L0XX_DRIVERS_DMA_CHANNEL_MASK & DMA_CHANNEL_MASK_ALL) != 0)
 /*!******************************************************************
  * \fn DMA_status_t DMA_stop(DMA_channel_t_t channel)
  * \brief Stop a DMA channel.
@@ -165,7 +177,7 @@ DMA_status_t DMA_start(DMA_channel_t channel);
 DMA_status_t DMA_stop(DMA_channel_t channel);
 #endif
 
-#if (STM32L0XX_DRIVERS_DMA_CHANNEL_MASK != 0)
+#if ((STM32L0XX_DRIVERS_DMA_CHANNEL_MASK & DMA_CHANNEL_MASK_ALL) != 0)
 /*!******************************************************************
  * \fn DMA_status_t DMA_set_memory_address(DMA_channel_t_t channel, uint32_t memory_addr, uint16_t number_of_data)
  * \brief Set DMA channel memory address.
@@ -178,7 +190,7 @@ DMA_status_t DMA_stop(DMA_channel_t channel);
 DMA_status_t DMA_set_memory_address(DMA_channel_t channel, uint32_t memory_addr, uint16_t number_of_data);
 #endif
 
-#if (STM32L0XX_DRIVERS_DMA_CHANNEL_MASK != 0)
+#if ((STM32L0XX_DRIVERS_DMA_CHANNEL_MASK & DMA_CHANNEL_MASK_ALL) != 0)
 /*!******************************************************************
  * \fn DMA_status_t DMA_set_peripheral_address(DMA_channel_t_t channel, uint32_t peripheral_addr, uint16_t number_of_data)
  * \brief Set DMA channel peripheral address.

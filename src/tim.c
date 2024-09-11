@@ -41,10 +41,10 @@
 
 #define TIM_MCH_CLOCK_SWITCH_LATENCY_MS		2
 
-#define TIM_MCH_TIMER_DURATION_MS_MIN		1
-#define TIM_MCH_TIMER_DURATION_MS_MAX		((TIM_CNT_VALUE_MAX * 1000) / (tim_mch_ctx.etrf_clock_hz))
+#define TIM_MCH_TIMER_PERIOD_MS_MIN			1
+#define TIM_MCH_TIMER_PERIOD_MS_MAX			((TIM_CNT_VALUE_MAX * 1000) / (tim_mch_ctx.etrf_clock_hz))
 
-#define TIM_MCH_WATCHDOG_PERIOD_SECONDS		((TIM_MCH_TIMER_DURATION_MS_MAX / 1000) + 5)
+#define TIM_MCH_WATCHDOG_PERIOD_SECONDS		((TIM_MCH_TIMER_PERIOD_MS_MAX / 1000) + 5)
 
 #define TIM_CAL_INPUT_CAPTURE_PRESCALER		8
 #define TIM_CAL_MEDIAN_FILTER_SIZE			9
@@ -385,7 +385,7 @@ static void __attribute__((optimize("-O0"))) _TIM_reset(TIM_instance_t instance)
 }
 #endif
 
-#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x19) != 0)
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & (TIM_MODE_MASK_STANDARD | TIM_MODE_MASK_PWM | TIM_MODE_MASK_OPM)) != 0)
 /*******************************************************************/
 static TIM_status_t _TIM_compute_psc_arr(TIM_instance_t instance, uint32_t tim_clock_hz, uint32_t expected_period_ns, uint32_t* arr) {
 	// Local variables.
@@ -437,26 +437,22 @@ static void _TIM_de_init(TIM_instance_t instance) {
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_STANDARD) != 0)
 /*******************************************************************/
-TIM_status_t TIM_STD_init(TIM_instance_t instance, uint32_t period_ns, uint8_t nvic_priority, TIM_completion_irq_cb_t irq_callback) {
+TIM_status_t TIM_STD_init(TIM_instance_t instance, uint8_t nvic_priority) {
 	// Local variables.
 	TIM_status_t status = TIM_SUCCESS;
-	uint32_t tim_clock_hz = 0;
 	// Check instance.
 	_TIM_check_instance(instance);
 	// Reset peripheral.
 	_TIM_reset(instance);
 	// Update local interrupt handler.
 	tim_irq_handler[instance] = &_TIM_STD_irq_handler;
-	// Register callback.
-	tim_std_ctx[instance].irq_callback = irq_callback;
-	// Get clock source frequency.
-	RCC_get_frequency_hz(RCC_CLOCK_SYSTEM, &tim_clock_hz);
 	// Enable peripheral clock.
 	(*TIM_DESCRIPTOR[instance].rcc_enr) |= TIM_DESCRIPTOR[instance].rcc_mask;
 	(*TIM_DESCRIPTOR[instance].rcc_smenr) |= TIM_DESCRIPTOR[instance].rcc_mask;
-	// Compute ARR and PSC values.
-	status = _TIM_compute_psc_arr(instance, tim_clock_hz, period_ns, NULL);
-	if (status != TIM_SUCCESS) goto errors;
+	// Enable preload.
+	TIM_DESCRIPTOR[instance].peripheral -> CR1 |= (0b1 << 7); // ARPE='1'.
+	// Set trigger selection to reserved value to ensure there is no link with other timers.
+	TIM_DESCRIPTOR[instance].peripheral -> SMCR |= (0b011 << 4);
 	// Enable interrupt.
 	TIM_DESCRIPTOR[instance].peripheral -> DIER |= (0b1 << 0);
 	NVIC_set_priority(TIM_DESCRIPTOR[instance].nvic_interrupt, nvic_priority);
@@ -483,11 +479,21 @@ errors:
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_STANDARD) != 0)
 /*******************************************************************/
-TIM_status_t TIM_STD_start(TIM_instance_t instance) {
+TIM_status_t TIM_STD_start(TIM_instance_t instance, uint32_t period_ns, TIM_completion_irq_cb_t irq_callback) {
 	// Local variables.
 	TIM_status_t status = TIM_SUCCESS;
+	uint32_t tim_clock_hz = 0;
 	// Check instance.
 	_TIM_check_instance(instance);
+	// Get clock source frequency.
+	RCC_get_frequency_hz(RCC_CLOCK_SYSTEM, &tim_clock_hz);
+	// Compute ARR and PSC values.
+	status = _TIM_compute_psc_arr(instance, tim_clock_hz, period_ns, NULL);
+	if (status != TIM_SUCCESS) goto errors;
+	// Generate event to update registers.
+	TIM_DESCRIPTOR[instance].peripheral -> EGR |= (0b1 << 0); // UG='1'.
+	// Register callback.
+	tim_std_ctx[instance].irq_callback = irq_callback;
 	// Enable interrupt.
 	NVIC_enable_interrupt(TIM_DESCRIPTOR[instance].nvic_interrupt);
 	// Start timer.
@@ -625,11 +631,11 @@ errors:
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_MULTI_CHANNEL) != 0)
 /*******************************************************************/
-TIM_status_t TIM_MCH_start_channel(TIM_instance_t instance, TIM_channel_t channel, uint32_t duration_ms, TIM_waiting_mode_t waiting_mode) {
+TIM_status_t TIM_MCH_start_channel(TIM_instance_t instance, TIM_channel_t channel, uint32_t period_ms, TIM_waiting_mode_t waiting_mode) {
 	// Local variables.
 	TIM_status_t status = TIM_SUCCESS;
-	uint32_t local_duration_ms = duration_ms;
-	uint32_t duration_min_ms = TIM_MCH_TIMER_DURATION_MS_MIN;
+	uint32_t local_period_ms = period_ms;
+	uint32_t period_min_ms = TIM_MCH_TIMER_PERIOD_MS_MIN;
 	// Check instance and channel.
 	_TIM_check_instance(instance);
 	_TIM_check_channel(channel);
@@ -640,21 +646,21 @@ TIM_status_t TIM_MCH_start_channel(TIM_instance_t instance, TIM_channel_t channe
 	}
 	if (waiting_mode == TIM_WAITING_MODE_LOW_POWER_SLEEP) {
 		// Compensate clock switch latency.
-		duration_min_ms += TIM_MCH_CLOCK_SWITCH_LATENCY_MS;
+		period_min_ms += TIM_MCH_CLOCK_SWITCH_LATENCY_MS;
 	}
-	if (duration_ms < duration_min_ms) {
+	if (period_ms < period_min_ms) {
 		status = TIM_ERROR_DURATION_UNDERFLOW;
 		goto errors;
 	}
-	if (duration_ms > TIM_MCH_TIMER_DURATION_MS_MAX) {
+	if (period_ms > TIM_MCH_TIMER_PERIOD_MS_MAX) {
 		status = TIM_ERROR_DURATION_OVERFLOW;
 		goto errors;
 	}
 	if (waiting_mode == TIM_WAITING_MODE_LOW_POWER_SLEEP) {
-		local_duration_ms -= TIM_MCH_CLOCK_SWITCH_LATENCY_MS;
+		local_period_ms -= TIM_MCH_CLOCK_SWITCH_LATENCY_MS;
 	}
 	// Update channel context.
-	tim_mch_ctx.channel[channel].duration_ms = local_duration_ms;
+	tim_mch_ctx.channel[channel].duration_ms = local_period_ms;
 	tim_mch_ctx.channel[channel].waiting_mode = waiting_mode;
 	tim_mch_ctx.channel[channel].running_flag = 1;
 	tim_mch_ctx.channel[channel].irq_flag = 0;
@@ -813,6 +819,8 @@ TIM_status_t TIM_CAL_init(TIM_instance_t instance, uint8_t nvic_priority) {
 	// Channel input on TI1, CH1 mapped on MCO and capture done every 8 edges.
 	TIM_DESCRIPTOR[instance].peripheral -> CCMR1 |= (0b01 << 0) | (0b11 << 2);
 	TIM_DESCRIPTOR[instance].peripheral -> OR |= (0b111 << 2);
+	// Set trigger selection to reserved value to ensure there is no link with other timers.
+	TIM_DESCRIPTOR[instance].peripheral -> SMCR |= (0b011 << 4);
 	// Enable interrupt.
 	TIM_DESCRIPTOR[instance].peripheral -> DIER |= (0b1 << 1); // CC1IE='1'.
 	NVIC_set_priority(TIM_DESCRIPTOR[instance].nvic_interrupt, nvic_priority);
@@ -904,6 +912,8 @@ TIM_status_t TIM_PWM_init(TIM_instance_t instance, TIM_gpio_t* pins_list, uint8_
 	// Enable preload.
 	TIM_DESCRIPTOR[instance].peripheral -> CR1 |= (0b1 << 7); // ARPE='1'.
 	TIM_DESCRIPTOR[instance].peripheral -> ARR = 0xFFFE;
+	// Set trigger selection to reserved value to ensure there is no link with other timers.
+	TIM_DESCRIPTOR[instance].peripheral -> SMCR |= (0b011 << 4);
 	// Configure channels.
 	for (idx=0 ; idx<number_of_pins ; idx++) {
 		// Check channel.
@@ -1035,6 +1045,8 @@ TIM_status_t TIM_OPM_init(TIM_instance_t instance, TIM_gpio_t* pins_list, uint8_
 	// Enable one pulse mode and preload.
 	TIM_DESCRIPTOR[instance].peripheral -> CR1 |= (0b1 << 7) | (0b1 << 3); // ARPE='1' and OPM='1'.
 	TIM_DESCRIPTOR[instance].peripheral -> ARR = 0xFFFE;
+	// Set trigger selection to reserved value to ensure there is no link with other timers.
+	TIM_DESCRIPTOR[instance].peripheral -> SMCR |= (0b011 << 4);
 	// Configure channels.
 	for (idx=0 ; idx<number_of_pins ; idx++) {
 		// Check channel.

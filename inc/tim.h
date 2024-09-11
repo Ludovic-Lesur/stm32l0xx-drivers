@@ -132,16 +132,14 @@ typedef struct {
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_STANDARD) != 0)
 /*!******************************************************************
- * \fn TIM_status_t TIM_STD_init(TIM_instance_t instance, uint32_t period_ns, uint8_t nvic_priority, TIM_completion_irq_cb_t irq_callback)
+ * \fn TIM_status_t TIM_STD_init(TIM_instance_t instance, uint8_t nvic_priority)
  * \brief Init a timer peripheral in standard mode.
  * \param[in]  	instance: Timer instance to use.
- * \param[in]	period_ns: Timer period in ns.
  * \param[in]	nvic_priority: Interrupt priority.
- * \param[in]	irq_callback: Function to call on timer completion interrupt.
  * \param[out] 	none
  * \retval		Function execution status.
  *******************************************************************/
-TIM_status_t TIM_STD_init(TIM_instance_t instance, uint32_t period_ns, uint8_t nvic_priority, TIM_completion_irq_cb_t irq_callback);
+TIM_status_t TIM_STD_init(TIM_instance_t instance, uint8_t nvic_priority);
 #endif
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_STANDARD) != 0)
@@ -157,13 +155,15 @@ TIM_status_t TIM_STD_de_init(TIM_instance_t instance);
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_STANDARD) != 0)
 /*!******************************************************************
- * \fn TIM_status_t TIM_STD_start(TIM_instance_t instance)
+ * \fn TIM_status_t TIM_STD_start(TIM_instance_t instance, uint32_t period_ns, TIM_completion_irq_cb_t irq_callback)
  * \brief Start a timer in standard mode.
  * \param[in]  	instance: Timer instance to use.
+ * \param[in]	period_ns: Timer period in ns.
+ * \param[in]	irq_callback: Function to call on timer completion interrupt.
  * \param[out] 	none
  * \retval		none
  *******************************************************************/
-TIM_status_t TIM_STD_start(TIM_instance_t instance);
+TIM_status_t TIM_STD_start(TIM_instance_t instance, uint32_t period_ns, TIM_completion_irq_cb_t irq_callback);
 #endif
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_STANDARD) != 0)
@@ -202,16 +202,16 @@ TIM_status_t TIM_MCH_de_init(TIM_instance_t instance);
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_MULTI_CHANNEL) != 0)
 /*!******************************************************************
- * \fn TIM_status_t TIM_MCH_start_channel(TIM_instance_t instance, TIM_channel_t channel, uint32_t duration_ms, TIM_waiting_mode_t waiting_mode)
+ * \fn TIM_status_t TIM_MCH_start_channel(TIM_instance_t instance, TIM_channel_t channel, uint32_t period_ms, TIM_waiting_mode_t waiting_mode)
  * \brief Start a timer in multi-channel mode.
  * \param[in]  	instance: Timer instance to use.
  * \param[in]  	channel: Channel to start.
- * \param[in]	duration_ms: Timer duration in ms.
+ * \param[in]	period_ms: Timer channel period in ms.
  * \param[in]	waiting_mode: Completion waiting mode.
  * \param[out] 	none
  * \retval		none
  *******************************************************************/
-TIM_status_t TIM_MCH_start_channel(TIM_instance_t instance, TIM_channel_t channel, uint32_t duration_ms, TIM_waiting_mode_t waiting_mode);
+TIM_status_t TIM_MCH_start_channel(TIM_instance_t instance, TIM_channel_t channel, uint32_t period_ms, TIM_waiting_mode_t waiting_mode);
 #endif
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_MULTI_CHANNEL) != 0)

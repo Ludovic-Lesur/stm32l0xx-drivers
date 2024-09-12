@@ -11,6 +11,7 @@
 #include "stm32l0xx_drivers_flags.h"
 #endif
 #include "error.h"
+#include "gpio.h"
 #include "flash.h"
 #include "nvic.h"
 #include "pwr.h"
@@ -259,8 +260,7 @@ RCC_status_t RCC_calibrate(uint8_t nvic_priority) {
 	// HSI calibration is not possible without LSE.
 	if (lse_status == 0) goto lsi_calibration;
 	// Connect MCO to LSE clock.
-	RCC -> CFGR &= ~(0x7F << 24);
-	RCC -> CFGR |= (0b0111 << 24);
+	RCC_set_mco(RCC_MCO_CLOCK_LSE, RCC_MCO_PRESCALER_1, NULL);
 	// Perform measurement.
 	tim_status = TIM_CAL_mco_capture(TIM_INSTANCE_TIM21, &ref_clock_pulse_count, &mco_pulse_count);
 	// Compute HSI frequency.
@@ -276,8 +276,7 @@ RCC_status_t RCC_calibrate(uint8_t nvic_priority) {
 lsi_calibration:
 #endif
 	// Connect MCO to LSI clock.
-	RCC -> CFGR &= ~(0x7F << 24);
-	RCC -> CFGR |= (0b0110 << 24);
+	RCC_set_mco(RCC_MCO_CLOCK_LSI, RCC_MCO_PRESCALER_1, NULL);
 	// Perform measurement.
 	tim_status = TIM_CAL_mco_capture(TIM_INSTANCE_TIM21, &ref_clock_pulse_count, &mco_pulse_count);
 	// Compute LSI frequency.
@@ -291,8 +290,9 @@ lsi_calibration:
 	// Update local data.
 	rcc_ctx.clock_frequency[RCC_CLOCK_LSI] = clock_frequency_hz;
 errors:
-	// Release timer.
+	// Release timer and MCO.
 	TIM_CAL_de_init(TIM_INSTANCE_TIM21);
+	RCC_set_mco(RCC_MCO_CLOCK_NONE, RCC_MCO_PRESCALER_1, NULL);
 	// Update system clock.
 	rcc_ctx.clock_frequency[RCC_CLOCK_SYSTEM] = rcc_ctx.clock_frequency[rcc_ctx.sysclk_source];
 	return status;
@@ -347,6 +347,39 @@ RCC_status_t RCC_get_status(RCC_clock_t clock, uint8_t* clock_is_ready) {
 	default:
 		status = RCC_ERROR_CLOCK;
 		goto errors;
+	}
+errors:
+	return status;
+}
+
+/*******************************************************************/
+RCC_status_t RCC_set_mco(RCC_mco_clock_t mco_clock, RCC_mco_prescaler_t mco_prescaler, const GPIO_pin_t* mco_gpio) {
+	// Local variables.
+	RCC_status_t status = RCC_SUCCESS;
+	uint32_t cfgr = 0;
+	// Check parameters.
+	if (mco_clock >= RCC_MCO_CLOCK_LAST) {
+		status = RCC_ERROR_MCO_CLOCK;
+		goto errors;
+	}
+	if (mco_prescaler >= RCC_MCO_PRESCALER_LAST) {
+		status = RCC_ERROR_MCO_PRESCALER;
+		goto errors;
+	}
+	// Configure clock and prescaler.
+	cfgr = (RCC -> CFGR);
+	cfgr &= 0x80FFFFFF;
+	cfgr |= (mco_prescaler << 28) | (mco_clock << 24);
+	RCC -> CFGR = cfgr;
+	// Configure GPIO if needed.
+	if (mco_gpio != NULL) {
+		// Check clock selection.
+		if (mco_clock == RCC_MCO_CLOCK_NONE) {
+			GPIO_configure(mco_gpio, GPIO_MODE_ANALOG, GPIO_TYPE_OPEN_DRAIN, GPIO_SPEED_LOW, GPIO_PULL_NONE);
+		}
+		else {
+			GPIO_configure(mco_gpio, GPIO_MODE_ALTERNATE_FUNCTION, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_HIGH, GPIO_PULL_NONE);
+		}
 	}
 errors:
 	return status;

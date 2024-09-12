@@ -11,6 +11,7 @@
 #ifndef STM32L0XX_DRIVERS_DISABLE_FLAGS_FILE
 #include "stm32l0xx_drivers_flags.h"
 #endif
+#include "gpio.h"
 #include "flash.h"
 #include "types.h"
 
@@ -35,6 +36,8 @@ typedef enum {
 	RCC_ERROR_LSE_READY,
 	RCC_ERROR_HSI_CALIBRATION,
 	RCC_ERROR_LSI_CALIBRATION,
+	RCC_ERROR_MCO_CLOCK,
+	RCC_ERROR_MCO_PRESCALER,
 	// Low level drivers errors.
 	RCC_ERROR_BASE_FLASH = 0x0100,
 	// Last base value.
@@ -68,6 +71,35 @@ typedef enum {
 	RCC_MSI_RANGE_6_4MHZ,
 	RCC_MSI_RANGE_LAST
 } RCC_msi_range_t;
+
+/*!******************************************************************
+ * \enum RCC_mco_clock_t
+ * \brief RCC MCO clock output selection.
+ *******************************************************************/
+typedef enum {
+	RCC_MCO_CLOCK_NONE = 0,
+	RCC_MCO_CLOCK_SYSCLK,
+	RCC_MCO_CLOCK_HSI,
+	RCC_MCO_CLOCK_MSI,
+	RCC_MCO_CLOCK_HSE,
+	RCC_MCO_CLOCK_PLL,
+	RCC_MCO_CLOCK_LSI,
+	RCC_MCO_CLOCK_LSE,
+	RCC_MCO_CLOCK_LAST,
+} RCC_mco_clock_t;
+
+/*!******************************************************************
+ * \enum RCC_mco_prescaler_t
+ * \brief RCC MCO clock output prescaler.
+ *******************************************************************/
+typedef enum {
+	RCC_MCO_PRESCALER_1 = 0,
+	RCC_MCO_PRESCALER_2,
+	RCC_MCO_PRESCALER_4,
+	RCC_MCO_PRESCALER_8,
+	RCC_MCO_PRESCALER_16,
+	RCC_MCO_PRESCALER_LAST
+} RCC_mco_prescaler_t;
 
 /*** RCC functions ***/
 
@@ -126,6 +158,17 @@ RCC_status_t RCC_get_frequency_hz(RCC_clock_t clock, uint32_t* frequency_hz);
  * \retval		Function execution status.
  *******************************************************************/
 RCC_status_t RCC_get_status(RCC_clock_t clock, uint8_t* clock_is_ready);
+
+/*!******************************************************************
+ * \fn RCC_status_t RCC_set_mco(RCC_mco_clock_t mco_clock, RCC_mco_prescaler_t mco_prescaler, const GPIO_pin_t* mco_gpio)
+ * \brief Set MCO clock output signal.
+ * \param[in]  	clock: Clock to select.
+ * \param[in] 	prescaler: Clock output prescaler.
+ * \param[in]	gpio: Optional GPIO to link to MCO.
+ * \param[out]	none
+ * \retval		Function execution status.
+ *******************************************************************/
+RCC_status_t RCC_set_mco(RCC_mco_clock_t mco_clock, RCC_mco_prescaler_t mco_prescaler, const GPIO_pin_t* mco_gpio);
 
 /*******************************************************************/
 #define RCC_exit_error(base) { ERROR_check_exit(rcc_status, RCC_SUCCESS, base) }

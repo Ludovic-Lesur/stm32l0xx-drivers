@@ -342,15 +342,14 @@ static TIM_status_t _TIM_CAL_single_capture(TIM_instance_t instance, int32_t* re
 	tim_cal_ctx.ccr1_end = 0;
 	tim_cal_ctx.capture_count = 0;
 	tim_cal_ctx.capture_done = 0;
-	// Reset counter.
-	TIM_DESCRIPTOR[instance].peripheral -> CNT = 0;
-	TIM_DESCRIPTOR[instance].peripheral -> CCR1 = 0;
+	// Reset timer.
+	TIM_DESCRIPTOR[instance].peripheral -> EGR |= (0b1 << 0); // UG='1'.
 	// Enable interrupt.
 	TIM_DESCRIPTOR[instance].peripheral -> SR &= 0xFFFFF9B8; // Clear all flags.
 	NVIC_enable_interrupt(TIM_DESCRIPTOR[instance].nvic_interrupt);
 	// Enable TIM peripheral.
-	TIM_DESCRIPTOR[instance].peripheral -> CR1 |= (0b1 << 0); // CEN='1'.
 	TIM_DESCRIPTOR[instance].peripheral -> CCER |= (0b1 << 0); // CC1E='1'.
+	TIM_DESCRIPTOR[instance].peripheral -> CR1 |= (0b1 << 0); // CEN='1'.
 	// Wait for capture to complete.
 	while (tim_cal_ctx.capture_done == 0) {
 		// Manage timeout.
@@ -402,11 +401,12 @@ static TIM_status_t _TIM_compute_psc_arr(TIM_instance_t instance, uint32_t tim_c
 		// Compute ARR.
 		arr_u64 = ((uint64_t) expected_period_ns) * ((uint64_t) tim_clock_hz);
 		arr_u64 /= (((uint64_t) MATH_POWER_10[9]) * ((uint64_t) psc));
+		arr_u64 -= 1;
 		// Check value.
 		if ((arr_u64 > TIM_ARR_VALUE_MIN) && (arr_u64 < TIM_ARR_VALUE_MAX)) {
 			// Write registers.
 			TIM_DESCRIPTOR[instance].peripheral -> PSC = (psc - 1);
-			TIM_DESCRIPTOR[instance].peripheral -> ARR = ((uint32_t) arr_u64);
+			TIM_DESCRIPTOR[instance].peripheral -> ARR = (uint32_t) arr_u64;
 			// Update computed value.
 			if (arr != NULL) {
 				(*arr) = (uint32_t) arr_u64;

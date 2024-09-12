@@ -34,9 +34,9 @@ typedef enum {
 	RCC_ERROR_MSI_READY,
 	RCC_ERROR_MSI_SWITCH,
 	RCC_ERROR_LSE_READY,
-	RCC_ERROR_HSI_CALIBRATION,
-	RCC_ERROR_LSI_CALIBRATION,
-	RCC_ERROR_MCO_CLOCK,
+	RCC_ERROR_CALIBRATION_TIMER,
+	RCC_ERROR_CALIBRATION_HSI,
+	RCC_ERROR_CALIBRATION_LSI,
 	RCC_ERROR_MCO_PRESCALER,
 	// Low level drivers errors.
 	RCC_ERROR_BASE_FLASH = 0x0100,
@@ -49,13 +49,28 @@ typedef enum {
  * \brief RCC clocks list.
  *******************************************************************/
 typedef enum {
-	RCC_CLOCK_LSI = 0,
-	RCC_CLOCK_LSE,
-	RCC_CLOCK_MSI,
-	RCC_CLOCK_HSI,
+	RCC_CLOCK_NONE = 0,
 	RCC_CLOCK_SYSTEM,
+	RCC_CLOCK_HSI,
+	RCC_CLOCK_MSI,
+	RCC_CLOCK_HSE,
+	RCC_CLOCK_PLL,
+	RCC_CLOCK_LSI,
+	RCC_CLOCK_LSE,
 	RCC_CLOCK_LAST
 } RCC_clock_t;
+
+#ifdef STM32L0XX_DRIVERS_RCC_HSE_ENABLE
+/*!******************************************************************
+ * \enum RCC_hse_mode_t
+ * \brief RCC external oscillator modes.
+ *******************************************************************/
+typedef enum {
+	RCC_HSE_MODE_OSCILLATOR = 0,
+	RCC_HSE_MODE_BYPASS,
+	RCC_HSE_MODE_LAST
+} RCC_hse_mode_t;
+#endif
 
 /*!******************************************************************
  * \enum RCC_msi_range_t
@@ -65,28 +80,12 @@ typedef enum {
 	RCC_MSI_RANGE_0_65KHZ = 0,
 	RCC_MSI_RANGE_1_131KHZ,
 	RCC_MSI_RANGE_2_262KHZ,
-	RCC_MSI_RANGE_3_524KKZ,
+	RCC_MSI_RANGE_3_524KHZ,
 	RCC_MSI_RANGE_4_1MHZ,
 	RCC_MSI_RANGE_5_2MHZ,
 	RCC_MSI_RANGE_6_4MHZ,
 	RCC_MSI_RANGE_LAST
 } RCC_msi_range_t;
-
-/*!******************************************************************
- * \enum RCC_mco_clock_t
- * \brief RCC MCO clock output selection.
- *******************************************************************/
-typedef enum {
-	RCC_MCO_CLOCK_NONE = 0,
-	RCC_MCO_CLOCK_SYSCLK,
-	RCC_MCO_CLOCK_HSI,
-	RCC_MCO_CLOCK_MSI,
-	RCC_MCO_CLOCK_HSE,
-	RCC_MCO_CLOCK_PLL,
-	RCC_MCO_CLOCK_LSI,
-	RCC_MCO_CLOCK_LSE,
-	RCC_MCO_CLOCK_LAST,
-} RCC_mco_clock_t;
 
 /*!******************************************************************
  * \enum RCC_mco_prescaler_t
@@ -121,6 +120,17 @@ RCC_status_t RCC_init(uint8_t nvic_priority);
  *******************************************************************/
 RCC_status_t RCC_switch_to_hsi(void);
 
+#ifdef STM32L0XX_DRIVERS_RCC_HSE_ENABLE
+/*!******************************************************************
+ * \fn RCC_status_t RCC_switch_to_hse(RCC_hse_mode_t hse_mode)
+ * \brief Switch system clock to external oscillator.
+ * \param[in]  	hse_mode: External oscillator mode.
+ * \param[out] 	none
+ * \retval		Function execution status.
+ *******************************************************************/
+RCC_status_t RCC_switch_to_hse(RCC_hse_mode_t hse_mode);
+#endif
+
 /*!******************************************************************
  * \fn RCC_status_t RCC_switch_to_msi(RCC_msi_range_t msi_range)
  * \brief Switch system clock to MSI.
@@ -132,13 +142,13 @@ RCC_status_t RCC_switch_to_msi(RCC_msi_range_t msi_range);
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x04) != 0)
 /*!******************************************************************
- * \fn RCC_status_t RCC_calibrate(uint8_t nvic_priority)
- * \brief Measure internal oscillators frequency with external reference clock.
+ * \fn RCC_status_t RCC_calibrate_internal_clocks(uint8_t nvic_priority)
+ * \brief Measure internal oscillators frequency with external reference clock. Warning: this function temporarily switches the system clock to HSI.
  * \param[in]  	nvic_priority: Calibration timer interrupt priority.
  * \param[out] 	none
  * \retval		Function execution status.
  *******************************************************************/
-RCC_status_t RCC_calibrate(uint8_t nvic_priority);
+RCC_status_t RCC_calibrate_internal_clocks(uint8_t nvic_priority);
 #endif
 
 /*!******************************************************************
@@ -160,7 +170,7 @@ RCC_status_t RCC_get_frequency_hz(RCC_clock_t clock, uint32_t* frequency_hz);
 RCC_status_t RCC_get_status(RCC_clock_t clock, uint8_t* clock_is_ready);
 
 /*!******************************************************************
- * \fn RCC_status_t RCC_set_mco(RCC_mco_clock_t mco_clock, RCC_mco_prescaler_t mco_prescaler, const GPIO_pin_t* mco_gpio)
+ * \fn RCC_status_t RCC_set_mco(RCC_clock_t mco_clock, RCC_mco_prescaler_t mco_prescaler, const GPIO_pin_t* mco_gpio)
  * \brief Set MCO clock output signal.
  * \param[in]  	clock: Clock to select.
  * \param[in] 	prescaler: Clock output prescaler.
@@ -168,7 +178,7 @@ RCC_status_t RCC_get_status(RCC_clock_t clock, uint8_t* clock_is_ready);
  * \param[out]	none
  * \retval		Function execution status.
  *******************************************************************/
-RCC_status_t RCC_set_mco(RCC_mco_clock_t mco_clock, RCC_mco_prescaler_t mco_prescaler, const GPIO_pin_t* mco_gpio);
+RCC_status_t RCC_set_mco(RCC_clock_t mco_clock, RCC_mco_prescaler_t mco_prescaler, const GPIO_pin_t* mco_gpio);
 
 /*******************************************************************/
 #define RCC_exit_error(base) { ERROR_check_exit(rcc_status, RCC_SUCCESS, base) }

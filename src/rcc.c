@@ -351,7 +351,7 @@ RCC_status_t RCC_calibrate_internal_clocks(uint8_t nvic_priority) {
 #if (STM32L0XX_DRIVERS_RCC_LSE_MODE > 0)
 	// Check LSE status.
 	RCC_get_status(RCC_CLOCK_LSE, &lse_status);
-	// HSI calibration IS not possible without LSE.
+	// HSI calibration is not possible without LSE.
 	if (lse_status == 0) goto lsi_calibration;
 	// Connect MCO to LSE clock.
 	RCC_set_mco(RCC_CLOCK_LSE, RCC_MCO_PRESCALER_1, NULL);

@@ -46,7 +46,7 @@
 
 #define TIM_MCH_WATCHDOG_PERIOD_SECONDS		((TIM_MCH_TIMER_PERIOD_MS_MAX / 1000) + 5)
 
-#define TIM_CAL_INPUT_CAPTURE_PRESCALER		8
+#define TIM_CAL_INPUT_CAPTURE_PRESCALER		2
 #define TIM_CAL_MEDIAN_FILTER_SIZE			9
 #define TIM_CAL_CENTER_AVERAGE_SIZE			3
 
@@ -306,7 +306,7 @@ static void __attribute__((optimize("-O0"))) _TIM_CAL_irq_handler(TIM_instance_t
 	// TI1 interrupt.
 	if (((peripheral -> SR) & (0b1 << 1)) != 0) {
 		// Update flags.
-		if (((peripheral -> DIER) & (0b1 << 1)) != 0) {
+		if (tim_cal_ctx.capture_done == 0) {
 			// Check count.
 			if (tim_cal_ctx.capture_count == 0) {
 				// Store start value.
@@ -816,8 +816,8 @@ TIM_status_t TIM_CAL_init(TIM_instance_t instance, uint8_t nvic_priority) {
 	// Enable peripheral clock.
 	(*TIM_DESCRIPTOR[instance].rcc_enr) |= TIM_DESCRIPTOR[instance].rcc_mask;
 	(*TIM_DESCRIPTOR[instance].rcc_smenr) |= TIM_DESCRIPTOR[instance].rcc_mask;
-	// Channel input on TI1, CH1 mapped on MCO and capture done every 8 edges.
-	TIM_DESCRIPTOR[instance].peripheral -> CCMR1 |= (0b01 << 0) | (0b11 << 2);
+	// Channel input on TI1, CH1 mapped on MCO and capture done every 2 edges.
+	TIM_DESCRIPTOR[instance].peripheral -> CCMR1 |= (0b01 << 0) | (0b01 << 2);
 	TIM_DESCRIPTOR[instance].peripheral -> OR |= (0b111 << 2);
 	// Set trigger selection to reserved value to ensure there is no link with other timers.
 	TIM_DESCRIPTOR[instance].peripheral -> SMCR |= (0b011 << 4);

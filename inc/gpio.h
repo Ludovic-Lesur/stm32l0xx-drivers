@@ -101,7 +101,7 @@ void GPIO_configure(const GPIO_pin_t* gpio, GPIO_mode_t mode, GPIO_output_type_t
  * \fn void GPIO_write(const GPIO_pin_t* gpio, uint8_t state)
  * \brief Set GPIO output state.
  * \param[in]  	gpio: GPIO to write.
- * \param[in]	state: Output state to write.
+ * \param[in]	state: Output state to write (0 for low level, 1 for high level).
  * \param[out] 	none
  * \retval		none
  *******************************************************************/
@@ -111,8 +111,8 @@ void GPIO_write(const GPIO_pin_t* gpio, uint8_t state);
  * \fn uint8_t GPIO_read(const GPIO_pin_t* gpio)
  * \brief Read GPIO input or output state.
  * \param[in]  	gpio: GPIO to read.
- * \param[out] 	state: Pointer to byte that will contain the GPIO state.
- * \retval		none
+ * \param[out] 	none
+ * \retval		GPIO state (0 is low level, 1 is high level).
  *******************************************************************/
 uint8_t GPIO_read(const GPIO_pin_t* gpio);
 

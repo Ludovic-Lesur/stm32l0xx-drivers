@@ -108,7 +108,7 @@ typedef struct {
 LPUART_status_t LPUART_init(const LPUART_gpio_t* pins, LPUART_configuration_t* configuration);
 
 /*!******************************************************************
- * \fn LPUART_status_t LPUART_de_init(LPUART_gpio_t* pins)
+ * \fn LPUART_status_t LPUART_de_init(const LPUART_gpio_t* pins)
  * \brief Release LPUART peripheral.
  * param[in]	pins: Pointer to the LPUART pins to release.
  * \param[out] 	none
@@ -117,7 +117,7 @@ LPUART_status_t LPUART_init(const LPUART_gpio_t* pins, LPUART_configuration_t* c
 LPUART_status_t LPUART_de_init(const LPUART_gpio_t* pins);
 
 /*!******************************************************************
- * \fn LPUART_status_t LPUART_enable_rx(void)
+ * \fn void LPUART_enable_rx(void)
  * \brief Enable LPUART RX operation.
  * \param[in]	none
  * \param[out] 	none
@@ -126,7 +126,7 @@ LPUART_status_t LPUART_de_init(const LPUART_gpio_t* pins);
 void LPUART_enable_rx(void);
 
 /*!******************************************************************
- * \fn LPUART_status_t LPUART_disable_rx(void)
+ * \fn void LPUART_disable_rx(void)
  * \brief Disable LPUART RX operation.
  * \param[in]	none
  * \param[out] 	none

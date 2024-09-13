@@ -422,6 +422,11 @@ errors:
 #endif
 
 /*******************************************************************/
+RCC_clock_t RCC_get_system_clock(void) {
+	return (rcc_ctx.sysclk_source);
+}
+
+/*******************************************************************/
 RCC_status_t RCC_get_frequency_hz(RCC_clock_t clock, uint32_t* frequency_hz) {
 	// Local variables.
 	RCC_status_t status = RCC_SUCCESS;

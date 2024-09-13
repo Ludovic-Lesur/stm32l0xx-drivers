@@ -11,6 +11,7 @@
 #include "flash_reg.h"
 #include "nvic_reg.h"
 #include "pwr_reg.h"
+#include "rcc.h"
 #include "rcc_reg.h"
 #include "rtc_reg.h"
 #include "scb_reg.h"
@@ -25,8 +26,6 @@ void PWR_init(void) {
 	PWR -> CR |= (0b1 << 8);
 	// Power memories down when entering sleep mode.
 	FLASH -> ACR |= (0b1 << 3); // SLEEP_PD='1'.
-	// Use HSI clock when waking-up from stop mode.
-	RCC -> CFGR |= (0b1 << 15);
 	// Switch internal voltage reference off in low power mode and ignore startup time.
 	PWR -> CR |= (0b11 << 9); // ULP='1' and FWU='1'.
 	// Never return in low power sleep mode after wake-up.
@@ -53,6 +52,15 @@ void PWR_enter_low_power_sleep_mode(void) {
 
 /*******************************************************************/
 void PWR_enter_stop_mode(void) {
+	// Select wakeup clock.
+	if (RCC_get_system_clock() == RCC_CLOCK_MSI) {
+		// Use MSI.
+		RCC -> CFGR &= ~(0b1 << 15);
+	}
+	else {
+		// Use HSI.
+		RCC -> CFGR |= (0b1 << 15);
+	}
 	// Regulator in low power mode.
 	PWR -> CR |= (0b1 << 0); // LPSDSR='1'.
 	// Clear WUF flag.

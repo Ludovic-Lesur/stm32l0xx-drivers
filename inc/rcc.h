@@ -152,6 +152,15 @@ RCC_status_t RCC_calibrate_internal_clocks(uint8_t nvic_priority);
 #endif
 
 /*!******************************************************************
+ * \fn RCC_clock_t RCC_get_system_clock(void)
+ * \brief Get current system clock source.
+ * \param[in]  	none
+ * \param[out] 	none
+ * \retval		Current system clock source.
+ *******************************************************************/
+RCC_clock_t RCC_get_system_clock(void);
+
+/*!******************************************************************
  * \fn RCC_status_t RCC_get_frequency_hz(RCC_clock_t clock, uint32_t* frequency_hz)
  * \brief Get clock frequency.
  * \param[in]  	clock: Clock to read.

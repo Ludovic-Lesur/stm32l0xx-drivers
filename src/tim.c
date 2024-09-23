@@ -386,7 +386,7 @@ static void __attribute__((optimize("-O0"))) _TIM_reset(TIM_instance_t instance)
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & (TIM_MODE_MASK_STANDARD | TIM_MODE_MASK_PWM | TIM_MODE_MASK_OPM)) != 0)
 /*******************************************************************/
-static TIM_status_t _TIM_compute_psc_arr(TIM_instance_t instance, uint32_t tim_clock_hz, uint32_t expected_period_ns, uint32_t* arr) {
+static TIM_status_t _TIM_compute_psc_arr(TIM_instance_t instance, uint32_t tim_clock_hz, uint64_t expected_period_ns, uint32_t* arr) {
 	// Local variables.
 	TIM_status_t status = TIM_ERROR_ARR_VALUE;
 	uint64_t arr_u64 = 0;
@@ -399,7 +399,7 @@ static TIM_status_t _TIM_compute_psc_arr(TIM_instance_t instance, uint32_t tim_c
 		// Try next power of 2.
 		psc = (0b1 << idx);
 		// Compute ARR.
-		arr_u64 = ((uint64_t) expected_period_ns) * ((uint64_t) tim_clock_hz);
+		arr_u64 = (expected_period_ns * ((uint64_t) tim_clock_hz));
 		arr_u64 /= (((uint64_t) MATH_POWER_10[9]) * ((uint64_t) psc));
 		arr_u64 -= 1;
 		// Check value.
@@ -488,7 +488,7 @@ TIM_status_t TIM_STD_start(TIM_instance_t instance, uint32_t period_ns, TIM_comp
 	// Get clock source frequency.
 	RCC_get_frequency_hz(RCC_CLOCK_SYSTEM, &tim_clock_hz);
 	// Compute ARR and PSC values.
-	status = _TIM_compute_psc_arr(instance, tim_clock_hz, period_ns, NULL);
+	status = _TIM_compute_psc_arr(instance, tim_clock_hz, (uint64_t) period_ns, NULL);
 	if (status != TIM_SUCCESS) goto errors;
 	// Generate event to update registers.
 	TIM_DESCRIPTOR[instance].peripheral -> EGR |= (0b1 << 0); // UG='1'.
@@ -961,16 +961,17 @@ errors:
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_PWM) != 0)
 /*******************************************************************/
-TIM_status_t TIM_PWM_set_waveform(TIM_instance_t instance, TIM_channel_t channel, uint32_t frequency_hz, uint8_t duty_cycle_percent) {
+TIM_status_t TIM_PWM_set_waveform(TIM_instance_t instance, TIM_channel_t channel, uint32_t frequency_mhz, uint8_t duty_cycle_percent) {
 	// Local variables.
 	TIM_status_t status = TIM_SUCCESS;
 	uint32_t tim_clock_hz = 0;
 	uint32_t arr = 0;
+	uint64_t period_ns = 0;
 	// Check instance and channel.
 	_TIM_check_instance(instance);
 	_TIM_check_channel(channel);
 	// Check parameters.
-	if (frequency_hz == 0) {
+	if (frequency_mhz == 0) {
 		status = TIM_ERROR_FREQUENCY;
 		goto errors;
 	}
@@ -983,7 +984,9 @@ TIM_status_t TIM_PWM_set_waveform(TIM_instance_t instance, TIM_channel_t channel
 	// Disable update event during registers writing.
 	TIM_DESCRIPTOR[instance].peripheral -> CR1 |= (0b1 << 1);
 	// Compute PSC and ARR values.
-	status = _TIM_compute_psc_arr(instance, tim_clock_hz, (MATH_POWER_10[9] / frequency_hz), &arr);
+	period_ns = ((uint64_t) 1000000000000);
+	period_ns /= ((uint64_t) frequency_mhz);
+	status = _TIM_compute_psc_arr(instance, tim_clock_hz, period_ns, &arr);
 	if (status != TIM_SUCCESS) goto errors;
 	// Set duty cycle.
 	TIM_DESCRIPTOR[instance].peripheral -> CCRx[channel] = ((arr + 1) - (((arr + 1) * duty_cycle_percent) / (TIM_PWM_DUTY_CYCLE_PERCENT_MAX)));
@@ -1113,7 +1116,7 @@ TIM_status_t TIM_OPM_make_pulse(TIM_instance_t instance, TIM_channel_t channel, 
 	// Disable update event during registers writing.
 	TIM_DESCRIPTOR[instance].peripheral -> CR1 |= (0b1 << 1);
 	// Compute PSC and ARR values.
-	status = _TIM_compute_psc_arr(instance, tim_clock_hz, (delay_ns + pulse_duration_ns), &arr);
+	status = _TIM_compute_psc_arr(instance, tim_clock_hz, ((uint64_t) delay_ns + (uint64_t) pulse_duration_ns), &arr);
 	if (status != TIM_SUCCESS) goto errors;
 	// Compute CCR value.
 	ccr = (((uint64_t) delay_ns) * ((uint64_t) (arr + 1)));

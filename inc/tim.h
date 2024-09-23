@@ -313,16 +313,16 @@ TIM_status_t TIM_PWM_de_init(TIM_instance_t instance, TIM_gpio_t* pins_list, uin
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_PWM) != 0)
 /*!******************************************************************
- * \fn TIM_status_t TIM_PWM_set_waveform(TIM_instance_t instance, TIM_channel_t channel, uint32_t frequency_hz, uint8_t duty_cycle_percent)
+ * \fn TIM_status_t TIM_PWM_set_waveform(TIM_instance_t instance, TIM_channel_t channel, uint32_t frequency_mhz, uint8_t duty_cycle_percent)
  * \brief Set channel duty cycle of a timer configured in PWM mode.
  * \param[in]  	instance: Timer instance to use.
  * \param[in]  	channel: Channel to configure.
- * \param[in]	frequency_hz: PWM frequency in Hz. Warning: this setting will be applied to all channels of the timer instance.
+ * \param[in]	frequency_mhz: PWM frequency in mHz. Warning: this setting will be applied to all channels of the timer instance.
  * \param[in]  	duty_cycle_percent: PWM duty cycle in percent. Value 0 disables the signal.
  * \param[out] 	none
  * \retval		Function execution status.
  *******************************************************************/
-TIM_status_t TIM_PWM_set_waveform(TIM_instance_t instance, TIM_channel_t channel, uint32_t frequency_hz, uint8_t duty_cycle_percent);
+TIM_status_t TIM_PWM_set_waveform(TIM_instance_t instance, TIM_channel_t channel, uint32_t frequency_mhz, uint8_t duty_cycle_percent);
 #endif
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_OPM) != 0)

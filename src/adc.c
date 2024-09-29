@@ -12,18 +12,21 @@
 #include "gpio.h"
 #include "lptim.h"
 #include "math.h"
+#include "rcc.h"
 #include "rcc_reg.h"
 #include "types.h"
 
 /*** ADC local macros ***/
 
-#define ADC_MEDIAN_FILTER_SIZE			9
-#define ADC_CENTER_AVERAGE_SIZE			3
+#define ADC_MEDIAN_FILTER_SIZE				9
+#define ADC_CENTER_AVERAGE_SIZE				3
 
-#define ADC_VREFINT_VOLTAGE_MV			((VREFINT_CAL * VREFINT_VCC_CALIB_MV) / (ADC_FULL_SCALE_12BITS))
-#define ADC_VREFINT_DEFAULT_12BITS		((VREFINT_CAL * VREFINT_VCC_CALIB_MV) / (ADC_VMCU_DEFAULT_MV))
+#define ADC_VREFINT_VOLTAGE_MV				((VREFINT_CAL * VREFINT_VCC_CALIB_MV) / (ADC_FULL_SCALE_12BITS))
+#define ADC_VREFINT_DEFAULT_12BITS			((VREFINT_CAL * VREFINT_VCC_CALIB_MV) / (ADC_VMCU_DEFAULT_MV))
 
-#define ADC_TIMEOUT_COUNT				1000000
+#define ADC_LOW_FREQUENCY_MODE_THRESHOLD_HZ	3500000
+
+#define ADC_TIMEOUT_COUNT					1000000
 
 /*** ADC local functions ***/
 
@@ -84,6 +87,7 @@ ADC_status_t ADC_init(const ADC_gpio_t* pins) {
 	// Local variables.
 	ADC_status_t status = ADC_SUCCESS;
 	LPTIM_status_t lptim_status = LPTIM_SUCCESS;
+	uint32_t adcclk_hz = 0;
 	uint8_t idx = 0;
 	uint32_t loop_count = 0;
 	// Init GPIOs.
@@ -92,6 +96,9 @@ ADC_status_t ADC_init(const ADC_gpio_t* pins) {
 			GPIO_configure(&((pins -> list)[idx]), GPIO_MODE_ANALOG, GPIO_TYPE_OPEN_DRAIN, GPIO_SPEED_LOW, GPIO_PULL_NONE);
 		}
 	}
+	// Get system clock frequency.
+	RCC_get_frequency_hz(RCC_CLOCK_SYSTEM, &adcclk_hz);
+	adcclk_hz >>= 2;
 	// Enable peripheral clock.
 	RCC -> APB2ENR |= (0b1 << 9); // ADCEN='1'.
 	// Ensure ADC is disabled.
@@ -102,8 +109,19 @@ ADC_status_t ADC_init(const ADC_gpio_t* pins) {
 	lptim_status = LPTIM_delay_milliseconds(ADC_INIT_DELAY_MS_REGULATOR, LPTIM_DELAY_MODE_ACTIVE);
 	LPTIM_exit_error(ADC_ERROR_BASE_LPTIM);
 	// ADC configuration.
-	ADC1 -> CFGR2 |= (0b01 << 30); // Use (PCLK2/2) as ADCCLK = SYSCLK/2.
+	ADC1 -> CFGR2 |= (0b10 << 30); // Use (PCLK2/4) as source.
 	ADC1 -> SMPR |= (0b111 << 0); // Maximum sampling time.
+	// ADC clock.
+	if (adcclk_hz < ADC_LOW_FREQUENCY_MODE_THRESHOLD_HZ) {
+		// Enable low frequency mode.
+		ADC1 -> CCR |= (0b1 << 25); // LFMEN='1'.
+		ADC1 -> CCR &= ~(0b1111 << 18); // PRESC='0000'.
+	}
+	else {
+		// Add prescaler.
+		ADC1 -> CCR &= ~(0b1 << 25); // LFMEN='0'.
+		ADC1 -> CCR |= (0b0010 << 18); // PRESC='0010'.
+	}
 	// ADC calibration.
 	ADC1 -> CR |= (0b1 << 31); // ADCAL='1'.
 	while ((((ADC1 -> CR) & (0b1 << 31)) != 0) && (((ADC1 -> ISR) & (0b1 << 11)) == 0)) {

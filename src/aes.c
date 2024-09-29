@@ -15,6 +15,17 @@
 
 #define AES_TIMEOUT_COUNT	1000000
 
+/*** AES local structures ***/
+
+/*******************************************************************/
+typedef struct {
+	uint8_t init_count;
+} AES_context_t;
+
+/*** AES local global variables ***/
+
+static AES_context_t aes_ctx = {.init_count = 0};
+
 /*** AES functions ***/
 
 /*******************************************************************/
@@ -23,12 +34,22 @@ void AES_init(void) {
 	RCC -> AHBENR |= (0b1 << 24); // CRYPTOEN='1'.
 	// Configure peripheral.
 	AES -> CR |= (0b01 << 5); // CBC algorithm (CHMOD='01').
+	// Update initialization count.
+	aes_ctx.init_count++;
 }
 
 /*******************************************************************/
 void AES_de_init(void) {
+	// Update initialization count.
+	if (aes_ctx.init_count > 0) {
+		aes_ctx.init_count--;
+	}
+	// Check initialization count.
+	if (aes_ctx.init_count > 0) goto errors;
 	// Disable peripheral clock.
 	RCC -> AHBENR &= ~(0b1 << 24); // CRYPTOEN='0'.
+errors:
+	return;
 }
 
 /*******************************************************************/
@@ -38,6 +59,11 @@ AES_status_t AES_encrypt(uint8_t* data_in, uint8_t* data_out, uint8_t* key) {
 	uint8_t idx = 0;
 	uint32_t data_32bits = 0;
 	uint32_t loop_count = 0;
+	// Check state.
+	if (aes_ctx.init_count == 0) {
+		status = AES_ERROR_UNINITIALIZED;
+		goto errors;
+	}
 	// Check parameters.
 	if ((data_in == NULL) || (data_out == NULL) || (key == NULL)) {
 		status = AES_ERROR_NULL_PARAMETER;

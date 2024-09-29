@@ -57,6 +57,11 @@ static SPI_context_t spi_ctx = {.init_count = {0}};
 		status = SPI_ERROR_INSTANCE; \
 		goto errors; \
 	} \
+	/* Check state */ \
+	if (spi_ctx.init_count[instance] == 0) { \
+		status = SPI_ERROR_UNINITIALIZED; \
+		goto errors; \
+	} \
 	/* Check parameters */ \
 	if ((tx_data == NULL) || (rx_data == NULL)) { \
 		status = SPI_ERROR_NULL_PARAMETER; \

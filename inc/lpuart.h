@@ -23,6 +23,7 @@
 typedef enum {
 	// Driver errors.
 	LPUART_SUCCESS = 0,
+	LPUART_ERROR_UNINITIALIZED,
 	LPUART_ERROR_NULL_PARAMETER,
 	LPUART_ERROR_BAUD_RATE,
 	LPUART_ERROR_RX_MODE,
@@ -117,22 +118,22 @@ LPUART_status_t LPUART_init(const LPUART_gpio_t* pins, LPUART_configuration_t* c
 LPUART_status_t LPUART_de_init(const LPUART_gpio_t* pins);
 
 /*!******************************************************************
- * \fn void LPUART_enable_rx(void)
+ * \fn LPUART_status_t LPUART_enable_rx(void)
  * \brief Enable LPUART RX operation.
  * \param[in]	none
  * \param[out] 	none
- * \retval		none
+ * \retval		Function execution status.
  *******************************************************************/
-void LPUART_enable_rx(void);
+LPUART_status_t LPUART_enable_rx(void);
 
 /*!******************************************************************
- * \fn void LPUART_disable_rx(void)
+ * \fn LPUART_status_t LPUART_disable_rx(void)
  * \brief Disable LPUART RX operation.
  * \param[in]	none
  * \param[out] 	none
- * \retval		none
+ * \retval		Function execution status.
  *******************************************************************/
-void LPUART_disable_rx(void);
+LPUART_status_t LPUART_disable_rx(void);
 
 /*!******************************************************************
  * \fn LPUART_status_t LPUART_write(uint8_t* data, uint32_t data_size_bytes)

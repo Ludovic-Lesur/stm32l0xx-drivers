@@ -65,6 +65,17 @@ typedef struct {
 } TIM_descriptor_t;
 
 /*******************************************************************/
+typedef enum {
+	TIM_MODE_NONE = 0,
+	TIM_MODE_STANDARD,
+	TIM_MODE_MULTI_CHANNEL,
+	TIM_MODE_CALIBRATION,
+	TIM_MODE_PWM,
+	TIM_MODE_OPM,
+	TIM_MODE_LAST
+} TIM_mode_t;
+
+/*******************************************************************/
 typedef void (*TIM_irq_handler_cb_t)(TIM_instance_t instance, TIM_registers_t* peripheral);
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_STANDARD) != 0)
@@ -110,6 +121,12 @@ typedef struct {
 } TIM_PWM_context_t;
 #endif
 
+/*******************************************************************/
+typedef struct {
+	TIM_mode_t mode[TIM_INSTANCE_LAST];
+	TIM_irq_handler_cb_t irq_handler[TIM_INSTANCE_LAST];
+} TIM_context_t;
+
 /*** TIM local global variables ***/
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_ALL) != 0)
@@ -140,7 +157,7 @@ static TIM_CAL_context_t tim_cal_ctx; // Not defined as array because only suppo
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_PWM) != 0)
 static TIM_PWM_context_t tim_pwm_ctx[TIM_INSTANCE_LAST];
 #endif
-static TIM_irq_handler_cb_t tim_irq_handler[TIM_INSTANCE_LAST];
+static TIM_context_t tim_ctx;
 
 /*** TIM local functions ***/
 
@@ -149,6 +166,15 @@ static TIM_irq_handler_cb_t tim_irq_handler[TIM_INSTANCE_LAST];
 	/* Check instance */ \
 	if (instance >= TIM_INSTANCE_LAST) { \
 		status = TIM_ERROR_INSTANCE; \
+		goto errors; \
+	} \
+}
+
+/*******************************************************************/
+#define _TIM_check_mode(instance, expected_mode) { \
+	/* Check timer mode */ \
+	if (tim_ctx.mode[instance] != expected_mode) { \
+		status = TIM_ERROR_MODE; \
 		goto errors; \
 	} \
 }
@@ -178,8 +204,8 @@ static TIM_irq_handler_cb_t tim_irq_handler[TIM_INSTANCE_LAST];
 /*******************************************************************/
 #define _TIM_irq_handler(instance, peripheral) { \
 	/* Execute internal callback */ \
-	if (tim_irq_handler[instance] != NULL) { \
-		tim_irq_handler[instance](instance, peripheral); \
+	if (tim_ctx.irq_handler[instance] != NULL) { \
+		tim_ctx.irq_handler[instance](instance, peripheral); \
 	} \
 }
 
@@ -430,6 +456,8 @@ static void _TIM_de_init(TIM_instance_t instance) {
 	TIM_DESCRIPTOR[instance].peripheral -> CR1 &= ~(0b1 << 0); // CEN='0'.
 	// Disable peripheral clock.
 	(*TIM_DESCRIPTOR[instance].rcc_enr) &= ~(TIM_DESCRIPTOR[instance].rcc_mask);
+	// Update mode.
+	tim_ctx.mode[instance] = TIM_MODE_NONE;
 }
 #endif
 
@@ -445,7 +473,7 @@ TIM_status_t TIM_STD_init(TIM_instance_t instance, uint8_t nvic_priority) {
 	// Reset peripheral.
 	_TIM_reset(instance);
 	// Update local interrupt handler.
-	tim_irq_handler[instance] = &_TIM_STD_irq_handler;
+	tim_ctx.irq_handler[instance] = &_TIM_STD_irq_handler;
 	// Enable peripheral clock.
 	(*TIM_DESCRIPTOR[instance].rcc_enr) |= TIM_DESCRIPTOR[instance].rcc_mask;
 	(*TIM_DESCRIPTOR[instance].rcc_smenr) |= TIM_DESCRIPTOR[instance].rcc_mask;
@@ -458,6 +486,8 @@ TIM_status_t TIM_STD_init(TIM_instance_t instance, uint8_t nvic_priority) {
 	NVIC_set_priority(TIM_DESCRIPTOR[instance].nvic_interrupt, nvic_priority);
 	// Generate event to update registers.
 	TIM_DESCRIPTOR[instance].peripheral -> EGR |= (0b1 << 0); // UG='1'.
+	// Update mode.
+	tim_ctx.mode[instance] = TIM_MODE_STANDARD;
 errors:
 	return status;
 }
@@ -483,8 +513,9 @@ TIM_status_t TIM_STD_start(TIM_instance_t instance, uint32_t period_ns, TIM_comp
 	// Local variables.
 	TIM_status_t status = TIM_SUCCESS;
 	uint32_t tim_clock_hz = 0;
-	// Check instance.
+	// Check instance and mode.
 	_TIM_check_instance(instance);
+	_TIM_check_mode(instance, TIM_MODE_STANDARD);
 	// Get clock source frequency.
 	RCC_get_frequency_hz(RCC_CLOCK_SYSTEM, &tim_clock_hz);
 	// Compute ARR and PSC values.
@@ -508,8 +539,9 @@ errors:
 TIM_status_t TIM_STD_stop(TIM_instance_t instance) {
 	// Local variables.
 	TIM_status_t status = TIM_SUCCESS;
-	// Check instance.
+	// Check instance and mode.
 	_TIM_check_instance(instance);
+	_TIM_check_mode(instance, TIM_MODE_STANDARD);
 	// Stop timer.
 	TIM_DESCRIPTOR[instance].peripheral -> CR1 &= ~(0b1 << 0);
 	// Disable interrupt.
@@ -546,7 +578,7 @@ TIM_status_t TIM_MCH_init(TIM_instance_t instance, uint8_t nvic_priority) {
 		tim_mch_ctx.channel[idx].irq_flag = 0;
 	}
 	// Init common context.
-	tim_irq_handler[instance] = &_TIM_MCH_irq_handler;
+	tim_ctx.irq_handler[instance] = &_TIM_MCH_irq_handler;
 	// Select trigger.
 #if (STM32L0XX_DRIVERS_RCC_LSE_MODE == 0)
 	tim_mch_ctx.clock_source = RCC_CLOCK_HSI;
@@ -610,6 +642,8 @@ TIM_status_t TIM_MCH_init(TIM_instance_t instance, uint8_t nvic_priority) {
 	NVIC_set_priority(TIM_DESCRIPTOR[instance].nvic_interrupt, nvic_priority);
 	// Generate event to update registers.
 	TIM_DESCRIPTOR[instance].peripheral -> EGR |= (0b1 << 0); // UG='1'.
+	// Update mode.
+	tim_ctx.mode[instance] = TIM_MODE_MULTI_CHANNEL;
 errors:
 	return status;
 }
@@ -636,8 +670,9 @@ TIM_status_t TIM_MCH_start_channel(TIM_instance_t instance, TIM_channel_t channe
 	TIM_status_t status = TIM_SUCCESS;
 	uint32_t local_period_ms = period_ms;
 	uint32_t period_min_ms = TIM_MCH_TIMER_PERIOD_MS_MIN;
-	// Check instance and channel.
+	// Check instance, mode and channel.
 	_TIM_check_instance(instance);
+	_TIM_check_mode(instance, TIM_MODE_MULTI_CHANNEL);
 	_TIM_check_channel(channel);
 	// Check parameters.
 	if (waiting_mode >= TIM_WAITING_MODE_LAST) {
@@ -684,8 +719,9 @@ errors:
 TIM_status_t TIM_MCH_stop_channel(TIM_instance_t instance, TIM_channel_t channel) {
 	// Local variables.
 	TIM_status_t status = TIM_SUCCESS;
-	// Check instance and channel.
+	// Check instance, mode and channel.
 	_TIM_check_instance(instance);
+	_TIM_check_mode(instance, TIM_MODE_MULTI_CHANNEL);
 	_TIM_check_channel(channel);
 	// Disable interrupt.
 	TIM_DESCRIPTOR[instance].peripheral -> DIER &= ~(0b1 << (channel + 1));
@@ -711,8 +747,9 @@ errors:
 TIM_status_t TIM_MCH_get_channel_status(TIM_instance_t instance, TIM_channel_t channel, uint8_t* timer_has_elapsed) {
 	// Local variables.
 	TIM_status_t status = TIM_SUCCESS;
-	// Check instance and channel.
+	// Check instance, mode and channel.
 	_TIM_check_instance(instance);
+	_TIM_check_mode(instance, TIM_MODE_MULTI_CHANNEL);
 	_TIM_check_channel(channel);
 	// Check parameters.
 	if (timer_has_elapsed == NULL) {
@@ -734,8 +771,9 @@ TIM_status_t TIM_MCH_wait_channel_completion(TIM_instance_t instance, TIM_channe
 	RCC_status_t rcc_status = RCC_SUCCESS;
 	uint32_t time_start = RTC_get_uptime_seconds();
 	uint32_t time_reference = 0;
-	// Check instance and channel.
+	// Check instance, mode and channel.
 	_TIM_check_instance(instance);
+	_TIM_check_mode(instance, TIM_MODE_MULTI_CHANNEL);
 	_TIM_check_channel(channel);
 	// Directly exit if the IRQ already occurred.
 	if ((tim_mch_ctx.channel[channel].running_flag == 0) || (tim_mch_ctx.channel[channel].irq_flag != 0)) goto errors;
@@ -812,7 +850,7 @@ TIM_status_t TIM_CAL_init(TIM_instance_t instance, uint8_t nvic_priority) {
 	// Reset peripheral.
 	_TIM_reset(instance);
 	// Update local interrupt handler.
-	tim_irq_handler[instance] = &_TIM_CAL_irq_handler;
+	tim_ctx.irq_handler[instance] = &_TIM_CAL_irq_handler;
 	// Enable peripheral clock.
 	(*TIM_DESCRIPTOR[instance].rcc_enr) |= TIM_DESCRIPTOR[instance].rcc_mask;
 	(*TIM_DESCRIPTOR[instance].rcc_smenr) |= TIM_DESCRIPTOR[instance].rcc_mask;
@@ -826,6 +864,8 @@ TIM_status_t TIM_CAL_init(TIM_instance_t instance, uint8_t nvic_priority) {
 	NVIC_set_priority(TIM_DESCRIPTOR[instance].nvic_interrupt, nvic_priority);
 	// Generate event to update registers.
 	TIM_DESCRIPTOR[instance].peripheral -> EGR |= (0b1 << 0); // UG='1'.
+	// Update mode.
+	tim_ctx.mode[instance] = TIM_MODE_CALIBRATION;
 errors:
 	return status;
 }
@@ -854,8 +894,9 @@ TIM_status_t TIM_CAL_mco_capture(TIM_instance_t instance, int32_t* ref_clock_pul
 	int32_t ref_clock_pulse_count_buffer[TIM_CAL_MEDIAN_FILTER_SIZE] = {0x00};
 	int32_t mco_pulse_count_buffer[TIM_CAL_MEDIAN_FILTER_SIZE] = {0x00};
 	uint8_t idx = 0;
-	// Check instance.
+	// Check instance and mode.
 	_TIM_check_instance(instance);
+	_TIM_check_mode(instance, TIM_MODE_CALIBRATION);
 	// Check parameters.
 	if ((ref_clock_pulse_count == NULL) || (mco_pulse_count == NULL)) {
 		status = TIM_ERROR_NULL_PARAMETER;
@@ -903,7 +944,7 @@ TIM_status_t TIM_PWM_init(TIM_instance_t instance, TIM_gpio_t* pins_list, uint8_
 	// Reset peripheral.
 	_TIM_reset(instance);
 	// Update local interrupt handler.
-	tim_irq_handler[instance] = NULL;
+	tim_ctx.irq_handler[instance] = NULL;
 	// Init context.
 	tim_pwm_ctx[instance].channels_duty_cycle = 0;
 	// Enable peripheral clock.
@@ -934,6 +975,8 @@ TIM_status_t TIM_PWM_init(TIM_instance_t instance, TIM_gpio_t* pins_list, uint8_
 		// Init GPIO.
 		GPIO_configure((pins_list[idx].gpio), GPIO_MODE_ALTERNATE_FUNCTION, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_HIGH, GPIO_PULL_NONE);
 	}
+	// Update mode.
+	tim_ctx.mode[instance] = TIM_MODE_PWM;
 errors:
 	return status;
 }
@@ -967,8 +1010,9 @@ TIM_status_t TIM_PWM_set_waveform(TIM_instance_t instance, TIM_channel_t channel
 	uint32_t tim_clock_hz = 0;
 	uint32_t arr = 0;
 	uint64_t period_ns = 0;
-	// Check instance and channel.
+	// Check instance, mode and channel.
 	_TIM_check_instance(instance);
+	_TIM_check_mode(instance, TIM_MODE_PWM);
 	_TIM_check_channel(channel);
 	// Check parameters.
 	if (frequency_mhz == 0) {
@@ -1041,7 +1085,7 @@ TIM_status_t TIM_OPM_init(TIM_instance_t instance, TIM_gpio_t* pins_list, uint8_
 	// Reset peripheral.
 	_TIM_reset(instance);
 	// Update local interrupt handler.
-	tim_irq_handler[instance] = NULL;
+	tim_ctx.irq_handler[instance] = NULL;
 	// Enable peripheral clock.
 	(*TIM_DESCRIPTOR[instance].rcc_enr) |= TIM_DESCRIPTOR[instance].rcc_mask;
 	(*TIM_DESCRIPTOR[instance].rcc_smenr) |= TIM_DESCRIPTOR[instance].rcc_mask;
@@ -1070,6 +1114,8 @@ TIM_status_t TIM_OPM_init(TIM_instance_t instance, TIM_gpio_t* pins_list, uint8_
 		// Init GPIO.
 		GPIO_configure((pins_list[idx].gpio), GPIO_MODE_ALTERNATE_FUNCTION, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_HIGH, GPIO_PULL_NONE);
 	}
+	// Update mode.
+	tim_ctx.mode[instance] = TIM_MODE_OPM;
 errors:
 	return status;
 }
@@ -1103,8 +1149,9 @@ TIM_status_t TIM_OPM_make_pulse(TIM_instance_t instance, TIM_channel_t channel, 
 	uint32_t tim_clock_hz = 0;
 	uint32_t arr = 0;
 	uint64_t ccr = 0;
-	// Check instance and channel.
+	// Check instance, mode and channel.
 	_TIM_check_instance(instance);
+	_TIM_check_mode(instance, TIM_MODE_OPM);
 	_TIM_check_channel(channel);
 	// Check parameters.
 	if ((delay_ns + pulse_duration_ns) == 0) {
@@ -1138,8 +1185,9 @@ errors:
 TIM_status_t TIM_OPM_get_pulse_status(TIM_instance_t instance, TIM_channel_t channel, uint8_t* pulse_is_done) {
 	// Local variables.
 	TIM_status_t status = TIM_SUCCESS;
-	// Check instance and channel.
+	// Check instance, mode and channel.
 	_TIM_check_instance(instance);
+	_TIM_check_mode(instance, TIM_MODE_OPM);
 	_TIM_check_channel(channel);
 	// Check parameter.
 	if (pulse_is_done == NULL) {

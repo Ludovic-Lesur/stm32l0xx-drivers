@@ -39,6 +39,7 @@ typedef struct {
 
 /*******************************************************************/
 typedef struct {
+	uint8_t init_count[USART_INSTANCE_LAST];
 #if (STM32L0XX_DRIVERS_USART_MODE == 0)
 	USART_rx_irq_cb_t rxne_callback[USART_INSTANCE_LAST];
 #endif
@@ -60,6 +61,7 @@ static const USART_descriptor_t USART_DESCRIPTOR[USART_INSTANCE_LAST] = {
 #endif
 };
 static USART_context_t usart_ctx = {
+	.init_count = {0},
 #if (STM32L0XX_DRIVERS_USART_MODE == 0)
 	.rxne_callback = {NULL},
 #endif
@@ -203,6 +205,8 @@ USART_status_t USART_init(USART_instance_t instance, const USART_gpio_t* pins, U
 #if (STM32L0XX_DRIVERS_USART_MODE == 1)
 	usart_ctx.cmf_callback[instance] = (configuration -> cmf_callback);
 #endif
+	// Update initialization count.
+	usart_ctx.init_count[instance]++;
 errors:
 	return status;
 }
@@ -216,6 +220,12 @@ USART_status_t USART_de_init(USART_instance_t instance, const USART_gpio_t* pins
 		status = USART_ERROR_INSTANCE;
 		goto errors;
 	}
+	// Update initialization count.
+	if (usart_ctx.init_count[instance] > 0) {
+		usart_ctx.init_count[instance]--;
+	}
+	// Check initialization count.
+	if (usart_ctx.init_count[instance] > 0) goto errors;
 	// Check parameters.
 	if (pins == NULL) {
 		status = USART_ERROR_NULL_PARAMETER;
@@ -241,6 +251,11 @@ USART_status_t USART_enable_rx(USART_instance_t instance) {
 		status = USART_ERROR_INSTANCE;
 		goto errors;
 	}
+	// Check state.
+	if (usart_ctx.init_count[instance] == 0) {
+		status = USART_ERROR_UNINITIALIZED;
+		goto errors;
+	}
 	// Clear RXNE flag if needed.
 	if (((USART_DESCRIPTOR[instance].peripheral -> ISR) & (0b1 << 5)) != 0) {
 		USART_DESCRIPTOR[instance].peripheral -> RQR |= (0b1 << 3);
@@ -260,6 +275,11 @@ USART_status_t USART_disable_rx(USART_instance_t instance) {
 		status = USART_ERROR_INSTANCE;
 		goto errors;
 	}
+	// Check state.
+	if (usart_ctx.init_count[instance] == 0) {
+		status = USART_ERROR_UNINITIALIZED;
+		goto errors;
+	}
 	// Disable interrupt.
 	NVIC_disable_interrupt(USART_DESCRIPTOR[instance].nvic_interrupt);
 errors:
@@ -275,6 +295,11 @@ USART_status_t USART_write(USART_instance_t instance, uint8_t* data, uint32_t da
 	// Check instance.
 	if (instance >= USART_INSTANCE_LAST) {
 		status = USART_ERROR_INSTANCE;
+		goto errors;
+	}
+	// Check state.
+	if (usart_ctx.init_count[instance] == 0) {
+		status = USART_ERROR_UNINITIALIZED;
 		goto errors;
 	}
 	// Check parameters.

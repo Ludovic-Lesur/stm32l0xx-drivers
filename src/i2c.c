@@ -143,6 +143,11 @@ I2C_status_t I2C_write(I2C_instance_t instance, uint8_t slave_address, uint8_t* 
 		status = I2C_ERROR_INSTANCE;
 		goto errors;
 	}
+	// Check state.
+	if (i2c_ctx.init_count[instance] == 0) {
+		status = I2C_ERROR_UNINITIALIZED;
+		goto errors;
+	}
 	// Check parameters.
 	if ((data == NULL) || (data_size_bytes == 0)) {
 		status = I2C_ERROR_NULL_PARAMETER;
@@ -228,6 +233,11 @@ I2C_status_t I2C_read(I2C_instance_t instance, uint8_t slave_address, uint8_t* d
 	// Check instance.
 	if (instance >= I2C_INSTANCE_LAST) {
 		status = I2C_ERROR_INSTANCE;
+		goto errors;
+	}
+	// Check state.
+	if (i2c_ctx.init_count[instance] == 0) {
+		status = I2C_ERROR_UNINITIALIZED;
 		goto errors;
 	}
 	// Check parameters.

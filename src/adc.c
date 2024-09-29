@@ -28,6 +28,17 @@
 
 #define ADC_TIMEOUT_COUNT					1000000
 
+/*** ADC local structures ***/
+
+/*******************************************************************/
+typedef struct {
+	uint8_t init_count;
+} ADC_context_t;
+
+/*** ADC local global variables ***/
+
+static ADC_context_t adc_ctx = {.init_count = 0};
+
 /*** ADC local functions ***/
 
 /*******************************************************************/
@@ -148,6 +159,8 @@ ADC_status_t ADC_init(const ADC_gpio_t* pins) {
 	// Wait for startup.
 	lptim_status = LPTIM_delay_milliseconds(ADC_INIT_DELAY_MS_VREF_TS, LPTIM_DELAY_MODE_ACTIVE);
 	LPTIM_exit_error(ADC_ERROR_BASE_LPTIM);
+	// Update initialization count.
+	adc_ctx.init_count++;
 errors:
 	return status;
 }
@@ -156,6 +169,12 @@ errors:
 ADC_status_t ADC_de_init(void) {
 	// Local variables.
 	ADC_status_t status = ADC_SUCCESS;
+	// Update initialization count.
+	if (adc_ctx.init_count > 0) {
+		adc_ctx.init_count--;
+	}
+	// Check initialization count.
+	if (adc_ctx.init_count > 0) goto errors;
 	// Switch internal voltage reference off.
 	ADC1 -> CCR &= ~(0b11 << 22); // TSEN='0' and VREFEF='0'.
 	// Disable ADC peripheral.
@@ -164,6 +183,7 @@ ADC_status_t ADC_de_init(void) {
 	ADC1 -> CR &= ~(0b1 << 28);
 	// Disable peripheral clock.
 	RCC -> APB2ENR &= ~(0b1 << 9); // ADCEN='0'.
+errors:
 	return status;
 }
 
@@ -174,6 +194,11 @@ ADC_status_t ADC_convert_channel(ADC_channel_t channel, int32_t* adc_data_12bits
 	MATH_status_t math_status = MATH_SUCCESS;
 	int32_t adc_sample_buf[ADC_MEDIAN_FILTER_SIZE] = {0x00};
 	uint8_t idx = 0;
+	// Check state.
+	if (adc_ctx.init_count == 0) {
+		status = ADC_ERROR_UNINITIALIZED;
+		goto errors;
+	}
 	// Check parameters.
 	if (channel >= ADC_CHANNEL_LAST) {
 		status = ADC_ERROR_CHANNEL;

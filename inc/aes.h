@@ -19,6 +19,7 @@
 typedef enum {
 	// Driver errors.
 	AES_SUCCESS = 0,
+	AES_ERROR_UNINITIALIZED,
 	AES_ERROR_NULL_PARAMETER,
 	AES_ERROR_TIMEOUT,
 	// Last base value.

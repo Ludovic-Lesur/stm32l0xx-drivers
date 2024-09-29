@@ -31,6 +31,7 @@
 
 /*******************************************************************/
 typedef struct {
+	uint8_t init_count;
 #if ((STM32L0XX_DRIVERS_LPUART_MODE == 0) || (STM32L0XX_DRIVERS_LPUART_MODE == 2) || (STM32L0XX_DRIVERS_LPUART_MODE == 3))
 	LPUART_rx_irq_cb_t rxne_callback;
 #endif
@@ -42,6 +43,7 @@ typedef struct {
 /*** LPUART local global variables ***/
 
 static LPUART_context_t lpuart_ctx = {
+	.init_count = 0,
 #if ((STM32L0XX_DRIVERS_LPUART_MODE == 0) || (STM32L0XX_DRIVERS_LPUART_MODE == 2) || (STM32L0XX_DRIVERS_LPUART_MODE == 3))
 	.rxne_callback = NULL
 #endif
@@ -220,6 +222,8 @@ LPUART_status_t LPUART_init(const LPUART_gpio_t* pins, LPUART_configuration_t* c
 #if (STM32L0XX_DRIVERS_LPUART_MODE == 1)
 	lpuart_ctx.cmf_callback = (configuration -> cmf_callback);
 #endif
+	// Update initialization count.
+	lpuart_ctx.init_count++;
 errors:
 	return status;
 }
@@ -228,6 +232,12 @@ errors:
 LPUART_status_t LPUART_de_init(const LPUART_gpio_t* pins) {
 	// Local variables.
 	LPUART_status_t status = LPUART_SUCCESS;
+	// Update initialization count.
+	if (lpuart_ctx.init_count > 0) {
+		lpuart_ctx.init_count--;
+	}
+	// Check initialization count.
+	if (lpuart_ctx.init_count > 0) goto errors;
 	// Check parameter.
 	if (pins == NULL) {
 		status = LPUART_ERROR_NULL_PARAMETER;
@@ -250,7 +260,14 @@ errors:
 }
 
 /*******************************************************************/
-void LPUART_enable_rx(void) {
+LPUART_status_t LPUART_enable_rx(void) {
+	// Local variables.
+	LPUART_status_t status = LPUART_SUCCESS;
+	// Check state.
+	if (lpuart_ctx.init_count == 0) {
+		status = LPUART_ERROR_UNINITIALIZED;
+		goto errors;
+	}
 	// Clear RXNE flag if needed.
 	if (((LPUART1 -> ISR) & (0b1 << 5)) != 0) {
 		LPUART1 -> RQR |= (0b1 << 3);
@@ -270,14 +287,25 @@ void LPUART_enable_rx(void) {
 		LPUART1 -> RQR |= (0b1 << 2); // MMRQ='1'.
 	}
 #endif
+errors:
+	return status;
 }
 
 /*******************************************************************/
-void LPUART_disable_rx(void) {
+LPUART_status_t LPUART_disable_rx(void) {
+	// Local variables.
+	LPUART_status_t status = LPUART_SUCCESS;
+	// Check state.
+	if (lpuart_ctx.init_count == 0) {
+		status = LPUART_ERROR_UNINITIALIZED;
+		goto errors;
+	}
 	// Disable receiver.
 	LPUART1 -> CR1 &= ~(0b1 << 2); // RE='0'.
 	// Disable interrupt.
 	NVIC_disable_interrupt(NVIC_INTERRUPT_LPUART1);
+errors:
+	return status;
 }
 
 /*******************************************************************/
@@ -286,6 +314,11 @@ LPUART_status_t LPUART_write(uint8_t* data, uint32_t data_size_bytes) {
 	LPUART_status_t status = LPUART_SUCCESS;
 	uint32_t idx = 0;
 	uint32_t loop_count = 0;
+	// Check state.
+	if (lpuart_ctx.init_count == 0) {
+		status = LPUART_ERROR_UNINITIALIZED;
+		goto errors;
+	}
 	// Check parameter.
 	if (data == NULL) {
 		status = LPUART_ERROR_NULL_PARAMETER;
@@ -329,6 +362,11 @@ errors:
 LPUART_status_t LPUART_set_configuration(LPUART_configuration_t* configuration) {
 	// Local variables.
 	LPUART_status_t status = LPUART_SUCCESS;
+	// Check state.
+	if (lpuart_ctx.init_count == 0) {
+		status = LPUART_ERROR_UNINITIALIZED;
+		goto errors;
+	}
 	// Check parameters.
 	if (configuration == NULL) {
 		status = LPUART_ERROR_NULL_PARAMETER;

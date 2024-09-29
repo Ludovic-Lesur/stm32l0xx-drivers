@@ -36,6 +36,7 @@ typedef struct {
 
 /*******************************************************************/
 typedef struct {
+	uint8_t init_count[DMA_CHANNEL_LAST];
 	uint8_t enabled_channels_mask;
 	uint8_t started_channels_mask;
 	DMA_transfer_complete_irq_cb_t channel_irq_callbacks[DMA_CHANNEL_LAST];
@@ -56,6 +57,7 @@ static const DMA_descriptor_t DMA_DESCRIPTOR[DMA_CHANNEL_LAST] = {
 #endif
 };
 static DMA_context_t dma_ctx = {
+	.init_count = {0},
 	.enabled_channels_mask = 0,
 	.started_channels_mask = 0,
 	.channel_irq_callbacks = {NULL}
@@ -68,6 +70,14 @@ static DMA_context_t dma_ctx = {
 #define _DMA_check_channel(void) { \
 	if (channel >= DMA_CHANNEL_LAST) { \
 		status = DMA_ERROR_CHANNEL; \
+		goto errors; \
+	} \
+}
+
+/*******************************************************************/
+#define _DMA_check_channel_state(void) { \
+	if (dma_ctx.init_count[channel] == 0) { \
+		status = DMA_ERROR_UNINITIALIZED; \
 		goto errors; \
 	} \
 }
@@ -214,6 +224,8 @@ DMA_status_t DMA_init(DMA_channel_t channel, DMA_configuration_t* configuration)
 	NVIC_set_priority(DMA_DESCRIPTOR[channel].nvic_interrupt, (configuration -> nvic_priority));
 	// Update mask.
 	dma_ctx.enabled_channels_mask |= (0b1 << channel);
+	// Update initialization count.
+	dma_ctx.init_count[channel]++;
 errors:
 	return status;
 }
@@ -226,6 +238,12 @@ DMA_status_t DMA_de_init(DMA_channel_t channel) {
 	DMA_status_t status = DMA_SUCCESS;
 	// Check channel.
 	_DMA_check_channel();
+	// Update initialization count.
+	if (dma_ctx.init_count[channel] > 0) {
+		dma_ctx.init_count[channel]--;
+	}
+	// Check initialization count.
+	if (dma_ctx.init_count[channel] > 0) goto errors;
 	// Disable channel.
 	DMA1 -> CH[channel].CCR &= ~(0b1 << 0); // EN='0'.
 	// Update mask.
@@ -247,6 +265,7 @@ DMA_status_t DMA_start(DMA_channel_t channel) {
 	DMA_status_t status = DMA_SUCCESS;
 	// Check channel.
 	_DMA_check_channel();
+	_DMA_check_channel_state();
 	// Clear all flags.
 	DMA1 -> IFCR |= (0b1111 << (channel << 2));
 	// Enable interrupt.
@@ -267,6 +286,7 @@ DMA_status_t DMA_stop(DMA_channel_t channel) {
 	DMA_status_t status = DMA_SUCCESS;
 	// Check channel.
 	_DMA_check_channel();
+	_DMA_check_channel_state();
 	// Update mask.
 	dma_ctx.started_channels_mask &= ~(0b1 << channel);
 	// Stop transfer.
@@ -287,6 +307,7 @@ DMA_status_t DMA_set_memory_address(DMA_channel_t channel, uint32_t memory_addr,
 	DMA_status_t status = DMA_SUCCESS;
 	// Check channel.
 	_DMA_check_channel();
+	_DMA_check_channel_state();
 	// Set memory address and transfer size.
 	DMA1 -> CH[channel].CMAR = memory_addr;
 	DMA1 -> CH[channel].CNDTR = number_of_data;
@@ -302,6 +323,7 @@ DMA_status_t DMA_set_peripheral_address(DMA_channel_t channel, uint32_t peripher
 	DMA_status_t status = DMA_SUCCESS;
 	// Check channel.
 	_DMA_check_channel();
+	_DMA_check_channel_state();
 	// Set memory address and transfer size.
 	DMA1 -> CH[channel].CPAR = peripheral_addr;
 	DMA1 -> CH[channel].CNDTR = number_of_data;

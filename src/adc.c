@@ -12,6 +12,7 @@
 #include "gpio.h"
 #include "lptim.h"
 #include "math.h"
+#include "pwr_reg.h"
 #include "rcc.h"
 #include "rcc_reg.h"
 #include "types.h"
@@ -194,6 +195,7 @@ ADC_status_t ADC_convert_channel(ADC_channel_t channel, int32_t* adc_data_12bits
 	MATH_status_t math_status = MATH_SUCCESS;
 	int32_t adc_sample_buf[ADC_MEDIAN_FILTER_SIZE] = {0x00};
 	uint8_t idx = 0;
+	uint32_t loop_count = 0;
 	// Check state.
 	if (adc_ctx.init_count == 0) {
 		status = ADC_ERROR_UNINITIALIZED;
@@ -207,6 +209,17 @@ ADC_status_t ADC_convert_channel(ADC_channel_t channel, int32_t* adc_data_12bits
 	if (adc_data_12bits == NULL) {
 		status = ADC_ERROR_NULL_PARAMETER;
 		goto errors;
+	}
+	if (channel == ADC_CHANNEL_VREFINT) {
+		// Wait for internal reference to be ready.
+		while (((PWR -> CSR) & (0b1 << 3)) == 0) {
+			// Wait for VREFINTRDYF or timeout.
+			loop_count++;
+			if (loop_count > ADC_TIMEOUT_COUNT) {
+				status = ADC_ERROR_VREFINT_READY_TIMEOUT;
+				goto errors;
+			}
+		}
 	}
 	// Perform all conversions.
 	for (idx=0 ; idx<ADC_MEDIAN_FILTER_SIZE ; idx++) {

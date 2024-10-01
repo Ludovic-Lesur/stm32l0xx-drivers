@@ -267,10 +267,10 @@ ADC_status_t ADC_compute_tmcu(int32_t vmcu_mv, int32_t tmcu_12bits, int32_t* tmc
 		goto errors;
 	}
 	// Compute temperature according to MCU factory calibration.
-	raw_temp_calib_mv = ((tmcu_12bits * vmcu_mv) / (TS_VCC_CALIB_MV)) - TS_CAL1;
-	temp_calib_degrees = raw_temp_calib_mv * (TS_CAL2_TEMP - TS_CAL1_TEMP);
-	temp_calib_degrees = (temp_calib_degrees) / (TS_CAL2 - TS_CAL1);
-	(*tmcu_degrees) = temp_calib_degrees + TS_CAL1_TEMP;
+	raw_temp_calib_mv = ((tmcu_12bits * vmcu_mv) / (ADC_TS_VCC_CALIB_MV)) - ADC_TS_CAL1;
+	temp_calib_degrees = raw_temp_calib_mv * (ADC_TS_CAL2_TEMP - ADC_TS_CAL1_TEMP);
+	temp_calib_degrees = (temp_calib_degrees) / (ADC_TS_CAL2 - ADC_TS_CAL1);
+	(*tmcu_degrees) = temp_calib_degrees + ADC_TS_CAL1_TEMP;
 errors:
 	return status;
 }
@@ -278,6 +278,6 @@ errors:
 /*******************************************************************/
 int32_t ADC_get_vrefint_voltage_mv(void) {
 	// Local variables.
-	int32_t vrefint_mv = ((VREFINT_CAL * VREFINT_VCC_CALIB_MV) / (ADC_FULL_SCALE));
+	int32_t vrefint_mv = ((ADC_VREFINT_CAL * ADC_VREFINT_VCC_CALIB_MV) / (ADC_FULL_SCALE));
 	return vrefint_mv;
 }

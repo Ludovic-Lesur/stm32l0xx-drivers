@@ -17,12 +17,12 @@
  * \brief FLASH driver error codes.
  *******************************************************************/
 typedef enum {
-	// Driver errors.
-	FLASH_SUCCESS = 0,
-	FLASH_ERROR_LATENCY,
-	FLASH_ERROR_TIMEOUT,
-	// Last base value.
-	FLASH_ERROR_BASE_LAST = 0x0100
+    // Driver errors.
+    FLASH_SUCCESS = 0,
+    FLASH_ERROR_LATENCY,
+    FLASH_ERROR_TIMEOUT,
+    // Last base value.
+    FLASH_ERROR_BASE_LAST = 0x0100
 } FLASH_status_t;
 
 /*** FLASH functions ***/
@@ -30,9 +30,9 @@ typedef enum {
 /*!******************************************************************
  * \fn FLASH_status_t FLASH_set_latency(uint8_t wait_states)
  * \brief Set FLASH latency.
- * \param[in]  	wait_states: Number of wait states to set.
- * \param[out] 	none
- * \retval		Function execution status.
+ * \param[in]   wait_states: Number of wait states to set.
+ * \param[out]  none
+ * \retval      Function execution status.
  *******************************************************************/
 FLASH_status_t FLASH_set_latency(uint8_t wait_states);
 

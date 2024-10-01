@@ -14,7 +14,7 @@
 
 // Based on worst case 56kHz LSI clock frequency, minimum IWDG period is 18 seconds.
 // Adding 3 second margin to perform reload operation, the maximum free delay is limited to 15 seconds.
-#define IWDG_FREE_DELAY_SECONDS_MAX		15
+#define IWDG_FREE_DELAY_SECONDS_MAX     15
 
 /*** IWDG structures ***/
 
@@ -23,11 +23,11 @@
  * \brief IWDG driver error codes.
  *******************************************************************/
 typedef enum {
-	// Driver errors.
-	IWDG_SUCCESS = 0,
-	IWDG_ERROR_TIMEOUT,
-	// Last base value.
-	IWDG_ERROR_BASE_LAST = 0x0100
+    // Driver errors.
+    IWDG_SUCCESS = 0,
+    IWDG_ERROR_TIMEOUT,
+    // Last base value.
+    IWDG_ERROR_BASE_LAST = 0x0100
 } IWDG_status_t;
 
 /*** IWDG functions ***/
@@ -35,18 +35,18 @@ typedef enum {
 /*!******************************************************************
  * \fn IWDG_status_t IWDG_init(void)
  * \brief Start independent watchdog.
- * \param[in]  	none
- * \param[out] 	none
- * \retval		Function execution status.
+ * \param[in]   none
+ * \param[out]  none
+ * \retval      Function execution status.
  *******************************************************************/
 IWDG_status_t IWDG_init(void);
 
 /*!******************************************************************
  * \fn void IWDG_reload(void)
  * \brief Refresh independent watchdog.
- * \param[in]  	none
- * \param[out] 	none
- * \retval		Function execution status.
+ * \param[in]   none
+ * \param[out]  none
+ * \retval      Function execution status.
  *******************************************************************/
 void IWDG_reload(void);
 

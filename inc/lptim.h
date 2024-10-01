@@ -17,15 +17,15 @@
  * \brief LPTIM driver error codes.
  *******************************************************************/
 typedef enum {
-	// Driver errors.
-	LPTIM_SUCCESS = 0,
-	LPTIM_ERROR_DELAY_UNDERFLOW,
-	LPTIM_ERROR_DELAY_OVERFLOW,
-	LPTIM_ERROR_DELAY_MODE,
-	LPTIM_ERROR_ARR_TIMEOUT,
-	LPTIM_ERROR_CLOCK_SOURCE,
-	// Last base value.
-	LPTIM_ERROR_BASE_LAST = 0x0100
+    // Driver errors.
+    LPTIM_SUCCESS = 0,
+    LPTIM_ERROR_DELAY_UNDERFLOW,
+    LPTIM_ERROR_DELAY_OVERFLOW,
+    LPTIM_ERROR_DELAY_MODE,
+    LPTIM_ERROR_ARR_TIMEOUT,
+    LPTIM_ERROR_CLOCK_SOURCE,
+    // Last base value.
+    LPTIM_ERROR_BASE_LAST = 0x0100
 } LPTIM_status_t;
 
 /*!******************************************************************
@@ -33,10 +33,10 @@ typedef enum {
  * \brief LPTIM delay waiting modes.
  *******************************************************************/
 typedef enum {
-	LPTIM_DELAY_MODE_ACTIVE = 0,
-	LPTIM_DELAY_MODE_SLEEP,
-	LPTIM_DELAY_MODE_STOP,
-	LPTIM_DELAY_MODE_LAST
+    LPTIM_DELAY_MODE_ACTIVE = 0,
+    LPTIM_DELAY_MODE_SLEEP,
+    LPTIM_DELAY_MODE_STOP,
+    LPTIM_DELAY_MODE_LAST
 } LPTIM_delay_mode_t;
 
 /*** LPTIM functions ***/
@@ -44,19 +44,19 @@ typedef enum {
 /*!******************************************************************
  * \fn void LPTIM_init(uint8_t nvic_priority)
  * \brief Init LPTIM peripheral for delay operation.
- * \param[in]  	nvic_priority: Interrupt priority.
- * \param[out] 	none
- * \retval		none
+ * \param[in]   nvic_priority: Interrupt priority.
+ * \param[out]  none
+ * \retval      none
  *******************************************************************/
 void LPTIM_init(uint8_t nvic_priority);
 
 /*!******************************************************************
  * \fn LPTIM_status_t LPTIM_delay_milliseconds(uint32_t delay_ms, LPTIM_delay_mode_t delay_mode)
  * \brief Delay function.
- * \param[in]  	delay_ms: Delay to wait in ms.
- * \param[in]	delay_mode: Delay waiting mode.
- * \param[out] 	none
- * \retval		Function execution status.
+ * \param[in]   delay_ms: Delay to wait in ms.
+ * \param[in]   delay_mode: Delay waiting mode.
+ * \param[out]  none
+ * \retval      Function execution status.
  *******************************************************************/
 LPTIM_status_t LPTIM_delay_milliseconds(uint32_t delay_ms, LPTIM_delay_mode_t delay_mode);
 

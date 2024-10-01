@@ -17,13 +17,13 @@
  * \brief AES driver error codes.
  *******************************************************************/
 typedef enum {
-	// Driver errors.
-	AES_SUCCESS = 0,
-	AES_ERROR_UNINITIALIZED,
-	AES_ERROR_NULL_PARAMETER,
-	AES_ERROR_TIMEOUT,
-	// Last base value.
-	AES_ERROR_BASE_LAST = 0x0100
+    // Driver errors.
+    AES_SUCCESS = 0,
+    AES_ERROR_UNINITIALIZED,
+    AES_ERROR_NULL_PARAMETER,
+    AES_ERROR_TIMEOUT,
+    // Last base value.
+    AES_ERROR_BASE_LAST = 0x0100
 } AES_status_t;
 
 /*** AES functions ***/
@@ -31,28 +31,28 @@ typedef enum {
 /*!******************************************************************
  * \fn void AES_init(void)
  * \brief Init AES peripheral.
- * \param[in]  	none
- * \param[out] 	none
- * \retval		none
+ * \param[in]   none
+ * \param[out]  none
+ * \retval      none
  *******************************************************************/
 void AES_init(void);
 
 /*!******************************************************************
  * \fn void AES_de_init(void)
  * \brief Release AES peripheral.
- * \param[in]  	none
- * \param[out] 	none
- * \retval		none
+ * \param[in]   none
+ * \param[out]  none
+ * \retval      none
  *******************************************************************/
 void AES_de_init(void);
 
 /*!******************************************************************
  * \fn AES_status_t AES_encrypt(uint8_t* data_in, uint8_t* data_out, uint8_t* key)
  * \brief Compute AES-128.
- * \param[in]  	data_in: Input data.
- * \param[in]	key: AES key.
- * \param[out] 	data_out: Output data.
- * \retval		Function execution status.
+ * \param[in]   data_in: Input data.
+ * \param[in]   key: AES key.
+ * \param[out]  data_out: Output data.
+ * \retval      Function execution status.
  *******************************************************************/
 AES_status_t AES_encrypt(uint8_t* data_in, uint8_t* data_out, uint8_t* key);
 

@@ -36,7 +36,7 @@ typedef struct {
 
 /*******************************************************************/
 typedef struct {
-    uint8_t enabled_gpio_mask;
+    uint16_t enabled_gpio_mask;
     EXTI_gpio_irq_cb_t gpio_irq_callbacks[GPIO_PINS_PER_PORT];
 } EXTI_context_t;
 

@@ -94,7 +94,7 @@ void LPTIM_init(uint8_t nvic_priority) {
     // Set interrupt priority.
     NVIC_set_priority(NVIC_INTERRUPT_LPTIM1, nvic_priority);
     // Enable LPTIM EXTI line.
-    EXTI_configure_line(EXTI_LINE_LPTIM1, EXTI_TRIGGER_RISING_EDGE);
+    EXTI_enable_line(EXTI_LINE_LPTIM1, EXTI_TRIGGER_RISING_EDGE);
 }
 
 /*******************************************************************/

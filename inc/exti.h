@@ -102,23 +102,23 @@ typedef void (*EXTI_gpio_irq_cb_t)(void);
 void EXTI_init(void);
 
 /*!******************************************************************
- * \fn void EXTI_configure_line(EXTI_line_t line, EXTI_trigger_t trigger)
- * \brief Configure EXTI line interrupt.
- * \param[in]   line: Line to configure as interrupt input.
- * \param[in]   trigger: GPIO edge trigger.
+ * \fn void EXTI_enable_line(EXTI_line_t line, EXTI_trigger_t trigger)
+ * \brief Enable EXTI line.
+ * \param[in]   line: Line to enable.
+ * \param[in]   trigger: Signal edge trigger.
  * \param[out]  none
  * \retval      none
  *******************************************************************/
-void EXTI_configure_line(EXTI_line_t line, EXTI_trigger_t trigger);
+void EXTI_enable_line(EXTI_line_t line, EXTI_trigger_t trigger);
 
 /*!******************************************************************
- * \fn void EXTI_release_line(EXTI_line_t line)
- * \brief Release EXTI line interrupt.
- * \param[in]   line: Line to release.
+ * \fn void EXTI_disable_line(EXTI_line_t line)
+ * \brief Disable EXTI line.
+ * \param[in]   line: Line to disable.
  * \param[out]  none
  * \retval      none
  *******************************************************************/
-void EXTI_release_line(EXTI_line_t line);
+void EXTI_disable_line(EXTI_line_t line);
 
 /*!******************************************************************
  * \fn void EXTI_clear_line_flag(EXTI_line_t line)
@@ -131,16 +131,17 @@ void EXTI_clear_line_flag(EXTI_line_t line);
 
 #if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_ALL) != 0)
 /*!******************************************************************
- * \fn void EXTI_configure_gpio(const GPIO_pin_t* gpio, EXTI_trigger_t trigger, EXTI_gpio_irq_cb_t irq_callback, uint8_t nvic_priority)
+ * \fn void EXTI_configure_gpio(const GPIO_pin_t* gpio, GPIO_pull_resistor_t pull_resistor, EXTI_trigger_t trigger, EXTI_gpio_irq_cb_t irq_callback, uint8_t nvic_priority)
  * \brief Configure EXTI GPIO interrupt.
  * \param[in]   gpio: GPIO to configure as interrupt input.
+ * \param[in]   pull_resistor: GPIO pull resistor configuration.
  * \param[in]   trigger: Edge trigger selection.
  * \param[in]   irq_callback: Function to call on GPIO interrupt.
  * \param[in]   nvic_priority: Interrupt priority.
  * \param[out]  none
  * \retval      none
  *******************************************************************/
-void EXTI_configure_gpio(const GPIO_pin_t* gpio, EXTI_trigger_t trigger, EXTI_gpio_irq_cb_t irq_callback, uint8_t nvic_priority);
+void EXTI_configure_gpio(const GPIO_pin_t* gpio, GPIO_pull_resistor_t pull_resistor, EXTI_trigger_t trigger, EXTI_gpio_irq_cb_t irq_callback, uint8_t nvic_priority);
 #endif
 
 #if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_ALL) != 0)
@@ -148,21 +149,10 @@ void EXTI_configure_gpio(const GPIO_pin_t* gpio, EXTI_trigger_t trigger, EXTI_gp
  * \fn void EXTI_release_gpio(const GPIO_pin_t* gpio)
  * \brief Release GPIO external interrupt.
  * \param[in]   gpio: GPIO to release.
- * \param[out]  none
+ * \param[out]  released_mode: GPIO mode to use when EXTI line is released.
  * \retval      none
  *******************************************************************/
-void EXTI_release_gpio(const GPIO_pin_t* gpio);
-#endif
-
-#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_ALL) != 0)
-/*!******************************************************************
- * \fn void EXTI_clear_gpio_flag(const GPIO_pin_t* gpio)
- * \brief Clear EXTI GPIO flag.
- * \param[in]   gpio: GPIO to clear.
- * \param[out]  none
- * \retval      none
- *******************************************************************/
-void EXTI_clear_gpio_flag(const GPIO_pin_t* gpio);
+void EXTI_release_gpio(const GPIO_pin_t* gpio, GPIO_mode_t released_mode);
 #endif
 
 #if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_ALL) != 0)
@@ -185,6 +175,17 @@ void EXTI_enable_gpio_interrupt(const GPIO_pin_t* gpio);
  * \retval      Function execution status.
  *******************************************************************/
 void EXTI_disable_gpio_interrupt(const GPIO_pin_t* gpio);
+#endif
+
+#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_ALL) != 0)
+/*!******************************************************************
+ * \fn void EXTI_clear_gpio_flag(const GPIO_pin_t* gpio)
+ * \brief Clear EXTI GPIO flag.
+ * \param[in]   gpio: GPIO to clear.
+ * \param[out]  none
+ * \retval      none
+ *******************************************************************/
+void EXTI_clear_gpio_flag(const GPIO_pin_t* gpio);
 #endif
 
 #endif /* __EXTI_H__ */

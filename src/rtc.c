@@ -168,7 +168,7 @@ RTC_status_t RTC_init(RTC_irq_cb_t wakeup_timer_irq_callback, uint8_t nvic_prior
     // Register callback.
     rtc_ctx.wakeup_timer_irq_callback = wakeup_timer_irq_callback;
     // Configure interrupt.
-    EXTI_configure_line(EXTI_LINE_RTC_WAKEUP_TIMER, EXTI_TRIGGER_RISING_EDGE);
+    EXTI_enable_line(EXTI_LINE_RTC_WAKEUP_TIMER, EXTI_TRIGGER_RISING_EDGE);
     NVIC_set_priority(NVIC_INTERRUPT_RTC, nvic_priority);
     // Enable wake-up timer clocked by RTC clock (1Hz).
     RTC->CR = 0x00004424;
@@ -235,7 +235,7 @@ RTC_status_t RTC_start_alarm(RTC_alarm_t alarm, RTC_alarm_configuration_t* confi
         // Clear flag.
         RTC->ISR &= ~(0b1 << 8);
         // Enable alarm A.
-        EXTI_configure_line(EXTI_LINE_RTC_ALARM, EXTI_TRIGGER_RISING_EDGE);
+        EXTI_enable_line(EXTI_LINE_RTC_ALARM, EXTI_TRIGGER_RISING_EDGE);
         RTC->CR |= (0b1 << 12) | (0b1 << 8);
         break;
 #endif
@@ -246,7 +246,7 @@ RTC_status_t RTC_start_alarm(RTC_alarm_t alarm, RTC_alarm_configuration_t* confi
         // Clear flag.
         RTC->ISR &= ~(0b1 << 9);
         // Enable alarm B.
-        EXTI_configure_line(EXTI_LINE_RTC_ALARM, EXTI_TRIGGER_RISING_EDGE);
+        EXTI_enable_line(EXTI_LINE_RTC_ALARM, EXTI_TRIGGER_RISING_EDGE);
         RTC->CR |= (0b1 << 13) | (0b1 << 9);
         break;
 #endif

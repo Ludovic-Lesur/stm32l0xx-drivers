@@ -202,7 +202,7 @@ LPUART_status_t LPUART_init(const LPUART_gpio_t* pins, LPUART_configuration_t* c
     if (status != LPUART_SUCCESS) goto errors;
 #endif
     // Configure interrupt.
-    EXTI_configure_line(EXTI_LINE_LPUART1, EXTI_TRIGGER_RISING_EDGE);
+    EXTI_enable_line(EXTI_LINE_LPUART1, EXTI_TRIGGER_RISING_EDGE);
     NVIC_set_priority(NVIC_INTERRUPT_LPUART1, (configuration->nvic_priority));
     // Enable transmitter and receiver.
     LPUART1->CR1 |= (0b11 << 2); // TE='1' and RE='1'.
@@ -244,6 +244,8 @@ LPUART_status_t LPUART_de_init(const LPUART_gpio_t* pins) {
         status = LPUART_ERROR_NULL_PARAMETER;
         goto errors;
     }
+    // Disable line.
+    EXTI_disable_line(EXTI_LINE_LPUART1);
     // Disable LPUART alternate function.
     GPIO_configure((pins->tx), GPIO_MODE_OUTPUT, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_LOW, GPIO_PULL_NONE);
     GPIO_configure((pins->rx), GPIO_MODE_OUTPUT, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_LOW, GPIO_PULL_NONE);

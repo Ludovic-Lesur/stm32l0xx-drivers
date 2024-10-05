@@ -356,21 +356,20 @@ RCC_status_t RCC_restore_previous_system_clock(void) {
     // Check previous configuration.
     switch (rcc_ctx.previous_sysclk.source) {
     case RCC_CLOCK_MSI:
-        RCC_switch_to_msi(rcc_ctx.previous_sysclk.msi_range);
+        status = RCC_switch_to_msi(rcc_ctx.previous_sysclk.msi_range);
         break;
     case RCC_CLOCK_HSI:
-        RCC_switch_to_hsi();
+        status = RCC_switch_to_hsi();
         break;
 #ifdef STM32L0XX_DRIVERS_RCC_HSE_ENABLE
     case RCC_CLOCK_HSE:
-        RCC_switch_to_hse(rcc_ctx.previous_sysclk.hse_mode);
+        status = RCC_switch_to_hse(rcc_ctx.previous_sysclk.hse_mode);
         break;
 #endif
     default:
         status = RCC_ERROR_CLOCK;
-        goto errors;
+        break;
     }
-errors:
     return status;
 }
 

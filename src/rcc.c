@@ -35,12 +35,18 @@
 
 /*******************************************************************/
 typedef struct {
-    RCC_clock_t sysclk_source;
+    RCC_clock_t source;
     RCC_msi_range_t msi_range;
-    uint32_t clock_frequency[RCC_CLOCK_LAST];
 #ifdef STM32L0XX_DRIVERS_RCC_HSE_ENABLE
     RCC_hse_mode_t hse_mode;
 #endif
+} RCC_system_clock_t;
+
+/*******************************************************************/
+typedef struct {
+    RCC_system_clock_t current_sysclk;
+    RCC_system_clock_t previous_sysclk;
+    uint32_t clock_frequency[RCC_CLOCK_LAST];
 } RCC_context_t;
 
 /*** RCC local global variables ***/
@@ -120,6 +126,16 @@ void _RCC_enable_lse(void) {
     NVIC_disable_interrupt(NVIC_INTERRUPT_RCC_CRS);
 }
 #endif
+
+/*******************************************************************/
+static void _RCC_save_system_clock(void) {
+    // Copy current settings in previous structure.
+    rcc_ctx.previous_sysclk.source = rcc_ctx.current_sysclk.source;
+    rcc_ctx.previous_sysclk.msi_range = rcc_ctx.current_sysclk.msi_range;
+#ifdef STM32L0XX_DRIVERS_RCC_HSE_ENABLE
+    rcc_ctx.previous_sysclk.hse_mode = rcc_ctx.current_sysclk.hse_mode;
+#endif
+}
 
 /*******************************************************************/
 static RCC_status_t _RCC_wait_for_clock_ready(RCC_clock_t clock, RCC_status_t timeout_error) {
@@ -208,15 +224,16 @@ RCC_status_t RCC_init(uint8_t nvic_priority) {
     // Local variables.
     RCC_status_t status = RCC_SUCCESS;
     // Set boot configuration.
-    rcc_ctx.sysclk_source = RCC_CLOCK_MSI;
-    rcc_ctx.msi_range = RCC_MSI_RANGE_5_2MHZ;
+    rcc_ctx.current_sysclk.source = RCC_CLOCK_MSI;
+    rcc_ctx.current_sysclk.msi_range = RCC_MSI_RANGE_5_2MHZ;
 #ifdef STM32L0XX_DRIVERS_RCC_HSE_ENABLE
-    rcc_ctx.hse_mode = RCC_HSE_MODE_OSCILLATOR;
+    rcc_ctx.current_sysclk.hse_mode = RCC_HSE_MODE_OSCILLATOR;
 #endif
+    _RCC_save_system_clock();
     // Set default frequencies.
-    rcc_ctx.clock_frequency[RCC_CLOCK_SYSTEM] = rcc_ctx.clock_frequency[rcc_ctx.sysclk_source];
+    rcc_ctx.clock_frequency[RCC_CLOCK_SYSTEM] = rcc_ctx.clock_frequency[rcc_ctx.current_sysclk.source];
     rcc_ctx.clock_frequency[RCC_CLOCK_HSI] = RCC_HSI_FREQUENCY_TYPICAL_HZ;
-    rcc_ctx.clock_frequency[RCC_CLOCK_MSI] = RCC_MSI_FREQUENCY_TYPICAL[rcc_ctx.msi_range];
+    rcc_ctx.clock_frequency[RCC_CLOCK_MSI] = RCC_MSI_FREQUENCY_TYPICAL[rcc_ctx.current_sysclk.msi_range];
     rcc_ctx.clock_frequency[RCC_CLOCK_HSE] = STM32L0XX_DRIVERS_RCC_HSE_FREQUENCY_HZ;
     rcc_ctx.clock_frequency[RCC_CLOCK_PLL] = 0;
     rcc_ctx.clock_frequency[RCC_CLOCK_LSI] = RCC_LSI_FREQUENCY_TYPICAL_HZ;
@@ -241,6 +258,8 @@ RCC_status_t RCC_switch_to_hsi(void) {
     // Local variables.
     RCC_status_t status = RCC_SUCCESS;
     FLASH_status_t flash_status = FLASH_SUCCESS;
+    // Save current configuration.
+    _RCC_save_system_clock();
     // Set flash latency.
     flash_status = FLASH_set_latency(1);
     FLASH_exit_error(RCC_ERROR_BASE_FLASH);
@@ -253,10 +272,10 @@ RCC_status_t RCC_switch_to_hsi(void) {
     status = _RCC_switch_system_clock(RCC_CLOCK_HSI, RCC_ERROR_HSI_SWITCH);
     if (status != RCC_SUCCESS) goto errors;
     // Update clocks context.
-    rcc_ctx.sysclk_source = RCC_CLOCK_HSI;
+    rcc_ctx.current_sysclk.source = RCC_CLOCK_HSI;
 errors:
     // Update system clock frequency.
-    rcc_ctx.clock_frequency[RCC_CLOCK_SYSTEM] = rcc_ctx.clock_frequency[rcc_ctx.sysclk_source];
+    rcc_ctx.clock_frequency[RCC_CLOCK_SYSTEM] = rcc_ctx.clock_frequency[rcc_ctx.current_sysclk.source];
     return status;
 }
 
@@ -266,6 +285,8 @@ RCC_status_t RCC_switch_to_hse(RCC_hse_mode_t hse_mode) {
     // Local variables.
     RCC_status_t status = RCC_SUCCESS;
     FLASH_status_t flash_status = FLASH_SUCCESS;
+    // Save current configuration.
+    _RCC_save_system_clock();
     // Set flash latency.
     flash_status = FLASH_set_latency(1);
     FLASH_exit_error(RCC_ERROR_BASE_FLASH);
@@ -282,10 +303,11 @@ RCC_status_t RCC_switch_to_hse(RCC_hse_mode_t hse_mode) {
     status = _RCC_switch_system_clock(RCC_CLOCK_HSE, RCC_ERROR_HSE_SWITCH);
     if (status != RCC_SUCCESS) goto errors;
     // Update clocks context.
-    rcc_ctx.sysclk_source = RCC_CLOCK_HSE;
+    rcc_ctx.current_sysclk.source = RCC_CLOCK_HSE;
+    rcc_ctx.current_sysclk.hse_mode = hse_mode;
 errors:
     // Update system clock frequency.
-    rcc_ctx.clock_frequency[RCC_CLOCK_SYSTEM] = rcc_ctx.clock_frequency[rcc_ctx.sysclk_source];
+    rcc_ctx.clock_frequency[RCC_CLOCK_SYSTEM] = rcc_ctx.clock_frequency[rcc_ctx.current_sysclk.source];
     return status;
 }
 #endif
@@ -300,11 +322,13 @@ RCC_status_t RCC_switch_to_msi(RCC_msi_range_t msi_range) {
         status = RCC_ERROR_MSI_RANGE;
         goto errors;
     }
+    // Save current configuration.
+    _RCC_save_system_clock();
     // Set MSI range.
     RCC->ICSCR &= ~(0b111 << 13);
     RCC->ICSCR |= (msi_range << 13);
     // Update MSI frequency.
-    rcc_ctx.msi_range = msi_range;
+    rcc_ctx.current_sysclk.msi_range = msi_range;
     rcc_ctx.clock_frequency[RCC_CLOCK_MSI] = RCC_MSI_FREQUENCY_TYPICAL[msi_range];
     // Enable MSI.
     RCC->CR |= (0b1 << 8); // MSION='1'.
@@ -318,10 +342,35 @@ RCC_status_t RCC_switch_to_msi(RCC_msi_range_t msi_range) {
     flash_status = FLASH_set_latency(0);
     FLASH_exit_error(RCC_ERROR_BASE_FLASH);
     // Update clocks context.
-    rcc_ctx.sysclk_source = RCC_CLOCK_MSI;
+    rcc_ctx.current_sysclk.source = RCC_CLOCK_MSI;
 errors:
     // Update system clock frequency.
-    rcc_ctx.clock_frequency[RCC_CLOCK_SYSTEM] = rcc_ctx.clock_frequency[rcc_ctx.sysclk_source];
+    rcc_ctx.clock_frequency[RCC_CLOCK_SYSTEM] = rcc_ctx.clock_frequency[rcc_ctx.current_sysclk.source];
+    return status;
+}
+
+/*******************************************************************/
+RCC_status_t RCC_restore_previous_system_clock(void) {
+    // Local variables.
+    RCC_status_t status = RCC_SUCCESS;
+    // Check previous configuration.
+    switch (rcc_ctx.previous_sysclk.source) {
+    case RCC_CLOCK_MSI:
+        RCC_switch_to_msi(rcc_ctx.previous_sysclk.msi_range);
+        break;
+    case RCC_CLOCK_HSI:
+        RCC_switch_to_hsi();
+        break;
+#ifdef STM32L0XX_DRIVERS_RCC_HSE_ENABLE
+    case RCC_CLOCK_HSE:
+        RCC_switch_to_hse(rcc_ctx.previous_sysclk.hse_mode);
+        break;
+#endif
+    default:
+        status = RCC_ERROR_CLOCK;
+        goto errors;
+    }
+errors:
     return status;
 }
 
@@ -331,13 +380,15 @@ RCC_status_t RCC_calibrate_internal_clocks(uint8_t nvic_priority) {
     // Local variables.
     RCC_status_t status = RCC_SUCCESS;
     TIM_status_t tim_status = TIM_SUCCESS;
-    RCC_clock_t current_sysclk_source = rcc_ctx.sysclk_source;
     int32_t ref_clock_pulse_count = 0;
     int32_t mco_pulse_count = 0;
     uint64_t temp_u64 = 0;
     uint32_t clock_frequency_hz = 0;
 #if (STM32L0XX_DRIVERS_RCC_LSE_MODE > 0)
     uint8_t lse_status = 0;
+#endif
+#ifdef STM32L0XX_DRIVERS_RCC_HSE_ENABLE
+    uint8_t restore_done = 0;
 #endif
     // Switch to HSI.
     status = RCC_switch_to_hsi();
@@ -374,9 +425,12 @@ lsi_calibration:
     // LSI calibration.
 #ifdef STM32L0XX_DRIVERS_RCC_HSE_ENABLE
     // Check if HSE is available for better precision.
-    if (current_sysclk_source == RCC_CLOCK_HSE) {
-        status = RCC_switch_to_hse(rcc_ctx.hse_mode);
+    if (rcc_ctx.previous_sysclk.source == RCC_CLOCK_HSE) {
+        // Restore HSE.
+        status = RCC_restore_previous_system_clock();
         if (status != RCC_SUCCESS) goto errors;
+        // Update local flag.
+        restore_done = 1;
     }
 #endif
     // Connect MCO to LSI clock.
@@ -400,30 +454,24 @@ errors:
     TIM_CAL_de_init(TIM_INSTANCE_TIM21);
     RCC_set_mco(RCC_CLOCK_NONE, RCC_MCO_PRESCALER_1, NULL);
     // Restore system clock.
-    switch (current_sysclk_source) {
-    case RCC_CLOCK_MSI:
-        RCC_switch_to_msi(rcc_ctx.msi_range);
-        break;
-    case RCC_CLOCK_HSI:
-        RCC_switch_to_hsi();
-        break;
 #ifdef STM32L0XX_DRIVERS_RCC_HSE_ENABLE
-    case RCC_CLOCK_HSE:
-        RCC_switch_to_hse(rcc_ctx.hse_mode);
-        break;
-#endif
-    default:
-        break;
+    if (restore_done == 0) {
+        status = RCC_restore_previous_system_clock();
+        if (status != RCC_SUCCESS) goto errors;
     }
+#else
+    status = RCC_restore_previous_system_clock();
+    if (status != RCC_SUCCESS) goto errors;
+#endif
     // Update system clock frequency.
-    rcc_ctx.clock_frequency[RCC_CLOCK_SYSTEM] = rcc_ctx.clock_frequency[rcc_ctx.sysclk_source];
+    rcc_ctx.clock_frequency[RCC_CLOCK_SYSTEM] = rcc_ctx.clock_frequency[rcc_ctx.current_sysclk.source];
     return status;
 }
 #endif
 
 /*******************************************************************/
 RCC_clock_t RCC_get_system_clock(void) {
-    return (rcc_ctx.sysclk_source);
+    return (rcc_ctx.current_sysclk.source);
 }
 
 /*******************************************************************/

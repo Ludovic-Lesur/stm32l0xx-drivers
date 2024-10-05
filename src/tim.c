@@ -811,8 +811,8 @@ TIM_status_t TIM_MCH_wait_channel_completion(TIM_instance_t instance, TIM_channe
                 status = _TIM_MCH_internal_watchdog(time_start, &time_reference);
                 if (status != TIM_SUCCESS) goto errors;
             }
-            // Go back to HSI.
-            rcc_status = RCC_switch_to_hsi();
+            // Restore previous clock.
+            rcc_status = RCC_restore_previous_system_clock();
             RCC_exit_error(TIM_ERROR_BASE_RCC);
         }
         else {

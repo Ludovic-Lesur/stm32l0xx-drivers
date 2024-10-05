@@ -140,6 +140,15 @@ RCC_status_t RCC_switch_to_hse(RCC_hse_mode_t hse_mode);
  *******************************************************************/
 RCC_status_t RCC_switch_to_msi(RCC_msi_range_t msi_range);
 
+/*!******************************************************************
+ * \fn RCC_status_t RCC_restore_previous_system_clock(void)
+ * \brief Restore the system clock configuration used before the last clock switch.
+ * \param[in]   none
+ * \param[out]  none
+ * \retval      Function execution status.
+ *******************************************************************/
+RCC_status_t RCC_restore_previous_system_clock(void);
+
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x04) != 0)
 /*!******************************************************************
  * \fn RCC_status_t RCC_calibrate_internal_clocks(uint8_t nvic_priority)

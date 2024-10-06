@@ -13,6 +13,7 @@ Here is the versions compatibility table:
 
 | **stm32l0xx-drivers** | **stm32l0xx-registers** | **embedded-utils** |
 |:---:|:---:|:---:|
+| [sw4.2](https://github.com/Ludovic-Lesur/stm32l0xx-drivers/releases/tag/sw4.2) | >= [sw2.0](https://github.com/Ludovic-Lesur/stm32l0xx-registers/releases/tag/sw2.0) | >= [sw2.0](https://github.com/Ludovic-Lesur/embedded-utils/releases/tag/sw2.0) |
 | [sw4.1](https://github.com/Ludovic-Lesur/stm32l0xx-drivers/releases/tag/sw4.1) | >= [sw2.0](https://github.com/Ludovic-Lesur/stm32l0xx-registers/releases/tag/sw2.0) | >= [sw2.0](https://github.com/Ludovic-Lesur/embedded-utils/releases/tag/sw2.0) |
 | [sw4.0](https://github.com/Ludovic-Lesur/stm32l0xx-drivers/releases/tag/sw4.0) | >= [sw2.0](https://github.com/Ludovic-Lesur/stm32l0xx-registers/releases/tag/sw2.0) | >= [sw2.0](https://github.com/Ludovic-Lesur/embedded-utils/releases/tag/sw2.0) |
 | [sw3.0](https://github.com/Ludovic-Lesur/stm32l0xx-drivers/releases/tag/sw3.0) | [sw1.3](https://github.com/Ludovic-Lesur/stm32l0xx-registers/releases/tag/sw1.3) | >= [sw2.0](https://github.com/Ludovic-Lesur/embedded-utils/releases/tag/sw2.0) |

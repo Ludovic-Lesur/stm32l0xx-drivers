@@ -136,7 +136,7 @@ ADC_status_t ADC_init(const ADC_gpio_t* pins) {
     }
     // ADC calibration.
     ADC1->CR |= (0b1 << 31); // ADCAL='1'.
-    while ((((ADC1->CR) & (0b1 << 31)) != 0) && (((ADC1->ISR) & (0b1 << 11)) == 0)) {
+    while ((((ADC1->CR) & (0b1 << 31)) != 0) || (((ADC1->ISR) & (0b1 << 11)) == 0)) {
         // Wait until calibration is done or timeout.
         loop_count++;
         if (loop_count > ADC_TIMEOUT_COUNT) {

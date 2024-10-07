@@ -172,7 +172,7 @@ USART_status_t USART_init(USART_instance_t instance, const USART_gpio_t* pins, U
     RCC->CCIPR &= ~(0b1111 << 0); // Reset bits 2-3.
     RCC->CCIPR |= (0b1010 << 0); // USARTxSEL='10'.
     // Enable HSI in stop mode.
-    RCC->CR |= (0b1 << 1); // HSI16KERON='1'.
+    RCC_set_hsi_in_stop_mode(1);
     // Enable peripheral clock.
     (*USART_DESCRIPTOR[instance].rcc_enr) |= USART_DESCRIPTOR[instance].rcc_mask;
     (*USART_DESCRIPTOR[instance].rcc_smenr) |= USART_DESCRIPTOR[instance].rcc_mask;

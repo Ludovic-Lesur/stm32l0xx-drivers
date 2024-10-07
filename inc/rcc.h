@@ -149,6 +149,15 @@ RCC_status_t RCC_switch_to_msi(RCC_msi_range_t msi_range);
  *******************************************************************/
 RCC_status_t RCC_restore_previous_system_clock(void);
 
+/*!******************************************************************
+ * \fn void RCC_set_hsi_in_stop_mode(uint8_t enable)
+ * \brief Select HSI oscillator state in stop mode.
+ * \param[in]   enable: Disable (0) or enable (otherwise) HSI oscillator in stop mode.
+ * \param[out]  none
+ * \retval      none
+ *******************************************************************/
+void RCC_set_hsi_in_stop_mode(uint8_t enable);
+
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x04) != 0)
 /*!******************************************************************
  * \fn RCC_status_t RCC_calibrate_internal_clocks(uint8_t nvic_priority)

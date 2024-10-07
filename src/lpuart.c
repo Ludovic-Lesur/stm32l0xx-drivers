@@ -117,6 +117,8 @@ static LPUART_status_t _LPUART1_set_baud_rate(uint32_t baud_rate) {
         lpuart_clock = RCC_CLOCK_LSE;
     }
     else {
+        // Enable HSI in stop mode.
+        RCC_set_hsi_in_stop_mode(1);
         // Use HSI.
         RCC->CCIPR &= ~(0b1 << 10); // LPUART1SEL='10'.
         lpuart_clock = RCC_CLOCK_HSI;

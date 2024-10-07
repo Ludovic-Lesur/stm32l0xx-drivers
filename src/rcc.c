@@ -373,6 +373,17 @@ RCC_status_t RCC_restore_previous_system_clock(void) {
     return status;
 }
 
+/*******************************************************************/
+void RCC_set_hsi_in_stop_mode(uint8_t enable) {
+    // Check parameter.
+    if (enable == 0) {
+        RCC->CR &= ~(0b1 << 1); // HSI16KERON='0'.
+    }
+    else {
+        RCC->CR |= (0b1 << 1); // HSI16KERON='1'.
+    }
+}
+
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x04) != 0)
 /*******************************************************************/
 RCC_status_t RCC_calibrate_internal_clocks(uint8_t nvic_priority) {

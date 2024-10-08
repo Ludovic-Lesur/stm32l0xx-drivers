@@ -47,6 +47,7 @@ typedef struct {
     RCC_system_clock_t current_sysclk;
     RCC_system_clock_t previous_sysclk;
     uint32_t clock_frequency[RCC_CLOCK_LAST];
+    uint8_t hsi_stop_mode_request_count;
 } RCC_context_t;
 
 /*** RCC local global variables ***/
@@ -238,6 +239,7 @@ RCC_status_t RCC_init(uint8_t nvic_priority) {
     rcc_ctx.clock_frequency[RCC_CLOCK_PLL] = 0;
     rcc_ctx.clock_frequency[RCC_CLOCK_LSI] = RCC_LSI_FREQUENCY_TYPICAL_HZ;
     rcc_ctx.clock_frequency[RCC_CLOCK_LSE] = STM32L0XX_DRIVERS_RCC_LSE_FREQUENCY_HZ;
+    rcc_ctx.hsi_stop_mode_request_count = 0;
     // Reset backup domain.
     _RCC_reset_backup_domain();
     // Set interrupt priority.
@@ -377,10 +379,19 @@ RCC_status_t RCC_restore_previous_system_clock(void) {
 void RCC_set_hsi_in_stop_mode(uint8_t enable) {
     // Check parameter.
     if (enable == 0) {
-        RCC->CR &= ~(0b1 << 1); // HSI16KERON='0'.
+        // Update initialization count.
+        if (rcc_ctx.hsi_stop_mode_request_count > 0) {
+            rcc_ctx.hsi_stop_mode_request_count--;
+        }
+        // Check initialization count.
+        if (rcc_ctx.hsi_stop_mode_request_count == 0) {
+            RCC->CR &= ~(0b1 << 1); // HSI16KERON='0'.
+        }
     }
     else {
         RCC->CR |= (0b1 << 1); // HSI16KERON='1'.
+        // Update initialization count.
+        rcc_ctx.hsi_stop_mode_request_count++;
     }
 }
 

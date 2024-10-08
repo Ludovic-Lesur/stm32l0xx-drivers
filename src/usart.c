@@ -232,6 +232,8 @@ USART_status_t USART_de_init(USART_instance_t instance, const USART_gpio_t* pins
         status = USART_ERROR_NULL_PARAMETER;
         goto errors;
     }
+    // Disable HSI in stop mode.
+    RCC_set_hsi_in_stop_mode(0);
     // Disable USART alternate function.
     GPIO_configure((pins->tx), GPIO_MODE_ANALOG, GPIO_TYPE_OPEN_DRAIN, GPIO_SPEED_LOW, GPIO_PULL_NONE);
     GPIO_configure((pins->rx), GPIO_MODE_ANALOG, GPIO_TYPE_OPEN_DRAIN, GPIO_SPEED_LOW, GPIO_PULL_NONE);

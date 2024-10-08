@@ -246,6 +246,8 @@ LPUART_status_t LPUART_de_init(const LPUART_gpio_t* pins) {
         status = LPUART_ERROR_NULL_PARAMETER;
         goto errors;
     }
+    // Disable HSI in stop mode.
+    RCC_set_hsi_in_stop_mode(0);
     // Disable line.
     EXTI_disable_line(EXTI_LINE_LPUART1);
     // Disable LPUART alternate function.

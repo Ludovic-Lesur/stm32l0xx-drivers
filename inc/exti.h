@@ -149,7 +149,8 @@ void EXTI_configure_gpio(const GPIO_pin_t* gpio, GPIO_pull_resistor_t pull_resis
  * \fn void EXTI_release_gpio(const GPIO_pin_t* gpio)
  * \brief Release GPIO external interrupt.
  * \param[in]   gpio: GPIO to release.
- * \param[out]  released_mode: GPIO mode to use when EXTI line is released.
+ * \param[in]   released_mode: GPIO mode to use when EXTI line is released.
+ * \param[out]  none
  * \retval      none
  *******************************************************************/
 void EXTI_release_gpio(const GPIO_pin_t* gpio, GPIO_mode_t released_mode);

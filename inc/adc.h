@@ -79,7 +79,7 @@ typedef enum {
  * \brief ADC GPIO pins list.
  *******************************************************************/
 typedef struct {
-    const GPIO_pin_t* list;
+    const GPIO_pin_t** list;
     uint8_t list_size;
 } ADC_gpio_t;
 

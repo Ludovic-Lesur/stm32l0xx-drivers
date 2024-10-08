@@ -105,7 +105,7 @@ ADC_status_t ADC_init(const ADC_gpio_t* pins) {
     // Init GPIOs.
     if (pins != NULL) {
         for (idx = 0; idx < (pins->list_size); idx++) {
-            GPIO_configure(&((pins->list)[idx]), GPIO_MODE_ANALOG, GPIO_TYPE_OPEN_DRAIN, GPIO_SPEED_LOW, GPIO_PULL_NONE);
+            GPIO_configure(pins->list[idx], GPIO_MODE_ANALOG, GPIO_TYPE_OPEN_DRAIN, GPIO_SPEED_LOW, GPIO_PULL_NONE);
         }
     }
     // Get system clock frequency.

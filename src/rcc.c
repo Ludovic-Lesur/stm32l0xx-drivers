@@ -64,16 +64,6 @@ void __attribute__((optimize("-O0"))) RCC_IRQHandler(void) {
 }
 
 /*******************************************************************/
-static void __attribute__((optimize("-O0"))) _RCC_reset_backup_domain(void) {
-    // Local variables.
-    uint8_t count = 0;
-    // Perform manual reset and delay.
-    RCC->CSR |= (0b1 << 19); // RTCRST='1'.
-    for (count = 0; count < 100; count++);
-    RCC->CSR &= ~(0b1 << 19); // RTCRST='0'.
-}
-
-/*******************************************************************/
 void _RCC_enable_lsi(void) {
     // Enable LSI.
     RCC->CSR |= (0b1 << 0); // LSION='1'.
@@ -240,8 +230,6 @@ RCC_status_t RCC_init(uint8_t nvic_priority) {
     rcc_ctx.clock_frequency[RCC_CLOCK_LSI] = RCC_LSI_FREQUENCY_TYPICAL_HZ;
     rcc_ctx.clock_frequency[RCC_CLOCK_LSE] = STM32L0XX_DRIVERS_RCC_LSE_FREQUENCY_HZ;
     rcc_ctx.hsi_stop_mode_request_count = 0;
-    // Reset backup domain.
-    _RCC_reset_backup_domain();
     // Set interrupt priority.
     NVIC_set_priority(NVIC_INTERRUPT_RCC_CRS, nvic_priority);
     // Start low speed oscillators.

@@ -16,14 +16,28 @@
 #include "rtc_reg.h"
 #include "scb_reg.h"
 
+/*** PWR local functions ***/
+
+/*******************************************************************/
+static void __attribute__((optimize("-O0"))) _PWR_reset_backup_domain(void) {
+    // Local variables.
+    uint8_t count = 0;
+    // Unlock back-up registers.
+    PWR->CR |= (0b1 << 8); // DBP='1'.
+    // Perform manual reset and delay.
+    RCC->CSR |= (0b1 << 19); // RTCRST='1'.
+    for (count = 0; count < 100; count++);
+    RCC->CSR &= ~(0b1 << 19); // RTCRST='0'.
+}
+
 /*** PWR functions ***/
 
 /*******************************************************************/
 void PWR_init(void) {
     // Enable power interface clock.
     RCC->APB1ENR |= (0b1 << 28); // PWREN='1'.
-    // Unlock back-up registers (DBP bit).
-    PWR->CR |= (0b1 << 8);
+    // Reset backup domain.
+    _PWR_reset_backup_domain();
     // Power memories down when entering sleep mode.
     FLASH->ACR |= (0b1 << 3); // SLEEP_PD='1'.
     // Switch internal voltage reference off in low power mode and ignore startup time.

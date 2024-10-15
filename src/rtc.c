@@ -24,8 +24,7 @@
 
 /*******************************************************************/
 typedef struct {
-    uint32_t wakeup_timer_period_seconds;
-    uint32_t uptime_seconds;
+    volatile uint32_t uptime_seconds;
     RTC_irq_cb_t wakeup_timer_irq_callback;
 #if ((STM32L0XX_DRIVERS_RTC_ALARM_MASK & 0x01) != 0)
     RTC_irq_cb_t alarm_a_irq_callback;

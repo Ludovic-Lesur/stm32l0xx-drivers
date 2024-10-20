@@ -70,7 +70,7 @@ static SPI_context_t spi_ctx = { .init_count = { 0 } };
         goto errors; \
     } \
     /* Transfer loop */ \
-    for (transfer_idx=0 ; transfer_idx<transfer_size ; transfer_idx++) { \
+    for (transfer_idx = 0; transfer_idx < transfer_size; transfer_idx++) { \
         /* Dummy read to DR to clear RXNE flag */ \
         rx_data[transfer_idx] = (*spi_dr_ptr); \
         /* Wait for TXE flag */ \

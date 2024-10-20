@@ -31,10 +31,19 @@
 /*** LPTIM local structures ***/
 
 /*******************************************************************/
+typedef union {
+    struct {
+        unsigned wake_up :1;
+        unsigned running :1;
+    };
+    uint8_t all;
+} LPTIM_flags_t;
+
+/*******************************************************************/
 typedef struct {
     RCC_clock_t clock_source;
     uint32_t clock_frequency_hz;
-    volatile uint8_t wake_up;
+    volatile LPTIM_flags_t flags;
 } LPTIM_context_t;
 
 /*** LPTIM local global variables ***/
@@ -49,7 +58,7 @@ void __attribute__((optimize("-O0"))) LPTIM1_IRQHandler(void) {
     if (((LPTIM1->ISR) & (0b1 << 1)) != 0) {
         // Set local flag.
         if (((LPTIM1->IER) & (0b1 << 1)) != 0) {
-            lptim_ctx.wake_up = 1;
+            lptim_ctx.flags.wake_up = 1;
         }
         // Clear flag.
         LPTIM1->ICR |= (0b1 << 1);
@@ -91,6 +100,8 @@ void LPTIM_init(uint8_t nvic_priority) {
     // Get clock source frequency.
     RCC_get_frequency_hz(lptim_ctx.clock_source, &lptim_clock_hz);
     lptim_ctx.clock_frequency_hz = (lptim_clock_hz >> 3);
+    // Reset flags.
+    lptim_ctx.flags.all = 0;
     // Set interrupt priority.
     NVIC_set_priority(NVIC_INTERRUPT_LPTIM1, nvic_priority);
     // Enable LPTIM EXTI line.
@@ -112,6 +123,13 @@ LPTIM_status_t LPTIM_delay_milliseconds(uint32_t delay_ms, LPTIM_delay_mode_t de
         status = LPTIM_ERROR_DELAY_UNDERFLOW;
         goto errors;
     }
+    // Check if delay is not already running (protect from interrupt call).
+    if (lptim_ctx.flags.running != 0) {
+        status = LPTIM_ERROR_ALREADY_RUNNING;
+        goto end;
+    }
+    // Set running flag.
+    lptim_ctx.flags.running = 1;
     // Force APB clock to access registers.
     RCC->CCIPR &= ~(0b11 << 18); // LPTIM1SEL='00'.
     // Enable peripheral clock.
@@ -142,13 +160,13 @@ LPTIM_status_t LPTIM_delay_milliseconds(uint32_t delay_ms, LPTIM_delay_mode_t de
     RCC->CCIPR |= (0b01 << 18);
 #elif (STM32L0XX_DRIVERS_RCC_LSE_MODE == 1)
     switch (lptim_ctx.clock_source) {
-        case RCC_CLOCK_LSE:
+    case RCC_CLOCK_LSE:
         RCC->CCIPR |= (0b11 << 18);
         break;
-        case RCC_CLOCK_LSI:
+    case RCC_CLOCK_LSI:
         RCC->CCIPR |= (0b01 << 18);
         break;
-        default:
+    default:
         status = LPTIM_ERROR_CLOCK_SOURCE;
         goto errors;
     }
@@ -156,7 +174,7 @@ LPTIM_status_t LPTIM_delay_milliseconds(uint32_t delay_ms, LPTIM_delay_mode_t de
     RCC->CCIPR |= (0b11 << 18);
 #endif
     // Clear wake-up flag.
-    lptim_ctx.wake_up = 0;
+    lptim_ctx.flags.wake_up = 0;
     // Start timer.
     LPTIM1->CR |= (0b1 << 1); // SNGSTRT='1'.
     // Perform delay with the selected waiting mode.
@@ -169,7 +187,7 @@ LPTIM_status_t LPTIM_delay_milliseconds(uint32_t delay_ms, LPTIM_delay_mode_t de
         // Enable interrupt.
         NVIC_enable_interrupt(NVIC_INTERRUPT_LPTIM1);
         // Enter sleep mode.
-        while (lptim_ctx.wake_up == 0) {
+        while (lptim_ctx.flags.wake_up == 0) {
             PWR_enter_sleep_mode();
         }
         // Disable interrupt.
@@ -179,7 +197,7 @@ LPTIM_status_t LPTIM_delay_milliseconds(uint32_t delay_ms, LPTIM_delay_mode_t de
         // Enable interrupt.
         NVIC_enable_interrupt(NVIC_INTERRUPT_LPTIM1);
         // Enter stop mode.
-        while (lptim_ctx.wake_up == 0) {
+        while (lptim_ctx.flags.wake_up == 0) {
             PWR_enter_stop_mode();
         }
         // Disable interrupt.
@@ -196,5 +214,8 @@ errors:
     RCC->APB1ENR &= ~(0b1 << 31); // LPTIM1EN='0'.
     // Force APB clock at the end of delay.
     RCC->CCIPR &= ~(0b11 << 18); // LPTIM1SEL='00'.
+    // Reset running flag.
+    lptim_ctx.flags.running = 0;
+end:
     return status;
 }

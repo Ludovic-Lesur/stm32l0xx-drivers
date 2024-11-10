@@ -192,13 +192,13 @@ USART_status_t USART_init(USART_instance_t instance, const USART_gpio_t* pins, U
 #endif
     // Set interrupt priority.
     NVIC_set_priority(USART_DESCRIPTOR[instance].nvic_interrupt, (configuration->nvic_priority));
+    // Configure GPIOs.
+    GPIO_configure((pins->tx), GPIO_MODE_ALTERNATE_FUNCTION, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_LOW, GPIO_PULL_NONE);
+    GPIO_configure((pins->rx), GPIO_MODE_ALTERNATE_FUNCTION, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_LOW, GPIO_PULL_NONE);
     // Enable transmitter and receiver.
     USART_DESCRIPTOR[instance].peripheral->CR1 |= (0b11 << 2); // TE='1' and RE='1'.
     // Enable peripheral.
     USART_DESCRIPTOR[instance].peripheral->CR1 |= (0b11 << 0); // UE='1' and UESM='1'.
-    // Configure GPIOs.
-    GPIO_configure((pins->tx), GPIO_MODE_ALTERNATE_FUNCTION, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_LOW, GPIO_PULL_NONE);
-    GPIO_configure((pins->rx), GPIO_MODE_ALTERNATE_FUNCTION, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_LOW, GPIO_PULL_NONE);
     // Register callback.
 #if (STM32L0XX_DRIVERS_USART_MODE == 0)
     usart_ctx.rxne_callback[instance] = (configuration->rxne_callback);

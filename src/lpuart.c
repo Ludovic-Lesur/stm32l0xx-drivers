@@ -206,13 +206,13 @@ LPUART_status_t LPUART_init(const LPUART_gpio_t* pins, LPUART_configuration_t* c
     // Configure interrupt.
     EXTI_enable_line(EXTI_LINE_LPUART1, EXTI_TRIGGER_RISING_EDGE);
     NVIC_set_priority(NVIC_INTERRUPT_LPUART1, (configuration->nvic_priority));
+    // Configure GPIOs.
+    GPIO_configure((pins->tx), GPIO_MODE_ALTERNATE_FUNCTION, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_LOW, GPIO_PULL_NONE);
+    GPIO_configure((pins->rx), GPIO_MODE_ALTERNATE_FUNCTION, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_LOW, GPIO_PULL_NONE);
     // Enable transmitter and receiver.
     LPUART1->CR1 |= (0b11 << 2); // TE='1' and RE='1'.
     // Enable peripheral.
     LPUART1->CR1 |= (0b11 << 0); // UE='1' and UESM='1'
-    // Configure GPIOs.
-    GPIO_configure((pins->tx), GPIO_MODE_ALTERNATE_FUNCTION, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_LOW, GPIO_PULL_NONE);
-    GPIO_configure((pins->rx), GPIO_MODE_ALTERNATE_FUNCTION, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_LOW, GPIO_PULL_NONE);
 #if ((STM32L0XX_DRIVERS_LPUART_MODE == 2) || (STM32L0XX_DRIVERS_LPUART_MODE == 3))
     // Put NRE pin in high impedance since it is directly connected to the DE pin.
     GPIO_configure((pins->de), GPIO_MODE_ALTERNATE_FUNCTION, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_LOW, GPIO_PULL_NONE);

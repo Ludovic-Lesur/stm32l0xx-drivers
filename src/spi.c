@@ -35,14 +35,12 @@ typedef struct {
 
 /*** SPI local global variables ***/
 
-// @formatter:off
 static const SPI_descriptor_t SPI_DESCRIPTOR[SPI_INSTANCE_LAST] = {
     { SPI1, &(RCC->APB2ENR), (0b1 << 12) },
 #if (STM32L0XX_REGISTERS_MCU_CATEGORY == 3) || (STM32L0XX_REGISTERS_MCU_CATEGORY == 5)
     { SPI2, &(RCC->APB1ENR), (0b1 << 14) },
 #endif
 };
-// @formatter:on
 static SPI_context_t spi_ctx = { .init_count = { 0 } };
 
 /*** SPI local functions ***/

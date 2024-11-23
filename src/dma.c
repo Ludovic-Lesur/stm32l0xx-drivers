@@ -45,7 +45,6 @@ typedef struct {
 /*** DMA local global variables ***/
 
 #if ((STM32L0XX_DRIVERS_DMA_CHANNEL_MASK & DMA_CHANNEL_MASK_ALL) != 0)
-// @formatter:off
 static const DMA_descriptor_t DMA_DESCRIPTOR[DMA_CHANNEL_LAST] = {
     { NVIC_INTERRUPT_DMA1_CH_1,   DMA_NVIC_SHARED_CHANNEL_MASK_CH1 },
     { NVIC_INTERRUPT_DMA1_CH_2_3, DMA_NVIC_SHARED_CHANNEL_MASK_CH2_CH3 },
@@ -57,7 +56,6 @@ static const DMA_descriptor_t DMA_DESCRIPTOR[DMA_CHANNEL_LAST] = {
     { NVIC_INTERRUPT_DMA1_CH_4_7, DMA_NVIC_SHARED_CHANNEL_MASK_CH4_CH7 },
 #endif
 };
-// @formatter:on
 static DMA_context_t dma_ctx = { .init_count = { 0 }, .enabled_channels_mask = 0, .started_channels_mask = 0, .channel_irq_callbacks = { NULL } };
 #endif
 

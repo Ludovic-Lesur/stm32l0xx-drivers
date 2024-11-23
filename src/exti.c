@@ -43,7 +43,6 @@ typedef struct {
 /*** EXTI local global variables ***/
 
 #if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_ALL) != 0)
-// @formatter:off
 static const EXTI_descriptor_t EXTI_DESCRIPTOR[GPIO_PINS_PER_PORT] = {
     { NVIC_INTERRUPT_EXTI_0_1,  EXTI_NVIC_SHARED_GPIO_MASK_PIN0_PIN1  },
     { NVIC_INTERRUPT_EXTI_0_1,  EXTI_NVIC_SHARED_GPIO_MASK_PIN0_PIN1  },
@@ -62,7 +61,6 @@ static const EXTI_descriptor_t EXTI_DESCRIPTOR[GPIO_PINS_PER_PORT] = {
     { NVIC_INTERRUPT_EXTI_4_15, EXTI_NVIC_SHARED_GPIO_MASK_PIN4_PIN15 },
     { NVIC_INTERRUPT_EXTI_4_15, EXTI_NVIC_SHARED_GPIO_MASK_PIN4_PIN15 }
 };
-// @formatter:on
 static EXTI_context_t exti_ctx = { .enabled_gpio_mask = 0, .gpio_irq_callbacks = { NULL } };
 #endif
 

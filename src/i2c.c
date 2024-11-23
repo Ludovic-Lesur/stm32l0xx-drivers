@@ -37,7 +37,6 @@ typedef struct {
 
 /*** I2C local global variables ***/
 
-// @formatter:off
 static const I2C_descriptor_t I2C_DESCRIPTOR[I2C_INSTANCE_LAST] = {
     { I2C1, &(RCC->APB1ENR), (0b1 << 21) },
 #if (STM32L0XX_REGISTERS_MCU_CATEGORY == 3) || (STM32L0XX_REGISTERS_MCU_CATEGORY == 5)
@@ -47,7 +46,6 @@ static const I2C_descriptor_t I2C_DESCRIPTOR[I2C_INSTANCE_LAST] = {
     { I2C3, &(RCC->APB1ENR), (0b1 << 30) },
 #endif
 };
-// @formatter:on
 static I2C_context_t i2c_ctx = { .init_count = { 0 } };
 
 /*** I2C local functions ***/

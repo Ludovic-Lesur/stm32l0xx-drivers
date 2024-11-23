@@ -130,7 +130,6 @@ typedef struct {
 /*** TIM local global variables ***/
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_ALL) != 0)
-// @formatter:off
 static const TIM_descriptor_t TIM_DESCRIPTOR[TIM_INSTANCE_LAST] = {
     { TIM2,  &(RCC->APB1RSTR), &(RCC->APB1SMENR), &(RCC->APB1ENR), (0b1 << 0), NVIC_INTERRUPT_TIM2 },
     { TIM21, &(RCC->APB2RSTR), &(RCC->APB2SMENR), &(RCC->APB2ENR), (0b1 << 2), NVIC_INTERRUPT_TIM21 },
@@ -145,7 +144,6 @@ static const TIM_descriptor_t TIM_DESCRIPTOR[TIM_INSTANCE_LAST] = {
     { TIM7,  &(RCC->APB1RSTR), &(RCC->APB1SMENR), &(RCC->APB1ENR), (0b1 << 5), NVIC_INTERRUPT_TIM7 },
 #endif
 };
-// @formatter:on
 #endif
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_STANDARD) != 0)
 static TIM_STD_context_t tim_std_ctx[TIM_INSTANCE_LAST];

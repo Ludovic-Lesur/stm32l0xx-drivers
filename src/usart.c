@@ -50,7 +50,6 @@ typedef struct {
 
 /*** USART local global variables ***/
 
-// @formatter:off
 static const USART_descriptor_t USART_DESCRIPTOR[USART_INSTANCE_LAST] = {
     { USART2, &(RCC->APB1ENR), &(RCC->APB1SMENR), (0b1 << 17), RCC_CLOCK_HSI, NVIC_INTERRUPT_USART2 },
 #if (STM32L0XX_REGISTERS_MCU_CATEGORY == 3) || (STM32L0XX_REGISTERS_MCU_CATEGORY == 5)
@@ -70,7 +69,7 @@ static USART_context_t usart_ctx = {
     .cmf_callback = { NULL },
 #endif
 };
-// @formatter:on
+
 /*** USART local functions ***/
 
 #if (STM32L0XX_DRIVERS_USART_MODE == 0)

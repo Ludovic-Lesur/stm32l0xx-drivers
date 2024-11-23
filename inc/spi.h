@@ -128,22 +128,22 @@ SPI_status_t SPI_de_init(SPI_instance_t instance, const SPI_gpio_t* pins);
 
 /*!******************************************************************
  * \fn SPI_status_t SPI_write_read_8(SPI_instance_t instance, uint8_t* tx_data, uint8_t* rx_data, uint8_t transfer_size)
- * \brief SPI 16-bits data transfer function.
+ * \brief SPI 8-bits data transfer function.
  * \param[in]   instance: Peripheral instance to use.
- * \param[in]   tx_data: Short array to send.
- * \param[in]   transfer_size: Number of shorts to send and receive.
- * \param[out]  rx_data: Pointer to the received shorts.
+ * \param[in]   tx_data: Bytes array to send.
+ * \param[in]   transfer_size: Number of bytes to send and receive.
+ * \param[out]  rx_data: Pointer to the received bytes.
  * \retval      Function execution status.
  *******************************************************************/
 SPI_status_t SPI_write_read_8(SPI_instance_t instance, uint8_t* tx_data, uint8_t* rx_data, uint8_t transfer_size);
 
 /*!******************************************************************
  * \fn SPI_status_t SPI_write_read_16(SPI_instance_t instance, uint16_t* tx_data, uint16_t* rx_data, uint8_t transfer_size)
- * \brief SPI 8-bits data transfer function.
+ * \brief SPI 16-bits data transfer function.
  * \param[in]   instance: Peripheral instance to use.
- * \param[in]   tx_data: Byte array to send.
- * \param[in]   transfer_size: Number of bytes to send and receive.
- * \param[out]  rx_data: Pointer to the received bytes.
+ * \param[in]   tx_data: Shorts array to send.
+ * \param[in]   transfer_size: Number of shorts to send and receive.
+ * \param[out]  rx_data: Pointer to the received shorts.
  * \retval      Function execution status.
  *******************************************************************/
 SPI_status_t SPI_write_read_16(SPI_instance_t instance, uint16_t* tx_data, uint16_t* rx_data, uint8_t transfer_size);

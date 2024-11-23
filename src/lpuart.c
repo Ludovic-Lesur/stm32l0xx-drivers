@@ -42,7 +42,6 @@ typedef struct {
 
 /*** LPUART local global variables ***/
 
-// @formatter:off
 static LPUART_context_t lpuart_ctx = {
     .init_count = 0,
 #if ((STM32L0XX_DRIVERS_LPUART_MODE == 0) || (STM32L0XX_DRIVERS_LPUART_MODE == 2) || (STM32L0XX_DRIVERS_LPUART_MODE == 3))
@@ -52,7 +51,7 @@ static LPUART_context_t lpuart_ctx = {
     .cmf_callback = NULL
 #endif
 };
-// @formatter:on
+
 /*** LPUART local functions ***/
 
 /*******************************************************************/

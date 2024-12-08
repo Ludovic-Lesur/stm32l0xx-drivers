@@ -23,8 +23,9 @@
 typedef enum {
     // Driver errors.
     LPUART_SUCCESS = 0,
-    LPUART_ERROR_UNINITIALIZED,
     LPUART_ERROR_NULL_PARAMETER,
+    LPUART_ERROR_ALREADY_INITIALIZED,
+    LPUART_ERROR_UNINITIALIZED,
     LPUART_ERROR_BAUD_RATE,
     LPUART_ERROR_RX_MODE,
     LPUART_ERROR_TX_TIMEOUT,
@@ -40,13 +41,13 @@ typedef enum {
 typedef struct {
     const GPIO_pin_t* tx;
     const GPIO_pin_t* rx;
-#if ((STM32L0XX_DRIVERS_LPUART_MODE == 2) || (STM32L0XX_DRIVERS_LPUART_MODE == 3))
+#if (STM32L0XX_DRIVERS_LPUART_MODE == 2)
     const GPIO_pin_t* de;
     const GPIO_pin_t* nre;
 #endif
 } LPUART_gpio_t;
 
-#if ((STM32L0XX_DRIVERS_LPUART_MODE == 0) || (STM32L0XX_DRIVERS_LPUART_MODE == 2) || (STM32L0XX_DRIVERS_LPUART_MODE == 3))
+#if ((STM32L0XX_DRIVERS_LPUART_MODE == 0) || (STM32L0XX_DRIVERS_LPUART_MODE == 2))
 /*!******************************************************************
  * \fn LPUART_rx_irq_cb_t
  * \brief LPUART RX interrupt callback.
@@ -62,7 +63,7 @@ typedef void (*LPUART_rx_irq_cb_t)(uint8_t data);
 typedef void (*LPUART_character_match_irq_cb_t)(void);
 #endif
 
-#if (STM32L0XX_DRIVERS_LPUART_MODE == 3)
+#if (STM32L0XX_DRIVERS_LPUART_MODE == 2)
 /*!******************************************************************
  * \enum LPUART_rx_mode_t
  * \brief LPUART RX modes list.
@@ -81,17 +82,15 @@ typedef enum {
 typedef struct {
     uint32_t baud_rate;
     uint8_t nvic_priority;
-#if ((STM32L0XX_DRIVERS_LPUART_MODE == 0) || (STM32L0XX_DRIVERS_LPUART_MODE == 2) || (STM32L0XX_DRIVERS_LPUART_MODE == 3))
+#if ((STM32L0XX_DRIVERS_LPUART_MODE == 0) || (STM32L0XX_DRIVERS_LPUART_MODE == 2))
     LPUART_rx_irq_cb_t rxne_callback;
 #endif
 #if (STM32L0XX_DRIVERS_LPUART_MODE == 1)
     char_t match_character;
     LPUART_character_match_irq_cb_t cmf_callback;
 #endif
-#if ((STM32L0XX_DRIVERS_LPUART_MODE == 2) || (STM32L0XX_DRIVERS_LPUART_MODE == 3))
+#if (STM32L0XX_DRIVERS_LPUART_MODE == 2)
     uint8_t self_address;
-#endif
-#if (STM32L0XX_DRIVERS_LPUART_MODE == 3)
     LPUART_rx_mode_t rx_mode;
 #endif
 } LPUART_configuration_t;
@@ -144,17 +143,6 @@ LPUART_status_t LPUART_disable_rx(void);
  * \retval      Function execution status.
  *******************************************************************/
 LPUART_status_t LPUART_write(uint8_t* data, uint32_t data_size_bytes);
-
-#if (STM32L0XX_DRIVERS_LPUART_MODE == 3)
-/*!******************************************************************
- * \fn LPUART_status_t LPUART_set_configuration(LPUART_configuration_t* configuration)
- * \brief Switch LPUART configuration.
- * \param[in]   configuration: Pointer to the LPUART configuration structure.
- * \param[out]  none
- * \retval      Function execution status.
- *******************************************************************/
-LPUART_status_t LPUART_set_configuration(LPUART_configuration_t* configuration);
-#endif
 
 /*******************************************************************/
 #define LPUART_exit_error(base) { ERROR_check_exit(lpuart_status, LPUART_SUCCESS, base) }

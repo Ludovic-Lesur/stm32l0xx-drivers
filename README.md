@@ -30,7 +30,7 @@ Here is the versions compatibility table:
 | `STM32L0XX_DRIVERS_DISABLE_FLAGS_FILE` | `defined` / `undefined` | Disable the `stm32l0xx_drivers_flags.h` header file inclusion when compilation flags are given in the project settings or by command line. |
 | `STM32L0XX_DRIVERS_DMA_CHANNEL_MASK` | `0x00` to `0x7F` | 7-bits field which defines the enabled DMA channels. |
 | `STM32L0XX_DRIVERS_EXTI_GPIO_MASK` | `0x0000` to `0xFFFF` | 16-bits field which defines the enabled EXTI GPIO lines. |
-| `STM32L0XX_DRIVERS_LPUART_MODE` | `0` / `1` / `2` / `3` | LPUART operation mode: `0` = RXNE interrupt `1` = CMF interrupt `2` = RS485 slave mode `3` = RS485 master mode. |
+| `STM32L0XX_DRIVERS_LPUART_MODE` | `0` / `1` / `2` | LPUART operation mode: `0` = RXNE interrupt `1` = CMF interrupt `2` = RS485 |
 | `STM32L0XX_DRIVERS_LPUART_DISABLE_TX_0` | `defined` / `undefined` | Disable the transmission of byte 0x00 if defined. |
 | `STM32L0XX_DRIVERS_RCC_HSE_ENABLE` | `defined` / `undefined` | Enable or disable external oscillator functions. |
 | `STM32L0XX_DRIVERS_RCC_HSE_FREQUENCY_HZ` | `<value>` | Defines the external high speed crystal frequency in Hz (if used). |

@@ -31,8 +31,8 @@
 
 /*******************************************************************/
 typedef struct {
-    uint8_t init_count;
-#if ((STM32L0XX_DRIVERS_LPUART_MODE == 0) || (STM32L0XX_DRIVERS_LPUART_MODE == 2) || (STM32L0XX_DRIVERS_LPUART_MODE == 3))
+    uint8_t init_flag;
+#if ((STM32L0XX_DRIVERS_LPUART_MODE == 0) || (STM32L0XX_DRIVERS_LPUART_MODE == 2))
     LPUART_rx_irq_cb_t rxne_callback;
 #endif
 #if (STM32L0XX_DRIVERS_LPUART_MODE == 1)
@@ -43,8 +43,8 @@ typedef struct {
 /*** LPUART local global variables ***/
 
 static LPUART_context_t lpuart_ctx = {
-    .init_count = 0,
-#if ((STM32L0XX_DRIVERS_LPUART_MODE == 0) || (STM32L0XX_DRIVERS_LPUART_MODE == 2) || (STM32L0XX_DRIVERS_LPUART_MODE == 3))
+    .init_flag = 0,
+#if ((STM32L0XX_DRIVERS_LPUART_MODE == 0) || (STM32L0XX_DRIVERS_LPUART_MODE == 2))
     .rxne_callback = NULL
 #endif
 #if (STM32L0XX_DRIVERS_LPUART_MODE == 1)
@@ -56,7 +56,7 @@ static LPUART_context_t lpuart_ctx = {
 
 /*******************************************************************/
 void __attribute__((optimize("-O0"))) LPUART1_IRQHandler(void) {
-#if ((STM32L0XX_DRIVERS_LPUART_MODE == 0) || (STM32L0XX_DRIVERS_LPUART_MODE == 2) || (STM32L0XX_DRIVERS_LPUART_MODE == 3))
+#if ((STM32L0XX_DRIVERS_LPUART_MODE == 0) || (STM32L0XX_DRIVERS_LPUART_MODE == 2))
     // Local variables.
     uint8_t rx_byte = 0;
     // RXNE interrupt.
@@ -138,7 +138,7 @@ errors:
     return status;
 }
 
-#if (STM32L0XX_DRIVERS_LPUART_MODE == 3)
+#if (STM32L0XX_DRIVERS_LPUART_MODE == 2)
 /*******************************************************************/
 static LPUART_status_t _LPUART_set_rx_mode(LPUART_rx_mode_t rx_mode) {
     // Local variables.
@@ -170,6 +170,11 @@ errors:
 LPUART_status_t LPUART_init(const LPUART_gpio_t* pins, LPUART_configuration_t* configuration) {
     // Local variables.
     LPUART_status_t status = LPUART_SUCCESS;
+    // Check init flag.
+    if (lpuart_ctx.init_flag != 0) {
+        status = LPUART_ERROR_ALREADY_INITIALIZED;
+        goto errors;
+    }
     // Check parameters.
     if ((pins == NULL) || (configuration == NULL)) {
         status = LPUART_ERROR_NULL_PARAMETER;
@@ -193,12 +198,10 @@ LPUART_status_t LPUART_init(const LPUART_gpio_t* pins, LPUART_configuration_t* c
     LPUART1->CR3 |= (0b1 << 6);// Transfer is performed after each RXNE event (see p.738 of RM0377 datasheet).
     LPUART1->CR1 |= (0b1 << 14);// Enable CM interrupt (CMIE='1').
 #endif
-#if ((STM32L0XX_DRIVERS_LPUART_MODE == 2) || (STM32L0XX_DRIVERS_LPUART_MODE == 3))
+#if (STM32L0XX_DRIVERS_LPUART_MODE == 2)
     LPUART1->CR1 |= 0x00002822;
     LPUART1->CR2 |= ((configuration->self_address) << 24) | (0b1 << 4);
     LPUART1->CR3 |= 0x00805000;
-#endif
-#if (STM32L0XX_DRIVERS_LPUART_MODE == 3)
     status = _LPUART_set_rx_mode(configuration->rx_mode);
     if (status != LPUART_SUCCESS) goto errors;
 #endif
@@ -208,15 +211,15 @@ LPUART_status_t LPUART_init(const LPUART_gpio_t* pins, LPUART_configuration_t* c
     // Configure GPIOs.
     GPIO_configure((pins->tx), GPIO_MODE_ALTERNATE_FUNCTION, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_LOW, GPIO_PULL_NONE);
     GPIO_configure((pins->rx), GPIO_MODE_ALTERNATE_FUNCTION, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_LOW, GPIO_PULL_NONE);
-    // Enable transmitter and receiver.
-    LPUART1->CR1 |= (0b11 << 2); // TE='1' and RE='1'.
-    // Enable peripheral.
-    LPUART1->CR1 |= (0b11 << 0); // UE='1' and UESM='1'
-#if ((STM32L0XX_DRIVERS_LPUART_MODE == 2) || (STM32L0XX_DRIVERS_LPUART_MODE == 3))
+#if (STM32L0XX_DRIVERS_LPUART_MODE == 2)
     // Put NRE pin in high impedance since it is directly connected to the DE pin.
     GPIO_configure((pins->de), GPIO_MODE_ALTERNATE_FUNCTION, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_LOW, GPIO_PULL_NONE);
     GPIO_configure((pins->nre), GPIO_MODE_ANALOG, GPIO_TYPE_OPEN_DRAIN, GPIO_SPEED_LOW, GPIO_PULL_NONE);
 #endif
+    // Enable transmitter and receiver.
+    LPUART1->CR1 |= (0b11 << 2); // TE='1' and RE='1'.
+    // Enable peripheral.
+    LPUART1->CR1 |= (0b11 << 0); // UE='1' and UESM='1'
     // Register callback.
 #if (STM32L0XX_DRIVERS_LPUART_MODE == 0)
     lpuart_ctx.rxne_callback = (configuration->rxne_callback);
@@ -225,7 +228,7 @@ LPUART_status_t LPUART_init(const LPUART_gpio_t* pins, LPUART_configuration_t* c
     lpuart_ctx.cmf_callback = (configuration->cmf_callback);
 #endif
     // Update initialization count.
-    lpuart_ctx.init_count++;
+    lpuart_ctx.init_flag = 1;
 errors:
     return status;
 }
@@ -234,12 +237,11 @@ errors:
 LPUART_status_t LPUART_de_init(const LPUART_gpio_t* pins) {
     // Local variables.
     LPUART_status_t status = LPUART_SUCCESS;
-    // Update initialization count.
-    if (lpuart_ctx.init_count > 0) {
-        lpuart_ctx.init_count--;
+    // Check state.
+    if (lpuart_ctx.init_flag == 0) {
+        status = LPUART_ERROR_UNINITIALIZED;
+        goto errors;
     }
-    // Check initialization count.
-    if (lpuart_ctx.init_count > 0) goto errors;
     // Check parameter.
     if (pins == NULL) {
         status = LPUART_ERROR_NULL_PARAMETER;
@@ -252,7 +254,7 @@ LPUART_status_t LPUART_de_init(const LPUART_gpio_t* pins) {
     // Disable LPUART alternate function.
     GPIO_configure((pins->tx), GPIO_MODE_OUTPUT, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_LOW, GPIO_PULL_NONE);
     GPIO_configure((pins->rx), GPIO_MODE_OUTPUT, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_LOW, GPIO_PULL_NONE);
-#if ((STM32L0XX_DRIVERS_LPUART_MODE == 2) || (STM32L0XX_DRIVERS_LPUART_MODE == 3))
+#if (STM32L0XX_DRIVERS_LPUART_MODE == 2)
     // Put NRE pin in high impedance since it is directly connected to the DE pin.
     GPIO_configure((pins->de), GPIO_MODE_OUTPUT, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_LOW, GPIO_PULL_NONE);
     GPIO_configure((pins->nre), GPIO_MODE_ANALOG, GPIO_TYPE_OPEN_DRAIN, GPIO_SPEED_LOW, GPIO_PULL_NONE);
@@ -261,6 +263,8 @@ LPUART_status_t LPUART_de_init(const LPUART_gpio_t* pins) {
     LPUART1->CR1 &= ~(0b1 << 0); // UE='0'.
     // Disable peripheral clock.
     RCC->APB1ENR &= ~(0b1 << 18); // LPUARTEN='0'.
+    // Update initialization count.
+    lpuart_ctx.init_flag = 0;
 errors:
     return status;
 }
@@ -270,7 +274,7 @@ LPUART_status_t LPUART_enable_rx(void) {
     // Local variables.
     LPUART_status_t status = LPUART_SUCCESS;
     // Check state.
-    if (lpuart_ctx.init_count == 0) {
+    if (lpuart_ctx.init_flag == 0) {
         status = LPUART_ERROR_UNINITIALIZED;
         goto errors;
     }
@@ -283,10 +287,6 @@ LPUART_status_t LPUART_enable_rx(void) {
     // Enable receiver.
     LPUART1->CR1 |= (0b1 << 2); // RE='1'.
 #if (STM32L0XX_DRIVERS_LPUART_MODE == 2)
-    // Mute mode request.
-    LPUART1->RQR |= (0b1 << 2); // MMRQ='1'.
-#endif
-#if (STM32L0XX_DRIVERS_LPUART_MODE == 3)
     // Check mode.
     if (((LPUART1->CR1) & (0b1 << 13)) != 0) {
         // Mute mode request.
@@ -302,7 +302,7 @@ LPUART_status_t LPUART_disable_rx(void) {
     // Local variables.
     LPUART_status_t status = LPUART_SUCCESS;
     // Check state.
-    if (lpuart_ctx.init_count == 0) {
+    if (lpuart_ctx.init_flag == 0) {
         status = LPUART_ERROR_UNINITIALIZED;
         goto errors;
     }
@@ -321,7 +321,7 @@ LPUART_status_t LPUART_write(uint8_t* data, uint32_t data_size_bytes) {
     uint32_t idx = 0;
     uint32_t loop_count = 0;
     // Check state.
-    if (lpuart_ctx.init_count == 0) {
+    if (lpuart_ctx.init_flag == 0) {
         status = LPUART_ERROR_UNINITIALIZED;
         goto errors;
     }
@@ -348,7 +348,7 @@ LPUART_status_t LPUART_write(uint8_t* data, uint32_t data_size_bytes) {
             }
         }
     }
-#if ((STM32L0XX_DRIVERS_LPUART_MODE == 2) || (STM32L0XX_DRIVERS_LPUART_MODE == 3))
+#if (STM32L0XX_DRIVERS_LPUART_MODE == 2)
     // Wait for TC flag.
     while (((LPUART1->ISR) & (0b1 << 6)) == 0) {
         // Exit if timeout.
@@ -362,35 +362,3 @@ LPUART_status_t LPUART_write(uint8_t* data, uint32_t data_size_bytes) {
 errors:
     return status;
 }
-
-#if (STM32L0XX_DRIVERS_LPUART_MODE == 3)
-/*******************************************************************/
-LPUART_status_t LPUART_set_configuration(LPUART_configuration_t* configuration) {
-    // Local variables.
-    LPUART_status_t status = LPUART_SUCCESS;
-    // Check state.
-    if (lpuart_ctx.init_count == 0) {
-        status = LPUART_ERROR_UNINITIALIZED;
-        goto errors;
-    }
-    // Check parameters.
-    if (configuration == NULL) {
-        status = LPUART_ERROR_NULL_PARAMETER;
-        goto errors;
-    }
-    // Temporary disable peripheral while configuring.
-    LPUART1->CR1 &= ~(0b1 << 0); // UE='0'.
-    // Set baud rate.
-    status = _LPUART1_set_baud_rate(configuration->baud_rate);
-    if (status != LPUART_SUCCESS) goto errors;
-    // Set RX mode.
-    status = _LPUART_set_rx_mode(configuration->rx_mode);
-    if (status != LPUART_SUCCESS) goto errors;
-    // Register callback.
-    lpuart_ctx.rxne_callback = (configuration->rxne_callback);
-errors:
-    // Enable peripheral.
-    LPUART1->CR1 |= (0b1 << 0); // UE='1'.
-    return status;
-}
-#endif

@@ -89,7 +89,7 @@ void __attribute__((optimize("-O0"))) LPUART1_IRQHandler(void) {
 }
 
 /*******************************************************************/
-static LPUART_status_t _LPUART1_set_baud_rate(uint32_t baud_rate) {
+static LPUART_status_t _LPUART_set_baud_rate(uint32_t baud_rate) {
     // Local variables.
     LPUART_status_t status = LPUART_SUCCESS;
     RCC_clock_t lpuart_clock;
@@ -112,14 +112,14 @@ static LPUART_status_t _LPUART1_set_baud_rate(uint32_t baud_rate) {
     // Check LSE status and baud rate.
     if ((baud_rate < LPUART_BAUD_RATE_CLOCK_THRESHOLD) && (lse_status != 0)) {
         // Use LSE.
-        RCC->CCIPR |= (0b1 << 10); // LPUART1SEL='11'.
+        RCC->CCIPR |= (0b11 << 10); // LPUART1SEL='11'.
         lpuart_clock = RCC_CLOCK_LSE;
     }
     else {
         // Enable HSI in stop mode.
         RCC_set_hsi_in_stop_mode(1);
         // Use HSI.
-        RCC->CCIPR &= ~(0b1 << 10); // LPUART1SEL='10'.
+        RCC->CCIPR &= ~(0b10 << 10); // LPUART1SEL='10'.
         lpuart_clock = RCC_CLOCK_HSI;
     }
 #endif
@@ -186,7 +186,7 @@ LPUART_status_t LPUART_init(const LPUART_gpio_t* pins, LPUART_configuration_t* c
     // Disable overrun detection (OVRDIS='1') and enable clock in stop mode (UCESM='1').
     LPUART1->CR3 |= (0b1 << 12) | (0b1 << 23);
     // Baud rate.
-    status = _LPUART1_set_baud_rate(configuration->baud_rate);
+    status = _LPUART_set_baud_rate(configuration->baud_rate);
     if (status != LPUART_SUCCESS) goto errors;
     // Configure peripheral.
 #if (STM32L0XX_DRIVERS_LPUART_MODE == 0)
@@ -221,7 +221,7 @@ LPUART_status_t LPUART_init(const LPUART_gpio_t* pins, LPUART_configuration_t* c
     // Enable peripheral.
     LPUART1->CR1 |= (0b11 << 0); // UE='1' and UESM='1'
     // Register callback.
-#if (STM32L0XX_DRIVERS_LPUART_MODE == 0)
+#if ((STM32L0XX_DRIVERS_LPUART_MODE == 0) || (STM32L0XX_DRIVERS_LPUART_MODE == 2))
     lpuart_ctx.rxne_callback = (configuration->rxne_callback);
 #endif
 #if (STM32L0XX_DRIVERS_LPUART_MODE == 1)

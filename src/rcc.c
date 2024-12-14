@@ -64,7 +64,7 @@ void __attribute__((optimize("-O0"))) RCC_IRQHandler(void) {
 }
 
 /*******************************************************************/
-void _RCC_enable_lsi(void) {
+static void _RCC_enable_lsi(void) {
     // Enable LSI.
     RCC->CSR |= (0b1 << 0); // LSION='1'.
     // Enable interrupt.
@@ -79,7 +79,7 @@ void _RCC_enable_lsi(void) {
 
 #if (STM32L0XX_DRIVERS_RCC_LSE_MODE == 1)
 /*******************************************************************/
-RCC_status_t _RCC_enable_lse(void) {
+static RCC_status_t _RCC_enable_lse(void) {
     // Local variables.
     RCC_status_t status = RCC_SUCCESS;
     uint32_t loop_count = 0;
@@ -104,7 +104,7 @@ errors:
 
 #if (STM32L0XX_DRIVERS_RCC_LSE_MODE == 2)
 /*******************************************************************/
-void _RCC_enable_lse(void) {
+static void _RCC_enable_lse(void) {
     // Enable LSE (32.768kHz crystal).
     RCC->CSR |= (0b1 << 8); // LSEON='1'.
     // Enable interrupt.
@@ -196,7 +196,7 @@ errors:
 }
 
 /*******************************************************************/
-RCC_status_t _RCC_check_frequency_range(uint32_t default_value, uint32_t accuracy_percent, uint32_t measured_value, RCC_status_t calibration_error) {
+static RCC_status_t _RCC_check_frequency_range(uint32_t default_value, uint32_t accuracy_percent, uint32_t measured_value, RCC_status_t calibration_error) {
     // Local variables.
     RCC_status_t status = RCC_SUCCESS;
     uint32_t frequency_min = (default_value - ((default_value * accuracy_percent) / (100)));

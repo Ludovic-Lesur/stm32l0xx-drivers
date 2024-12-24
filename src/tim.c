@@ -189,13 +189,17 @@ static TIM_context_t tim_ctx;
 }
 
 /*******************************************************************/
-#define _TIM_check_gpio(pins_list, number_of_pins) { \
+#define _TIM_check_gpio(void) { \
     /* Check parameters */ \
-    if (pins_list == NULL) { \
+    if (pins == NULL) { \
         status = TIM_ERROR_NULL_PARAMETER; \
         goto errors; \
     } \
-    if ((number_of_pins == 0) || (number_of_pins > TIM_CHANNEL_LAST)) { \
+    if ((pins->list) == NULL) { \
+        status = TIM_ERROR_NULL_PARAMETER; \
+        goto errors; \
+    } \
+    if (((pins->list_size) == 0) || ((pins->list_size) > TIM_CHANNEL_LAST)) { \
         status = TIM_ERROR_NUMBER_OF_PINS; \
         goto errors; \
     } \
@@ -420,7 +424,7 @@ static TIM_status_t _TIM_compute_psc_arr(TIM_instance_t instance, uint32_t tim_c
     uint8_t idx = 0;
     // Check parameter.
     if ((expected_period_ns == 0) || (tim_clock_hz == 0)) goto errors;
-    // Search prescaler to reach PWM frequency.
+    // Search prescaler to reach expected period.
     for (idx = 0; idx <= MATH_U16_SIZE_BITS; idx++) {
         // Try next power of 2.
         psc = (0b1 << idx);
@@ -509,13 +513,29 @@ errors:
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_STANDARD) != 0)
 /*******************************************************************/
-TIM_status_t TIM_STD_start(TIM_instance_t instance, uint32_t period_ns, TIM_completion_irq_cb_t irq_callback) {
+TIM_status_t TIM_STD_start(TIM_instance_t instance, uint32_t period_value, TIM_unit_t period_unit, TIM_completion_irq_cb_t irq_callback) {
     // Local variables.
     TIM_status_t status = TIM_SUCCESS;
     uint32_t tim_clock_hz = 0;
+    uint64_t period_ns = 0;
     // Check instance and mode.
     _TIM_check_instance(instance);
     _TIM_check_mode(instance, TIM_MODE_STANDARD);
+    // Check unit.
+    switch (period_unit) {
+    case TIM_UNIT_NS:
+        period_ns = ((uint64_t) period_value);
+        break;
+    case TIM_UNIT_US:
+        period_ns = ((uint64_t) period_value) * ((uint64_t) MATH_POWER_10[3]);
+        break;
+    case TIM_UNIT_MS:
+        period_ns = ((uint64_t) period_value) * ((uint64_t) MATH_POWER_10[6]);
+        break;
+    default:
+        status = TIM_ERROR_UNIT;
+        goto errors;
+    }
     // Get clock source frequency.
     RCC_get_frequency_hz(RCC_CLOCK_SYSTEM, &tim_clock_hz);
     // Compute ARR and PSC values.
@@ -523,6 +543,8 @@ TIM_status_t TIM_STD_start(TIM_instance_t instance, uint32_t period_ns, TIM_comp
     if (status != TIM_SUCCESS) goto errors;
     // Generate event to update registers.
     TIM_DESCRIPTOR[instance].peripheral->EGR |= (0b1 << 0); // UG='1'.
+    // Clear flag.
+    TIM_DESCRIPTOR[instance].peripheral->SR &= ~(0b1 << 0); // UIF='0'.
     // Register callback.
     tim_std_ctx[instance].irq_callback = irq_callback;
     // Enable interrupt.
@@ -919,14 +941,14 @@ errors:
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_PWM) != 0)
 /*******************************************************************/
-TIM_status_t TIM_PWM_init(TIM_instance_t instance, TIM_gpio_t* pins_list, uint8_t number_of_pins) {
+TIM_status_t TIM_PWM_init(TIM_instance_t instance, TIM_gpio_t* pins) {
     // Local variables.
     TIM_status_t status = TIM_SUCCESS;
     TIM_channel_t channel = 0;
     uint8_t idx = 0;
     // Check instance and GPIOs.
     _TIM_check_instance(instance);
-    _TIM_check_gpio(pins_list, number_of_pins);
+    _TIM_check_gpio();
 #if (STM32L0XX_REGISTERS_MCU_CATEGORY == 3) || (STM32L0XX_REGISTERS_MCU_CATEGORY == 5)
     // Check supported instance.
     if (instance == TIM_INSTANCE_TIM6) {
@@ -956,24 +978,24 @@ TIM_status_t TIM_PWM_init(TIM_instance_t instance, TIM_gpio_t* pins_list, uint8_
     // Set trigger selection to reserved value to ensure there is no link with other timers.
     TIM_DESCRIPTOR[instance].peripheral->SMCR |= (0b011 << 4);
     // Configure channels.
-    for (idx = 0; idx < number_of_pins; idx++) {
+    for (idx = 0; idx < (pins->list_size); idx++) {
         // Check channel.
-        channel = pins_list[idx].channel;
+        channel = ((pins->list)[idx])->channel;
         _TIM_check_channel(channel);
         // Use PWM mode 2 with preload (OCxM='111' and OCxPE='1').
         TIM_DESCRIPTOR[instance].peripheral->CCMRx[channel >> 1] |= (0b1111 << (((channel % 2) << 3) + 3));
         // Set polarity.
-        if ((pins_list[idx].polarity) == TIM_POLARITY_ACTIVE_LOW) {
+        if ((((pins->list)[idx])->polarity) == TIM_POLARITY_ACTIVE_LOW) {
             TIM_DESCRIPTOR[instance].peripheral->CCER |= (0b1 << ((channel << 2) + 1));
         }
         // Disable output by default.
-        TIM_DESCRIPTOR[instance].peripheral->CCRx[idx] = 0xFFFF;
+        TIM_DESCRIPTOR[instance].peripheral->CCRx[channel] = 0xFFFF;
         // Generate event to update registers.
         TIM_DESCRIPTOR[instance].peripheral->EGR |= (0b1 << 0); // UG='1'.
         // Enable channel.
         TIM_DESCRIPTOR[instance].peripheral->CCER |= (0b1 << (channel << 2));
         // Init GPIO.
-        GPIO_configure((pins_list[idx].gpio), GPIO_MODE_ALTERNATE_FUNCTION, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_HIGH, GPIO_PULL_NONE);
+        GPIO_configure((((pins->list)[idx])->gpio), GPIO_MODE_ALTERNATE_FUNCTION, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_HIGH, GPIO_PULL_NONE);
     }
     // Update mode.
     tim_ctx.mode[instance] = TIM_MODE_PWM;
@@ -984,16 +1006,16 @@ errors:
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_PWM) != 0)
 /*******************************************************************/
-TIM_status_t TIM_PWM_de_init(TIM_instance_t instance, TIM_gpio_t* pins_list, uint8_t number_of_pins) {
+TIM_status_t TIM_PWM_de_init(TIM_instance_t instance, TIM_gpio_t* pins) {
     // Local variables.
     TIM_status_t status = TIM_SUCCESS;
     uint8_t idx = 0;
     // Check instance and GPIOs.
     _TIM_check_instance(instance);
-    _TIM_check_gpio(pins_list, number_of_pins);
+    _TIM_check_gpio();
     // Release GPIOs.
-    for (idx = 0; idx < number_of_pins; idx++) {
-        GPIO_configure((pins_list[idx].gpio), GPIO_MODE_OUTPUT, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_LOW, GPIO_PULL_NONE);
+    for (idx = 0; idx < (pins->list_size); idx++) {
+        GPIO_configure((((pins->list)[idx])->gpio), GPIO_MODE_OUTPUT, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_LOW, GPIO_PULL_NONE);
     }
     // Release peripheral.
     _TIM_de_init(instance);
@@ -1060,14 +1082,14 @@ errors:
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_OPM) != 0)
 /*******************************************************************/
-TIM_status_t TIM_OPM_init(TIM_instance_t instance, TIM_gpio_t* pins_list, uint8_t number_of_pins) {
+TIM_status_t TIM_OPM_init(TIM_instance_t instance, TIM_gpio_t* pins) {
     // Local variables.
     TIM_status_t status = TIM_SUCCESS;
     TIM_channel_t channel = 0;
     uint8_t idx = 0;
     // Check instance and GPIOs.
     _TIM_check_instance(instance);
-    _TIM_check_gpio(pins_list, number_of_pins);
+    _TIM_check_gpio();
 #if (STM32L0XX_REGISTERS_MCU_CATEGORY == 3) || (STM32L0XX_REGISTERS_MCU_CATEGORY == 5)
     // Check supported instance.
     if (instance == TIM_INSTANCE_TIM6) {
@@ -1095,14 +1117,14 @@ TIM_status_t TIM_OPM_init(TIM_instance_t instance, TIM_gpio_t* pins_list, uint8_
     // Set trigger selection to reserved value to ensure there is no link with other timers.
     TIM_DESCRIPTOR[instance].peripheral->SMCR |= (0b011 << 4);
     // Configure channels.
-    for (idx = 0; idx < number_of_pins; idx++) {
+    for (idx = 0; idx < (pins->list_size); idx++) {
         // Check channel.
-        channel = pins_list[idx].channel;
+        channel = ((pins->list)[idx])->channel;
         _TIM_check_channel(channel);
         // Use PWM mode 2 with preload (OCxM='111', OCxPE='1' and OCxFE='1').
         TIM_DESCRIPTOR[instance].peripheral->CCMRx[channel >> 1] |= (0b11111 << (((channel % 2) << 3) + 2));
         // Set polarity.
-        if ((pins_list[idx].polarity) == TIM_POLARITY_ACTIVE_LOW) {
+        if ((((pins->list)[idx])->polarity) == TIM_POLARITY_ACTIVE_LOW) {
             TIM_DESCRIPTOR[instance].peripheral->CCER |= (0b1 << ((channel << 2) + 1));
         }
         // Disable output by default.
@@ -1112,7 +1134,7 @@ TIM_status_t TIM_OPM_init(TIM_instance_t instance, TIM_gpio_t* pins_list, uint8_
         // Enable channel.
         TIM_DESCRIPTOR[instance].peripheral->CCER |= (0b1 << (channel << 2));
         // Init GPIO.
-        GPIO_configure((pins_list[idx].gpio), GPIO_MODE_ALTERNATE_FUNCTION, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_HIGH, GPIO_PULL_NONE);
+        GPIO_configure((((pins->list)[idx])->gpio), GPIO_MODE_ALTERNATE_FUNCTION, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_HIGH, GPIO_PULL_NONE);
     }
     // Update mode.
     tim_ctx.mode[instance] = TIM_MODE_OPM;
@@ -1123,16 +1145,16 @@ errors:
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_OPM) != 0)
 /*******************************************************************/
-TIM_status_t TIM_OPM_de_init(TIM_instance_t instance, TIM_gpio_t* pins_list, uint8_t number_of_pins) {
+TIM_status_t TIM_OPM_de_init(TIM_instance_t instance, TIM_gpio_t* pins) {
     // Local variables.
     TIM_status_t status = TIM_SUCCESS;
     uint8_t idx = 0;
     // Check instance and GPIOs.
     _TIM_check_instance(instance);
-    _TIM_check_gpio(pins_list, number_of_pins);
+    _TIM_check_gpio();
     // Release GPIOs.
-    for (idx = 0; idx < number_of_pins; idx++) {
-        GPIO_configure((pins_list[idx].gpio), GPIO_MODE_OUTPUT, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_LOW, GPIO_PULL_NONE);
+    for (idx = 0; idx < (pins->list_size); idx++) {
+        GPIO_configure((((pins->list)[idx])->gpio), GPIO_MODE_OUTPUT, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_LOW, GPIO_PULL_NONE);
     }
     // Release peripheral.
     _TIM_de_init(instance);

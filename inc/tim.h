@@ -41,6 +41,7 @@ typedef enum {
     TIM_ERROR_NULL_PARAMETER,
     TIM_ERROR_INSTANCE,
     TIM_ERROR_MODE,
+    TIM_ERROR_UNIT,
     TIM_ERROR_ARR_VALUE,
     TIM_ERROR_WAITING_MODE,
     TIM_ERROR_CHANNEL,
@@ -103,12 +104,6 @@ typedef enum {
 } TIM_waiting_mode_t;
 
 /*!******************************************************************
- * \fn TIM_completion_irq_cb_t
- * \brief TIM completion callback.
- *******************************************************************/
-typedef void (*TIM_completion_irq_cb_t)(void);
-
-/*!******************************************************************
  * \enum TIM_polarity_t
  * \brief Timer channel output polarities list.
  *******************************************************************/
@@ -119,6 +114,17 @@ typedef enum {
 } TIM_polarity_t;
 
 /*!******************************************************************
+ * \enum TIM_unit_t
+ * \brief Timer unit list
+ *******************************************************************/
+typedef enum {
+    TIM_UNIT_NS = 0,
+    TIM_UNIT_US,
+    TIM_UNIT_MS,
+    TIM_UNIT_LAST
+} TIM_unit_t;
+
+/*!******************************************************************
  * \struct TIM_channel_gpio_t
  * \brief Timer channel GPIO settings structure.
  *******************************************************************/
@@ -126,7 +132,22 @@ typedef struct {
     TIM_channel_t channel;
     const GPIO_pin_t* gpio;
     TIM_polarity_t polarity;
+} TIM_channel_gpio_t;
+
+/*!******************************************************************
+ * \struct TIM_gpio_t
+ * \brief Timer GPIOs list.
+ *******************************************************************/
+typedef struct {
+    const TIM_channel_gpio_t** list;
+    uint8_t list_size;
 } TIM_gpio_t;
+
+/*!******************************************************************
+ * \fn TIM_completion_irq_cb_t
+ * \brief TIM completion callback.
+ *******************************************************************/
+typedef void (*TIM_completion_irq_cb_t)(void);
 
 /*** TIM functions ***/
 
@@ -155,15 +176,16 @@ TIM_status_t TIM_STD_de_init(TIM_instance_t instance);
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_STANDARD) != 0)
 /*!******************************************************************
- * \fn TIM_status_t TIM_STD_start(TIM_instance_t instance, uint32_t period_ns, TIM_completion_irq_cb_t irq_callback)
+ * \fn TIM_status_t TIM_STD_start(TIM_instance_t instance, uint32_t period_value, TIM_unit_t period_unit, TIM_completion_irq_cb_t irq_callback)
  * \brief Start a timer in standard mode.
  * \param[in]   instance: Timer instance to use.
- * \param[in]   period_ns: Timer period in ns.
+ * \param[in]   period_value: Timer period in the given unit.
+ * \param[in]   period_unit: Unit of the period value.
  * \param[in]   irq_callback: Function to call on timer completion interrupt.
  * \param[out]  none
  * \retval      none
  *******************************************************************/
-TIM_status_t TIM_STD_start(TIM_instance_t instance, uint32_t period_ns, TIM_completion_irq_cb_t irq_callback);
+TIM_status_t TIM_STD_start(TIM_instance_t instance, uint32_t period_value, TIM_unit_t period_unit, TIM_completion_irq_cb_t irq_callback);
 #endif
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_STANDARD) != 0)
@@ -287,15 +309,14 @@ TIM_status_t TIM_CAL_mco_capture(TIM_instance_t instance, int32_t* ref_clock_pul
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_PWM) != 0)
 /*!******************************************************************
- * \fn TIM_status_t TIM_PWM_init(TIM_instance_t instance, TIM_gpio_t* pins_list, uint8_t number_of_pins)
+ * \fn TIM_status_t TIM_PWM_init(TIM_instance_t instance, TIM_gpio_t* pins)
  * \brief Init a timer peripheral in PWM mode.
  * \param[in]   instance: Timer instance to use.
- * \param[in]   pins_list: List of timer pins to configure.
- * \param[in]   number_of_pins: Number of pins to configure (list size).
+ * \param[in]   pins: List of timer pins to configure.
  * \param[out]  none
  * \retval      Function execution status.
  *******************************************************************/
-TIM_status_t TIM_PWM_init(TIM_instance_t instance, TIM_gpio_t* pins_list, uint8_t number_of_pins);
+TIM_status_t TIM_PWM_init(TIM_instance_t instance, TIM_gpio_t* pins);
 #endif
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_PWM) != 0)
@@ -303,12 +324,11 @@ TIM_status_t TIM_PWM_init(TIM_instance_t instance, TIM_gpio_t* pins_list, uint8_
  * \fn TIM_status_t TIM_PWM_de_init(TIM_instance_t instance, TIM_gpio_t* pins)
  * \brief Release a timer peripheral.
  * \param[in]   instance: Timer instance to release.
- * \param[in]   pins_list: List of timer pins to release.
- * \param[in]   number_of_pins: Number of pins to release (list size).
+ * \param[in]   pins: List of timer pins to release.
  * \param[out]  none
  * \retval      Function execution status.
  *******************************************************************/
-TIM_status_t TIM_PWM_de_init(TIM_instance_t instance, TIM_gpio_t* pins_list, uint8_t number_of_pins);
+TIM_status_t TIM_PWM_de_init(TIM_instance_t instance, TIM_gpio_t* pins);
 #endif
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_PWM) != 0)
@@ -327,15 +347,14 @@ TIM_status_t TIM_PWM_set_waveform(TIM_instance_t instance, TIM_channel_t channel
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_OPM) != 0)
 /*!******************************************************************
- * \fn TIM_status_t TIM_OPM_init(TIM_instance_t instance, TIM_gpio_t* pins_list, uint8_t number_of_pins)
+ * \fn TIM_status_t TIM_OPM_init(TIM_instance_t instance, TIM_gpio_t* pins)
  * \brief Init a timer peripheral in one pulse mode.
  * \param[in]   instance: Timer instance to use.
  * \param[in]   pins_list: List of timer pins to configure.
- * \param[in]   number_of_pins: Number of pins to configure (list size).
  * \param[out]  none
  * \retval      Function execution status.
  *******************************************************************/
-TIM_status_t TIM_OPM_init(TIM_instance_t instance, TIM_gpio_t* pins_list, uint8_t number_of_pins);
+TIM_status_t TIM_OPM_init(TIM_instance_t instance, TIM_gpio_t* pins);
 #endif
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_OPM) != 0)
@@ -343,12 +362,11 @@ TIM_status_t TIM_OPM_init(TIM_instance_t instance, TIM_gpio_t* pins_list, uint8_
  * \fn TIM_status_t TIM_OPM_de_init(TIM_instance_t instance, TIM_gpio_t* pins_list, uint8_t number_of_pins)
  * \brief Release a timer peripheral.
  * \param[in]   instance: Timer instance to release.
- * \param[in]   pins_list: List of timer pins to release.
- * \param[in]   number_of_pins: Number of pins to release (list size).
+ * \param[in]   pins: List of timer pins to release.
  * \param[out]  none
  * \retval      Function execution status.
  *******************************************************************/
-TIM_status_t TIM_OPM_de_init(TIM_instance_t instance, TIM_gpio_t* pins_list, uint8_t number_of_pins);
+TIM_status_t TIM_OPM_de_init(TIM_instance_t instance, TIM_gpio_t* pins);
 #endif
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_OPM) != 0)

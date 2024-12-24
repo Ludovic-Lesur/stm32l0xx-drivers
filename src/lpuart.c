@@ -20,7 +20,7 @@
 
 /*** LPUART local macros ***/
 
-#define LPUART_TIMEOUT_COUNT                100000
+#define LPUART_TIMEOUT_COUNT                1000000
 
 #define LPUART_BAUD_RATE_CLOCK_THRESHOLD    4000
 

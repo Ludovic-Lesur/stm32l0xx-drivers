@@ -7,6 +7,9 @@
 
 #include "i2c.h"
 
+#ifndef STM32L0XX_DRIVERS_DISABLE_FLAGS_FILE
+#include "stm32l0xx_drivers_flags.h"
+#endif
 #ifndef STM32L0XX_REGISTERS_DISABLE_FLAGS_FILE
 #include "stm32l0xx_registers_flags.h"
 #endif
@@ -87,9 +90,13 @@ I2C_status_t I2C_init(I2C_instance_t instance, const I2C_gpio_t* pins) {
     (*I2C_DESCRIPTOR[instance].rcc_enr) |= I2C_DESCRIPTOR[instance].rcc_mask;
     // Disable peripheral during configuration.
     I2C_DESCRIPTOR[instance].peripheral->CR1 &= ~(0b1 << 0); // PE='0'.
-    // I2CCLK = PCLK1/(PRESC+1) = SYSCLK/(PRESC+1) = 2MHz (HSI) (PRESC='1000').
-    // SCL frequency to 10kHz. See p.641 of RM0377 datasheet.
+#ifdef STM32L0XX_DRIVERS_I2C_FAST_MODE
+    // Set SCL frequency to 400kHz: I2CCLK = PCLK1/(PRESC+1) = SYSCLK/(PRESC+1) = 8MHz (PRESC='0001').
+    I2C1 -> TIMINGR |= (1 << 28) | (3 << 20)| (2 << 16) | (3 << 8) | (9 << 0);
+#else
+    // Set SCL frequency to 10kHz: I2CCLK = PCLK1/(PRESC+1) = SYSCLK/(PRESC+1) = 2MHz (PRESC='1000').
     I2C_DESCRIPTOR[instance].peripheral->TIMINGR |= (7 << 28) | (99 << 8) | (99 << 0);
+#endif
     // Enable peripheral.
     I2C_DESCRIPTOR[instance].peripheral->CR1 |= (0b1 << 0); // PE='1'.
     // Configure GPIOs.

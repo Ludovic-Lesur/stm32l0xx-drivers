@@ -12,11 +12,11 @@
 #endif
 #include "exti.h"
 #include "iwdg.h"
-#include "lptim_reg.h"
+#include "lptim_registers.h"
 #include "nvic.h"
 #include "pwr.h"
 #include "rcc.h"
-#include "rcc_reg.h"
+#include "rcc_registers.h"
 #include "types.h"
 
 /*** LPTIM local macros ***/

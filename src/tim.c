@@ -18,9 +18,9 @@
 #include "math.h"
 #include "nvic.h"
 #include "pwr.h"
-#include "rcc_reg.h"
+#include "rcc_registers.h"
 #include "rtc.h"
-#include "tim_reg.h"
+#include "tim_registers.h"
 #include "types.h"
 
 /*** TIM local macros ***/

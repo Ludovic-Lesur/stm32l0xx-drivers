@@ -12,8 +12,8 @@
 #endif
 #include "exti.h"
 #include "nvic.h"
-#include "rcc_reg.h"
-#include "rtc_reg.h"
+#include "rcc_registers.h"
+#include "rtc_registers.h"
 #include "types.h"
 
 /*** RTC local macros ***/

@@ -8,7 +8,7 @@
 #ifndef __NVM_H__
 #define __NVM_H__
 
-#include "flash_reg.h"
+#include "flash_registers.h"
 #include "types.h"
 
 /*** NVM structures ***/

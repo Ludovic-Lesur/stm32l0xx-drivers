@@ -7,8 +7,8 @@
 
 #include "gpio.h"
 
-#include "gpio_reg.h"
-#include "rcc_reg.h"
+#include "gpio_registers.h"
+#include "rcc_registers.h"
 #include "types.h"
 
 /*** GPIO local macros ***/

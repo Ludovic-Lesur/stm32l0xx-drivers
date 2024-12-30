@@ -15,9 +15,9 @@
 #endif
 #include "error.h"
 #include "gpio.h"
-#include "i2c_reg.h"
+#include "i2c_registers.h"
 #include "lptim.h"
-#include "rcc_reg.h"
+#include "rcc_registers.h"
 #include "types.h"
 
 /*** I2C local macros ***/

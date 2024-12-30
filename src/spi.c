@@ -11,8 +11,8 @@
 #include "stm32l0xx_registers_flags.h"
 #endif
 #include "gpio.h"
-#include "rcc_reg.h"
-#include "spi_reg.h"
+#include "rcc_registers.h"
+#include "spi_registers.h"
 #include "types.h"
 
 /*** SPI local macros ***/

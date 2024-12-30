@@ -7,14 +7,14 @@
 
 #include "pwr.h"
 
-#include "exti_reg.h"
-#include "flash_reg.h"
-#include "nvic_reg.h"
-#include "pwr_reg.h"
+#include "exti_registers.h"
+#include "flash_registers.h"
+#include "nvic_registers.h"
+#include "pwr_registers.h"
 #include "rcc.h"
-#include "rcc_reg.h"
-#include "rtc_reg.h"
-#include "scb_reg.h"
+#include "rcc_registers.h"
+#include "rtc_registers.h"
+#include "scb_registers.h"
 
 /*** PWR local functions ***/
 

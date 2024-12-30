@@ -12,10 +12,10 @@
 #endif
 #include "exti.h"
 #include "gpio.h"
-#include "lpuart_reg.h"
+#include "lpuart_registers.h"
 #include "nvic.h"
 #include "rcc.h"
-#include "rcc_reg.h"
+#include "rcc_registers.h"
 #include "types.h"
 
 /*** LPUART local macros ***/

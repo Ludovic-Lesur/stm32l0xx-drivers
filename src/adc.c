@@ -7,14 +7,14 @@
 
 #include "adc.h"
 
-#include "adc_reg.h"
+#include "adc_registers.h"
 #include "error.h"
 #include "gpio.h"
 #include "lptim.h"
 #include "math.h"
-#include "pwr_reg.h"
+#include "pwr_registers.h"
 #include "rcc.h"
-#include "rcc_reg.h"
+#include "rcc_registers.h"
 #include "types.h"
 
 /*** ADC local macros ***/

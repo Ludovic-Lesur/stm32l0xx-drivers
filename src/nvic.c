@@ -7,8 +7,8 @@
 
 #include "nvic.h"
 
-#include "nvic_reg.h"
-#include "scb_reg.h"
+#include "nvic_registers.h"
+#include "scb_registers.h"
 #include "types.h"
 
 /*** NVIC local macros ***/

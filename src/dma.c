@@ -13,9 +13,9 @@
 #ifndef STM32L0XX_DRIVERS_DISABLE_FLAGS_FILE
 #include "stm32l0xx_drivers_flags.h"
 #endif
-#include "dma_reg.h"
+#include "dma_registers.h"
 #include "nvic.h"
-#include "rcc_reg.h"
+#include "rcc_registers.h"
 #include "types.h"
 
 /*** DMA local macros ***/

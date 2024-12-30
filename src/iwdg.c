@@ -7,7 +7,7 @@
 
 #include "iwdg.h"
 
-#include "iwdg_reg.h"
+#include "iwdg_registers.h"
 #include "types.h"
 
 /*** IWDG local macros ***/

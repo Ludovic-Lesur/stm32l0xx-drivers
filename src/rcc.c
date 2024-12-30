@@ -15,7 +15,7 @@
 #include "flash.h"
 #include "nvic.h"
 #include "pwr.h"
-#include "rcc_reg.h"
+#include "rcc_registers.h"
 #include "tim.h"
 #include "types.h"
 

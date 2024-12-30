@@ -10,11 +10,11 @@
 #ifndef STM32L0XX_DRIVERS_DISABLE_FLAGS_FILE
 #include "stm32l0xx_drivers_flags.h"
 #endif
-#include "exti_reg.h"
+#include "exti_registers.h"
 #include "gpio.h"
 #include "nvic.h"
-#include "rcc_reg.h"
-#include "syscfg_reg.h"
+#include "rcc_registers.h"
+#include "syscfg_registers.h"
 #include "types.h"
 
 /*** EXTI local macros ***/

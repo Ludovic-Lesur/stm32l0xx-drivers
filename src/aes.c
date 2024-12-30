@@ -7,8 +7,8 @@
 
 #include "aes.h"
 
-#include "aes_reg.h"
-#include "rcc_reg.h"
+#include "aes_registers.h"
+#include "rcc_registers.h"
 #include "types.h"
 
 /*** AES local macros ***/

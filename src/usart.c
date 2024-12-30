@@ -17,9 +17,9 @@
 #include "gpio.h"
 #include "nvic.h"
 #include "rcc.h"
-#include "rcc_reg.h"
+#include "rcc_registers.h"
 #include "types.h"
-#include "usart_reg.h"
+#include "usart_registers.h"
 
 /*** USART local macros ***/
 

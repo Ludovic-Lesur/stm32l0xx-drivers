@@ -7,8 +7,8 @@
 
 #include "nvm.h"
 
-#include "flash_reg.h"
-#include "rcc_reg.h"
+#include "flash_registers.h"
+#include "rcc_registers.h"
 #include "types.h"
 
 /*** NVM local macros ***/

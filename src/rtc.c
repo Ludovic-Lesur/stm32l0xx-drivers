@@ -219,7 +219,7 @@ RTC_status_t RTC_start_alarm(RTC_alarm_t alarm, RTC_alarm_configuration_t* confi
     // Seconds.
     tens = (((configuration->seconds).value) / 10);
     units = ((configuration->seconds).value) - (tens * 10);
-    alrmxr |= (((configuration->seconds).mask) << 7) | ((tens & 0x03) << 4) | ((units & 0x0F) << 0);
+    alrmxr |= (((configuration->seconds).mask) << 7) | ((tens & 0x07) << 4) | ((units & 0x0F) << 0);
     // Enter initialization mode.
     status = _RTC_enter_initialization_mode();
     if (status != RTC_SUCCESS) goto errors;

@@ -195,6 +195,7 @@ errors:
     return status;
 }
 
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & 0x04) != 0)
 /*******************************************************************/
 static RCC_status_t _RCC_check_frequency_range(uint32_t default_value, uint32_t accuracy_percent, uint32_t measured_value, RCC_status_t calibration_error) {
     // Local variables.
@@ -207,6 +208,7 @@ static RCC_status_t _RCC_check_frequency_range(uint32_t default_value, uint32_t 
     }
     return status;
 }
+#endif
 
 /*** RCC functions ***/
 

@@ -121,11 +121,13 @@ typedef struct {
 } TIM_PWM_context_t;
 #endif
 
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_ALL) != 0)
 /*******************************************************************/
 typedef struct {
     TIM_mode_t mode[TIM_INSTANCE_LAST];
     TIM_irq_handler_cb_t irq_handler[TIM_INSTANCE_LAST];
 } TIM_context_t;
+#endif
 
 /*** TIM local global variables ***/
 
@@ -157,7 +159,9 @@ static TIM_CAL_context_t tim_cal_ctx; // Not defined as array because only suppo
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_PWM) != 0)
 static TIM_PWM_context_t tim_pwm_ctx[TIM_INSTANCE_LAST];
 #endif
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_ALL) != 0)
 static TIM_context_t tim_ctx;
+#endif
 
 /*** TIM local functions ***/
 

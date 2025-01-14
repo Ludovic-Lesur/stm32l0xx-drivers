@@ -80,7 +80,7 @@ static void __attribute__((optimize("-O0"))) _USART_irq_handler_rxne(USART_insta
     // RXNE interrupt.
     if (((peripheral->ISR) & (0b1 << 5)) != 0) {
         // Read incoming byte.
-        rx_byte = (peripheral->RDR);
+        rx_byte = (uint8_t) (peripheral->RDR);
         // Transmit byte to upper layer.
         if ((((peripheral->CR1) & (0b1 << 5)) != 0) && (usart_ctx.rxne_callback[instance] != NULL)) {
             usart_ctx.rxne_callback[instance](rx_byte);

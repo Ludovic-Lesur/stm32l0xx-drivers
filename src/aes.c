@@ -108,10 +108,10 @@ AES_status_t AES_encrypt(uint8_t* data_in, uint8_t* data_out, uint8_t* key) {
         // Read output data register (most significant 32-bits word first).
         data_32bits = (AES->DOUTR);
         // Split 32-bits word into 4 bytes.
-        data_out[(idx << 2) + 0] = (data_32bits >> 24) & 0xFF;
-        data_out[(idx << 2) + 1] = (data_32bits >> 16) & 0xFF;
-        data_out[(idx << 2) + 2] = (data_32bits >> 8) & 0xFF;
-        data_out[(idx << 2) + 3] = (data_32bits >> 0) & 0xFF;
+        data_out[(idx << 2) + 0] = (uint8_t) ((data_32bits >> 24) & 0xFF);
+        data_out[(idx << 2) + 1] = (uint8_t) ((data_32bits >> 16) & 0xFF);
+        data_out[(idx << 2) + 2] = (uint8_t) ((data_32bits >> 8) & 0xFF);
+        data_out[(idx << 2) + 3] = (uint8_t) ((data_32bits >> 0) & 0xFF);
     }
     // Reset peripheral.
     AES->CR |= (0b1 << 7); // Clear CCF flag for next AES operation.

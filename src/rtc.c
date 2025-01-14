@@ -205,20 +205,20 @@ RTC_status_t RTC_start_alarm(RTC_alarm_t alarm, RTC_alarm_configuration_t* confi
     // Build register value.
     alrmxr |= (((configuration->mode)) << 30);
     // Date.
-    tens = (((configuration->date).value) / 10);
-    units = ((configuration->date).value) - (tens * 10);
+    tens = (uint8_t) (((configuration->date).value) / 10);
+    units = (uint8_t) (((configuration->date).value) - (tens * 10));
     alrmxr |= (((configuration->date).mask) << 31) | ((tens & 0x03) << 28) | ((units & 0x0F) << 24);
     // Hours.
-    tens = (((configuration->hours).value) / 10);
-    units = ((configuration->hours).value) - (tens * 10);
+    tens = (uint8_t) (((configuration->hours).value) / 10);
+    units = (uint8_t) (((configuration->hours).value) - (tens * 10));
     alrmxr |= (((configuration->hours).mask) << 23) | ((tens & 0x03) << 20) | ((units & 0x0F) << 16);
     // Minutes.
-    tens = (((configuration->minutes).value) / 10);
-    units = ((configuration->minutes).value) - (tens * 10);
+    tens = (uint8_t) (((configuration->minutes).value) / 10);
+    units = (uint8_t) (((configuration->minutes).value) - (tens * 10));
     alrmxr |= (((configuration->minutes).mask) << 15) | ((tens & 0x07) << 12) | ((units & 0x0F) << 8);
     // Seconds.
-    tens = (((configuration->seconds).value) / 10);
-    units = ((configuration->seconds).value) - (tens * 10);
+    tens = (uint8_t) (((configuration->seconds).value) / 10);
+    units = (uint8_t) (((configuration->seconds).value) - (tens * 10));
     alrmxr |= (((configuration->seconds).mask) << 7) | ((tens & 0x07) << 4) | ((units & 0x0F) << 0);
     // Enter initialization mode.
     status = _RTC_enter_initialization_mode();
@@ -305,28 +305,28 @@ RTC_status_t RTC_set_time(RTC_time_t* time) {
         goto errors;
     }
     // Year.
-    tens = ((time->year) - 2000) / 10;
-    units = ((time->year) - 2000) - (tens * 10);
+    tens = (uint8_t) (((time->year) - 2000) / 10);
+    units = (uint8_t) (((time->year) - 2000) - (tens * 10));
     dr_value |= (tens << 20) | (units << 16);
     // Month.
-    tens = (time->month) / 10;
-    units = (time->month) - (tens * 10);
+    tens = (uint8_t) ((time->month) / 10);
+    units = (uint8_t) ((time->month) - (tens * 10));
     dr_value |= (tens << 12) | (units << 8);
     // Date.
-    tens = (time->date) / 10;
-    units = (time->date) - (tens * 10);
+    tens = (uint8_t) ((time->date) / 10);
+    units = (uint8_t) ((time->date) - (tens * 10));
     dr_value |= (tens << 4) | (units << 0);
     // Hour.
-    tens = (time->hours) / 10;
-    units = (time->hours) - (tens * 10);
+    tens = (uint8_t) ((time->hours) / 10);
+    units = (uint8_t) ((time->hours) - (tens * 10));
     tr_value |= (tens << 20) | (units << 16);
     // Minutes.
-    tens = (time->minutes) / 10;
-    units = (time->minutes) - (tens * 10);
+    tens = (uint8_t) ((time->minutes) / 10);
+    units = (uint8_t) ((time->minutes) - (tens * 10));
     tr_value |= (tens << 12) | (units << 8);
     // Seconds.
-    tens = (time->seconds) / 10;
-    units = (time->seconds) - (tens * 10);
+    tens = (uint8_t) ((time->seconds) / 10);
+    units = (uint8_t) ((time->seconds) - (tens * 10));
     tr_value |= (tens << 4) | (units << 0);
     // Enter initialization mode.
     status = _RTC_enter_initialization_mode();
@@ -357,12 +357,12 @@ RTC_status_t RTC_get_time(RTC_time_t* time) {
     dr_value = (RTC->DR) & 0x00FFFF3F; // Mask reserved bits.
     tr_value = (RTC->TR) & 0x007F7F7F; // Mask reserved bits.
     // Parse registers into time structure.
-    time->year = 2000 + ((dr_value & (0b1111 << 20)) >> 20) * 10 + ((dr_value & (0b1111 << 16)) >> 16);
-    time->month = ((dr_value & (0b1 << 12)) >> 12) * 10 + ((dr_value & (0b1111 << 8)) >> 8);
-    time->date = ((dr_value & (0b11 << 4)) >> 4) * 10 + (dr_value & 0b1111);
-    time->hours = ((tr_value & (0b11 << 20)) >> 20) * 10 + ((tr_value & (0b1111 << 16)) >> 16);
-    time->minutes = ((tr_value & (0b111 << 12)) >> 12) * 10 + ((tr_value & (0b1111 << 8)) >> 8);
-    time->seconds = ((tr_value & (0b111 << 4)) >> 4) * 10 + (tr_value & 0b1111);
+    time->year = (uint16_t) (2000 + ((dr_value & (0b1111 << 20)) >> 20) * 10 + ((dr_value & (0b1111 << 16)) >> 16));
+    time->month = (uint8_t) (((dr_value & (0b1 << 12)) >> 12) * 10 + ((dr_value & (0b1111 << 8)) >> 8));
+    time->date = (uint8_t) (((dr_value & (0b11 << 4)) >> 4) * 10 + (dr_value & 0b1111));
+    time->hours = (uint8_t) (((tr_value & (0b11 << 20)) >> 20) * 10 + ((tr_value & (0b1111 << 16)) >> 16));
+    time->minutes = (uint8_t) (((tr_value & (0b111 << 12)) >> 12) * 10 + ((tr_value & (0b1111 << 8)) >> 8));
+    time->seconds = (uint8_t) (((tr_value & (0b111 << 4)) >> 4) * 10 + (tr_value & 0b1111));
 errors:
     return status;
 }

@@ -344,14 +344,14 @@ static void __attribute__((optimize("-O0"))) _TIM_CAL_irq_handler(TIM_instance_t
             // Check count.
             if (tim_cal_ctx.capture_count == 0) {
                 // Store start value.
-                tim_cal_ctx.ccr1_start = (peripheral->CCR1);
+                tim_cal_ctx.ccr1_start = (uint16_t) (peripheral->CCR1);
                 tim_cal_ctx.capture_count++;
             }
             else {
                 // Check rollover.
                 if ((peripheral->CCR1) > tim_cal_ctx.ccr1_end) {
                     // Store new value.
-                    tim_cal_ctx.ccr1_end = (peripheral->CCR1);
+                    tim_cal_ctx.ccr1_end = (uint16_t) (peripheral->CCR1);
                     tim_cal_ctx.capture_count++;
                 }
                 else {

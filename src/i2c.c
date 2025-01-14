@@ -284,7 +284,7 @@ I2C_status_t I2C_read(I2C_instance_t instance, uint8_t slave_address, uint8_t* d
         // Wait for incoming data (RXNE='1').
         if (((I2C_DESCRIPTOR[instance].peripheral->ISR) & (0b1 << 2)) != 0) {
             // Fill RX buffer with new byte */
-            data[idx] = (I2C_DESCRIPTOR[instance].peripheral->RXDR);
+            data[idx] = (uint8_t) (I2C_DESCRIPTOR[instance].peripheral->RXDR);
             idx++;
         }
         // Exit if timeout.

@@ -53,8 +53,8 @@ void PWR_enter_sleep_mode(void) {
     PWR->CR &= ~(0b1 << 0); // LPSDSR='0'.
     // Enter low power sleep mode.
     SCB->SCR &= ~(0b1 << 2); // SLEEPDEEP='0'.
-    __asm volatile ("wfi");
     // Wait For Interrupt core instruction.
+    __asm volatile ("wfi");
 }
 
 /*******************************************************************/
@@ -63,8 +63,8 @@ void PWR_enter_low_power_sleep_mode(void) {
     PWR->CR |= (0b1 << 0); // LPSDSR='1'.
     // Enter low power sleep mode.
     SCB->SCR &= ~(0b1 << 2); // SLEEPDEEP='0'.
-    __asm volatile ("wfi");
     // Wait For Interrupt core instruction.
+    __asm volatile ("wfi");
 }
 
 /*******************************************************************/
@@ -91,8 +91,8 @@ void PWR_enter_stop_mode(void) {
     NVIC->ICPR = 0xFFFFFFFF; // CLEARPENDx='1'.
     // Enter stop mode.
     SCB->SCR |= (0b1 << 2); // SLEEPDEEP='1'.
-    __asm volatile ("wfi");
     // Wait For Interrupt core instruction.
+    __asm volatile ("wfi");
 }
 
 /*******************************************************************/

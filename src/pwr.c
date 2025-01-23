@@ -15,6 +15,7 @@
 #include "rcc_registers.h"
 #include "rtc_registers.h"
 #include "scb_registers.h"
+#include "types.h"
 
 /*** PWR local functions ***/
 
@@ -98,4 +99,15 @@ void PWR_enter_stop_mode(void) {
 void PWR_software_reset(void) {
     // Trigger software reset.
     SCB->AIRCR = 0x05FA0000 | ((SCB->AIRCR) & 0x0000FFFF) | (0b1 << 2);
+}
+
+/*******************************************************************/
+uint8_t PWR_get_reset_flags(void) {
+    // Local variables.
+    return ((uint8_t) (((RCC->CSR) >> 24) & 0xFF));
+}
+
+/*******************************************************************/
+void PWR_clear_reset_flags(void) {
+    RCC->CSR |= (0b1 << 23);
 }

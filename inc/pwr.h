@@ -8,6 +8,8 @@
 #ifndef __PWR_H__
 #define __PWR_H__
 
+#include "types.h"
+
 /*** PWR functions ***/
 
 /*!******************************************************************
@@ -54,5 +56,23 @@ void PWR_enter_stop_mode(void);
  * \retval      none
  *******************************************************************/
 void PWR_software_reset(void);
+
+/*!******************************************************************
+ * \fn uint8_t PWR_get_reset_flags(void)
+ * \brief Read the MCU reset flags.
+ * \param[in]   none
+ * \param[out]  none
+ * \retval      MCU reset flags.
+ *******************************************************************/
+uint8_t PWR_get_reset_flags(void);
+
+/*!******************************************************************
+ * \fn void PWR_clear_reset_flags(void)
+ * \brief Clear the MCU reset flags.
+ * \param[in]   none
+ * \param[out]  none
+ * \retval      none
+ *******************************************************************/
+void PWR_clear_reset_flags(void);
 
 #endif /* __PWR_H__ */

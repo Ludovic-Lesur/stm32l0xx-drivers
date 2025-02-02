@@ -15,7 +15,7 @@
 #include "stm32l0xx_drivers_flags.h"
 #endif
 #include "gpio.h"
-#include "math.h"
+#include "maths.h"
 #include "rcc.h"
 #include "types.h"
 

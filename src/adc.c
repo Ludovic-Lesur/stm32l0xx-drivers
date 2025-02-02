@@ -11,7 +11,7 @@
 #include "error.h"
 #include "gpio.h"
 #include "lptim.h"
-#include "math.h"
+#include "maths.h"
 #include "pwr_registers.h"
 #include "rcc.h"
 #include "rcc_registers.h"

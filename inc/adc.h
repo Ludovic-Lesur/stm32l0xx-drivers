@@ -10,7 +10,7 @@
 
 #include "gpio.h"
 #include "lptim.h"
-#include "math.h"
+#include "maths.h"
 #include "types.h"
 
 /*** ADC macros ***/

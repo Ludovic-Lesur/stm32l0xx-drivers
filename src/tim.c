@@ -15,7 +15,7 @@
 #endif
 #include "error.h"
 #include "iwdg.h"
-#include "math.h"
+#include "maths.h"
 #include "nvic.h"
 #include "pwr.h"
 #include "rcc_registers.h"

@@ -7,13 +7,24 @@
 
 #include "nvm.h"
 
+#ifndef STM32L0XX_DRIVERS_DISABLE_FLAGS_FILE
+#include "stm32l0xx_drivers_flags.h"
+#endif
 #include "flash_registers.h"
 #include "rcc_registers.h"
 #include "types.h"
 
+/*** NVM linker generated symbols ***/
+
+extern uint32_t __eeprom_address__;
+extern uint32_t __eeprom_size_bytes__;
+
 /*** NVM local macros ***/
 
-#define NVM_TIMEOUT_COUNT   1000000
+#define NVM_EEPROM_ADDRESS      ((uint32_t) &__eeprom_address__)
+#define NVM_EEPROM_SIZE_BYTES   ((uint32_t) &__eeprom_size_bytes__)
+
+#define NVM_TIMEOUT_COUNT       1000000
 
 /*** NVM local functions ***/
 
@@ -68,15 +79,21 @@ errors:
 /*** NVM functions ***/
 
 /*******************************************************************/
-NVM_status_t NVM_read_byte(NVM_address_t address, uint8_t* data) {
+NVM_status_t NVM_read_byte(uint32_t address, uint8_t* data) {
     // Local variables.
     NVM_status_t status = NVM_SUCCESS;
-    uint32_t absolute_address = (EEPROM_START_ADDRESS + address);
+    uint32_t absolute_address = (NVM_EEPROM_ADDRESS + address);
     // Check parameters.
-    if (address >= EEPROM_SIZE_BYTES) {
+    if (address >= NVM_EEPROM_SIZE_BYTES) {
+        status = NVM_ERROR_OVERFLOW;
+        goto errors;
+    }
+#ifdef STM32L0XX_DRIVERS_NVM_ADDRESS_LAST
+    if (address >= STM32L0XX_DRIVERS_NVM_ADDRESS_LAST) {
         status = NVM_ERROR_ADDRESS;
         goto errors;
     }
+#endif
     if (data == NULL) {
         status = NVM_ERROR_NULL_PARAMETER;
         goto errors;
@@ -95,15 +112,21 @@ errors:
 }
 
 /*******************************************************************/
-NVM_status_t NVM_write_byte(NVM_address_t address, uint8_t data) {
+NVM_status_t NVM_write_byte(uint32_t address, uint8_t data) {
     // Local variables.
     NVM_status_t status = NVM_SUCCESS;
-    uint32_t absolute_address = (EEPROM_START_ADDRESS + address);
+    uint32_t absolute_address = (NVM_EEPROM_ADDRESS + address);
     // Check parameters.
-    if (address >= EEPROM_SIZE_BYTES) {
+    if (address >= NVM_EEPROM_SIZE_BYTES) {
+        status = NVM_ERROR_OVERFLOW;
+        goto errors;
+    }
+#ifdef STM32L0XX_DRIVERS_NVM_ADDRESS_LAST
+    if (address >= STM32L0XX_DRIVERS_NVM_ADDRESS_LAST) {
         status = NVM_ERROR_ADDRESS;
         goto errors;
     }
+#endif
     // Enable peripheral.
     RCC->AHBENR |= (0b1 << 8); // MIFEN='1'.
     // Unlock memory.

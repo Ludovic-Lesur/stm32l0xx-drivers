@@ -6,23 +6,25 @@ This repository contains the **peripherals drivers** of the STM32L0xx MCUs.
 
 The drivers rely on:
 
+* The **STM32L0xx linker scripts** defined in the [stm32l0xx-device](https://github.com/Ludovic-Lesur/stm32l0xx-device) repository.
 * The **STM32L0xx registers** defined in the [stm32l0xx-registers](https://github.com/Ludovic-Lesur/stm32l0xx-registers) repository.
 * The **embedded utility functions** defined in the [embedded-utils](https://github.com/Ludovic-Lesur/embedded-utils) repository.
 
 Here is the versions compatibility table:
 
-| **stm32l0xx-drivers** | **stm32l0xx-registers** | **embedded-utils** |
-|:---:|:---:|:---:|
-| [sw6.0](https://github.com/Ludovic-Lesur/stm32l0xx-drivers/releases/tag/sw6.0) | >= [sw3.0](https://github.com/Ludovic-Lesur/stm32l0xx-registers/releases/tag/sw3.0) | >= [sw2.0](https://github.com/Ludovic-Lesur/embedded-utils/releases/tag/sw2.0) |
-| [sw5.0](https://github.com/Ludovic-Lesur/stm32l0xx-drivers/releases/tag/sw5.0) | [sw2.0](https://github.com/Ludovic-Lesur/stm32l0xx-registers/releases/tag/sw2.0) | >= [sw2.0](https://github.com/Ludovic-Lesur/embedded-utils/releases/tag/sw2.0) |
-| [sw4.2](https://github.com/Ludovic-Lesur/stm32l0xx-drivers/releases/tag/sw4.2) | [sw2.0](https://github.com/Ludovic-Lesur/stm32l0xx-registers/releases/tag/sw2.0) | >= [sw2.0](https://github.com/Ludovic-Lesur/embedded-utils/releases/tag/sw2.0) |
-| [sw4.1](https://github.com/Ludovic-Lesur/stm32l0xx-drivers/releases/tag/sw4.1) | [sw2.0](https://github.com/Ludovic-Lesur/stm32l0xx-registers/releases/tag/sw2.0) | >= [sw2.0](https://github.com/Ludovic-Lesur/embedded-utils/releases/tag/sw2.0) |
-| [sw4.0](https://github.com/Ludovic-Lesur/stm32l0xx-drivers/releases/tag/sw4.0) | [sw2.0](https://github.com/Ludovic-Lesur/stm32l0xx-registers/releases/tag/sw2.0) | >= [sw2.0](https://github.com/Ludovic-Lesur/embedded-utils/releases/tag/sw2.0) |
-| [sw3.0](https://github.com/Ludovic-Lesur/stm32l0xx-drivers/releases/tag/sw3.0) | [sw1.3](https://github.com/Ludovic-Lesur/stm32l0xx-registers/releases/tag/sw1.3) | >= [sw2.0](https://github.com/Ludovic-Lesur/embedded-utils/releases/tag/sw2.0) |
-| [sw2.0](https://github.com/Ludovic-Lesur/stm32l0xx-drivers/releases/tag/sw2.0) | [sw1.1](https://github.com/Ludovic-Lesur/stm32l0xx-registers/releases/tag/sw1.1) to [sw1.3](https://github.com/Ludovic-Lesur/stm32l0xx-registers/releases/tag/sw1.3) | >= [sw2.0](https://github.com/Ludovic-Lesur/embedded-utils/releases/tag/sw2.0) |
-| [sw1.2](https://github.com/Ludovic-Lesur/stm32l0xx-drivers/releases/tag/sw1.2) | [sw1.1](https://github.com/Ludovic-Lesur/stm32l0xx-registers/releases/tag/sw1.1) to [sw1.3](https://github.com/Ludovic-Lesur/stm32l0xx-registers/releases/tag/sw1.3) | [sw1.3](https://github.com/Ludovic-Lesur/embedded-utils/releases/tag/sw1.3) to [sw1.4](https://github.com/Ludovic-Lesur/embedded-utils/releases/tag/sw1.4) |
-| [sw1.1](https://github.com/Ludovic-Lesur/stm32l0xx-drivers/releases/tag/sw1.1) | [sw1.1](https://github.com/Ludovic-Lesur/stm32l0xx-registers/releases/tag/sw1.1) to [sw1.3](https://github.com/Ludovic-Lesur/stm32l0xx-registers/releases/tag/sw1.3) | [sw1.0](https://github.com/Ludovic-Lesur/embedded-utils/releases/tag/sw1.0) to [sw1.2](https://github.com/Ludovic-Lesur/embedded-utils/releases/tag/sw1.2) |
-| [sw1.0](https://github.com/Ludovic-Lesur/stm32l0xx-drivers/releases/tag/sw1.0) | [sw1.1](https://github.com/Ludovic-Lesur/stm32l0xx-registers/releases/tag/sw1.1) to [sw1.3](https://github.com/Ludovic-Lesur/stm32l0xx-registers/releases/tag/sw1.3) | [sw1.0](https://github.com/Ludovic-Lesur/embedded-utils/releases/tag/sw1.0) to [sw1.2](https://github.com/Ludovic-Lesur/embedded-utils/releases/tag/sw1.2)
+| **stm32l0xx-drivers** | **stm32l0xx-device** | **stm32l0xx-registers** | **embedded-utils** |
+|:---:|:---:|:---:|:---:|
+| [sw7.0](https://github.com/Ludovic-Lesur/stm32l0xx-drivers/releases/tag/sw7.0) | >= [sw2.0](https://github.com/Ludovic-Lesur/stm32l0xx-device/releases/tag/sw2.0) | >= [sw3.0](https://github.com/Ludovic-Lesur/stm32l0xx-registers/releases/tag/sw3.0) | >= [sw2.0](https://github.com/Ludovic-Lesur/embedded-utils/releases/tag/sw2.0) |
+| [sw6.0](https://github.com/Ludovic-Lesur/stm32l0xx-drivers/releases/tag/sw6.0) | | >= [sw3.0](https://github.com/Ludovic-Lesur/stm32l0xx-registers/releases/tag/sw3.0) | >= [sw2.0](https://github.com/Ludovic-Lesur/embedded-utils/releases/tag/sw2.0) |
+| [sw5.0](https://github.com/Ludovic-Lesur/stm32l0xx-drivers/releases/tag/sw5.0) | | [sw2.0](https://github.com/Ludovic-Lesur/stm32l0xx-registers/releases/tag/sw2.0) | >= [sw2.0](https://github.com/Ludovic-Lesur/embedded-utils/releases/tag/sw2.0) |
+| [sw4.2](https://github.com/Ludovic-Lesur/stm32l0xx-drivers/releases/tag/sw4.2) | | [sw2.0](https://github.com/Ludovic-Lesur/stm32l0xx-registers/releases/tag/sw2.0) | >= [sw2.0](https://github.com/Ludovic-Lesur/embedded-utils/releases/tag/sw2.0) |
+| [sw4.1](https://github.com/Ludovic-Lesur/stm32l0xx-drivers/releases/tag/sw4.1) | | [sw2.0](https://github.com/Ludovic-Lesur/stm32l0xx-registers/releases/tag/sw2.0) | >= [sw2.0](https://github.com/Ludovic-Lesur/embedded-utils/releases/tag/sw2.0) |
+| [sw4.0](https://github.com/Ludovic-Lesur/stm32l0xx-drivers/releases/tag/sw4.0) | | [sw2.0](https://github.com/Ludovic-Lesur/stm32l0xx-registers/releases/tag/sw2.0) | >= [sw2.0](https://github.com/Ludovic-Lesur/embedded-utils/releases/tag/sw2.0) |
+| [sw3.0](https://github.com/Ludovic-Lesur/stm32l0xx-drivers/releases/tag/sw3.0) | | [sw1.3](https://github.com/Ludovic-Lesur/stm32l0xx-registers/releases/tag/sw1.3) | >= [sw2.0](https://github.com/Ludovic-Lesur/embedded-utils/releases/tag/sw2.0) |
+| [sw2.0](https://github.com/Ludovic-Lesur/stm32l0xx-drivers/releases/tag/sw2.0) | | [sw1.1](https://github.com/Ludovic-Lesur/stm32l0xx-registers/releases/tag/sw1.1) to [sw1.3](https://github.com/Ludovic-Lesur/stm32l0xx-registers/releases/tag/sw1.3) | >= [sw2.0](https://github.com/Ludovic-Lesur/embedded-utils/releases/tag/sw2.0) |
+| [sw1.2](https://github.com/Ludovic-Lesur/stm32l0xx-drivers/releases/tag/sw1.2) | | [sw1.1](https://github.com/Ludovic-Lesur/stm32l0xx-registers/releases/tag/sw1.1) to [sw1.3](https://github.com/Ludovic-Lesur/stm32l0xx-registers/releases/tag/sw1.3) | [sw1.3](https://github.com/Ludovic-Lesur/embedded-utils/releases/tag/sw1.3) to [sw1.4](https://github.com/Ludovic-Lesur/embedded-utils/releases/tag/sw1.4) |
+| [sw1.1](https://github.com/Ludovic-Lesur/stm32l0xx-drivers/releases/tag/sw1.1) | | [sw1.1](https://github.com/Ludovic-Lesur/stm32l0xx-registers/releases/tag/sw1.1) to [sw1.3](https://github.com/Ludovic-Lesur/stm32l0xx-registers/releases/tag/sw1.3) | [sw1.0](https://github.com/Ludovic-Lesur/embedded-utils/releases/tag/sw1.0) to [sw1.2](https://github.com/Ludovic-Lesur/embedded-utils/releases/tag/sw1.2) |
+| [sw1.0](https://github.com/Ludovic-Lesur/stm32l0xx-drivers/releases/tag/sw1.0) | | [sw1.1](https://github.com/Ludovic-Lesur/stm32l0xx-registers/releases/tag/sw1.1) to [sw1.3](https://github.com/Ludovic-Lesur/stm32l0xx-registers/releases/tag/sw1.3) | [sw1.0](https://github.com/Ludovic-Lesur/embedded-utils/releases/tag/sw1.0) to [sw1.2](https://github.com/Ludovic-Lesur/embedded-utils/releases/tag/sw1.2)
 
 # Compilation flags
 
@@ -34,6 +36,7 @@ Here is the versions compatibility table:
 | `STM32L0XX_DRIVERS_I2C_FAST_MODE` | `defined` / `undefined` | Enable or disable the I2C fast mode (400kHz SCL frequency). |
 | `STM32L0XX_DRIVERS_LPUART_MODE` | `0` / `1` / `2` | LPUART operation mode: `0` = RXNE interrupt `1` = CMF interrupt `2` = RS485 |
 | `STM32L0XX_DRIVERS_LPUART_DISABLE_TX_0` | `defined` / `undefined` | Disable the transmission of byte 0x00 if defined. |
+| `STM32L0XX_DRIVERS_NVM_ADDRESS_LAST` | `undefined` / `<value>` | Last EEPROM address in bytes used by the application. |
 | `STM32L0XX_DRIVERS_RCC_HSE_ENABLE` | `defined` / `undefined` | Enable or disable external oscillator functions. |
 | `STM32L0XX_DRIVERS_RCC_HSE_FREQUENCY_HZ` | `<value>` | Defines the external high speed crystal frequency in Hz (if used). |
 | `STM32L0XX_DRIVERS_RCC_LSE_MODE` | `0` / `1` / `2` | LSE crystal mode: `0` = disabled `1` = enabled with LSI/HSI fallback `2` = enabled and mandatory. |

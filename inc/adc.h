@@ -15,7 +15,8 @@
 
 /*** ADC macros ***/
 
-#define ADC_FULL_SCALE                  4095
+#define ADC_RESOLUTION_BITS             12
+#define ADC_FULL_SCALE                  ((1 << ADC_RESOLUTION_BITS) - 1)
 
 #define ADC_INIT_DELAY_MS_REGULATOR     5
 #define ADC_INIT_DELAY_MS_VREF_TS       10

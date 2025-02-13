@@ -11,6 +11,9 @@
 #ifndef STM32L0XX_REGISTERS_DISABLE_FLAGS_FILE
 #include "stm32l0xx_registers_flags.h"
 #endif
+#ifndef STM32L0XX_DRIVERS_DISABLE_FLAGS_FILE
+#include "stm32l0xx_drivers_flags.h"
+#endif
 #include "types.h"
 
 /*** DMA macros ***/
@@ -34,13 +37,13 @@
 typedef enum {
     // Driver errors.
     DMA_SUCCESS = 0,
-    DMA_ERROR_UNINITIALIZED,
     DMA_ERROR_NULL_PARAMETER,
     DMA_ERROR_CHANNEL,
     DMA_ERROR_DIRECTION,
     DMA_ERROR_TRANSFER_SIZE,
     DMA_ERROR_PRIORITY,
     DMA_ERROR_REQUEST_NUMBER,
+    DMA_ERROR_UNINITIALIZED,
     // Last base value.
     DMA_ERROR_BASE_LAST = 0x0100
 } DMA_status_t;
@@ -124,9 +127,9 @@ typedef struct {
     DMA_transfer_size_t transfer_size;
     DMA_priority_t priority;
     uint16_t number_of_data;
-    uint8_t request_number;
     uint32_t memory_address;
     uint32_t peripheral_address;
+    uint8_t request_number;
     DMA_transfer_complete_irq_cb_t irq_callback;
     uint8_t nvic_priority;
 } DMA_configuration_t;
@@ -205,12 +208,12 @@ DMA_status_t DMA_set_peripheral_address(DMA_channel_t channel, uint32_t peripher
 #endif
 
 /*******************************************************************/
-#define DMA_exit_error(base) { if (dma_status != DMA_SUCCESS) { status = (base + dma_status); goto errors; } }
+#define DMA_exit_error(base) { ERROR_check_exit(dma_status, DMA_SUCCESS, base) }
 
 /*******************************************************************/
-#define DMA_stack_error(base) { if (dma_status != DMA_SUCCESS) { ERROR_stack_add(base + dma_status); } }
+#define DMA_stack_error(base) { ERROR_check_stack(dma_status, DMA_SUCCESS, base) }
 
 /*******************************************************************/
-#define DMA_stack_exit_error(base, code) { if (dma_status != DMA_SUCCESS) { ERROR_stack_add(base + dma_status); status = code; goto errors; } }
+#define DMA_stack_exit_error(base, code) { ERROR_check_stack_exit(dma_status, DMA_SUCCESS, base, code)
 
 #endif /* __DMA_H__ */

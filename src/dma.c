@@ -80,14 +80,14 @@ static DMA_context_t dma_ctx = { .init_count = { 0 }, .enabled_channels_mask = 0
 /*******************************************************************/
 #define _DMA_irq_handler(channel) { \
     /* Check flag */ \
-    if (((DMA1 -> ISR) & (0b1 << ((channel << 2) + 1))) != 0) { \
+    if (((DMA1->ISR) & (0b1 << ((channel << 2) + 1))) != 0) { \
         /* Check mask and callback */ \
-        if ((((DMA1 -> CH[channel].CCR) & (0b1 << 1)) != 0) && (dma_ctx.channel_irq_callbacks[channel] != NULL)) { \
+        if ((((DMA1->CHx[channel].CCR) & (0b1 << 1)) != 0) && (dma_ctx.channel_irq_callbacks[channel] != NULL)) { \
             /* Execute callback */ \
             dma_ctx.channel_irq_callbacks[channel](); \
         } \
         /* Clear flag */ \
-        DMA1 -> IFCR |= (0b1 << ((channel << 2) + 1)); \
+        DMA1->IFCR |= (0b1 << ((channel << 2) + 1)); \
     } \
 }
 
@@ -153,33 +153,33 @@ DMA_status_t DMA_init(DMA_channel_t channel, DMA_configuration_t* configuration)
     // Enable peripheral clock.
     RCC->AHBENR |= (0b1 << 0); // DMAEN='1'.
     // Reset configuration register.
-    DMA1->CH[channel].CCR = 0;
+    DMA1->CHx[channel].CCR = 0;
     // Direction.
     switch (configuration->direction) {
     case DMA_DIRECTION_PERIPHERAL_TO_MEMORY:
         // Nothing to do.
         break;
     case DMA_DIRECTION_MEMORY_TO_PERIPHERAL:
-        DMA1->CH[channel].CCR |= (0b1 << 4);
+        DMA1->CHx[channel].CCR |= (0b1 << 4);
         break;
     default:
         status = DMA_ERROR_DIRECTION;
         goto errors;
     }
     // Flags.
-    DMA1->CH[channel].CCR |= ((configuration->flags).circular_mode << 5);
-    DMA1->CH[channel].CCR |= ((configuration->flags).peripheral_increment << 6);
-    DMA1->CH[channel].CCR |= ((configuration->flags).memory_increment << 7);
+    DMA1->CHx[channel].CCR |= ((configuration->flags).circular_mode << 5);
+    DMA1->CHx[channel].CCR |= ((configuration->flags).peripheral_increment << 6);
+    DMA1->CHx[channel].CCR |= ((configuration->flags).memory_increment << 7);
     // Transfer size.
     switch (configuration->transfer_size) {
     case DMA_TRANSFER_SIZE_8_BITS:
         // Nothing to do.
         break;
     case DMA_TRANSFER_SIZE_16_BITS:
-        DMA1->CH[channel].CCR |= (0b01 << 8);
+        DMA1->CHx[channel].CCR |= (0b01 << 8);
         break;
     case DMA_TRANSFER_SIZE_32_BITS:
-        DMA1->CH[channel].CCR |= (0b10 << 8);
+        DMA1->CHx[channel].CCR |= (0b10 << 8);
         break;
     default:
         status = DMA_ERROR_TRANSFER_SIZE;
@@ -191,28 +191,29 @@ DMA_status_t DMA_init(DMA_channel_t channel, DMA_configuration_t* configuration)
         // Nothing to do.
         break;
     case DMA_PRIORITY_MEDIUM:
-        DMA1->CH[channel].CCR |= (0b01 << 12);
+        DMA1->CHx[channel].CCR |= (0b01 << 12);
         break;
     case DMA_PRIORITY_HIGH:
-        DMA1->CH[channel].CCR |= (0b10 << 12);
+        DMA1->CHx[channel].CCR |= (0b10 << 12);
         break;
     case DMA_PRIORITY_VERY_HIGH:
-        DMA1->CH[channel].CCR |= (0b11 << 12);
+        DMA1->CHx[channel].CCR |= (0b11 << 12);
         break;
     default:
         status = DMA_ERROR_PRIORITY;
         goto errors;
     }
     // Number of data.
-    DMA1->CH[channel].CNDTR = (configuration->number_of_data);
+    DMA1->CHx[channel].CNDTR = (configuration->number_of_data);
+    // Memory address.
+    DMA1->CHx[channel].CMAR = (configuration->memory_address);
+    // Peripheral address.
+    DMA1->CHx[channel].CPAR = (configuration->peripheral_address);
+    // Enable interrupt.
+    DMA1->CHx[channel].CCR |= (0b1 << 1);
+    // Channel selection.
     DMA1->CSELR &= ~(0b1111 << (channel << 2));
     DMA1->CSELR |= ((configuration->request_number) << (channel << 2));
-    // Memory address.
-    DMA1->CH[channel].CMAR = (configuration->memory_address);
-    // Peripheral address.
-    DMA1->CH[channel].CPAR = (configuration->peripheral_address);
-    // Enable interrupt.
-    DMA1->CH[channel].CCR |= (0b1 << 1);
     // Register callback.
     dma_ctx.channel_irq_callbacks[channel] = (configuration->irq_callback);
     // Set interrupt priority.
@@ -240,7 +241,7 @@ DMA_status_t DMA_de_init(DMA_channel_t channel) {
     // Check initialization count.
     if (dma_ctx.init_count[channel] > 0) goto errors;
     // Disable channel.
-    DMA1->CH[channel].CCR &= ~(0b1 << 0); // EN='0'.
+    DMA1->CHx[channel].CCR &= ~(0b1 << 0); // EN='0'.
     // Update mask.
     dma_ctx.enabled_channels_mask &= ~(0b1 << channel);
     dma_ctx.started_channels_mask &= ~(0b1 << channel);
@@ -268,7 +269,7 @@ DMA_status_t DMA_start(DMA_channel_t channel) {
     // Update mask.
     dma_ctx.started_channels_mask |= (0b1 << channel);
     // Start transfer.
-    DMA1->CH[channel].CCR |= (0b1 << 0); // EN='1'.
+    DMA1->CHx[channel].CCR |= (0b1 << 0); // EN='1'.
 errors:
     return status;
 }
@@ -285,7 +286,7 @@ DMA_status_t DMA_stop(DMA_channel_t channel) {
     // Update mask.
     dma_ctx.started_channels_mask &= ~(0b1 << channel);
     // Stop transfer.
-    DMA1->CH[channel].CCR &= ~(0b1 << 0); // EN='0'.
+    DMA1->CHx[channel].CCR &= ~(0b1 << 0); // EN='0'.
     // Disable interrupt.
     if ((dma_ctx.started_channels_mask & DMA_DESCRIPTOR[channel].nvic_shared_mask) == 0) {
         NVIC_disable_interrupt(DMA_DESCRIPTOR[channel].nvic_interrupt);
@@ -304,8 +305,8 @@ DMA_status_t DMA_set_memory_address(DMA_channel_t channel, uint32_t memory_addr,
     _DMA_check_channel();
     _DMA_check_channel_state();
     // Set memory address and transfer size.
-    DMA1->CH[channel].CMAR = memory_addr;
-    DMA1->CH[channel].CNDTR = number_of_data;
+    DMA1->CHx[channel].CMAR = memory_addr;
+    DMA1->CHx[channel].CNDTR = number_of_data;
 errors:
     return status;
 }
@@ -320,8 +321,8 @@ DMA_status_t DMA_set_peripheral_address(DMA_channel_t channel, uint32_t peripher
     _DMA_check_channel();
     _DMA_check_channel_state();
     // Set memory address and transfer size.
-    DMA1->CH[channel].CPAR = peripheral_addr;
-    DMA1->CH[channel].CNDTR = number_of_data;
+    DMA1->CHx[channel].CPAR = peripheral_addr;
+    DMA1->CHx[channel].CNDTR = number_of_data;
 errors:
     return status;
 }

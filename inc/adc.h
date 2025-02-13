@@ -53,6 +53,7 @@ typedef enum {
  * \brief ADC channels list.
  *******************************************************************/
 typedef enum {
+    // External channels.
     ADC_CHANNEL_IN0 = 0,
     ADC_CHANNEL_IN1,
     ADC_CHANNEL_IN2,
@@ -69,9 +70,11 @@ typedef enum {
     ADC_CHANNEL_IN13,
     ADC_CHANNEL_IN14,
     ADC_CHANNEL_IN15,
+    // Internal channels.
     ADC_CHANNEL_VLCD,
     ADC_CHANNEL_VREFINT,
     ADC_CHANNEL_TEMPERATURE_SENSOR,
+    // Last index.
     ADC_CHANNEL_LAST
 } ADC_channel_t;
 

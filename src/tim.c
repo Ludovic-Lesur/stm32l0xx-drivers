@@ -160,7 +160,7 @@ static TIM_CAL_context_t tim_cal_ctx; // Not defined as array because only suppo
 static TIM_PWM_context_t tim_pwm_ctx[TIM_INSTANCE_LAST];
 #endif
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_ALL) != 0)
-static TIM_context_t tim_ctx;
+static TIM_context_t tim_ctx = { .mode = { TIM_MODE_NONE }, .irq_handler = { NULL } };
 #endif
 
 /*** TIM local functions ***/
@@ -476,8 +476,9 @@ static void _TIM_de_init(TIM_instance_t instance) {
 TIM_status_t TIM_STD_init(TIM_instance_t instance, uint8_t nvic_priority) {
     // Local variables.
     TIM_status_t status = TIM_SUCCESS;
-    // Check instance.
+    // Check instance and mode.
     _TIM_check_instance(instance);
+    _TIM_check_mode(instance, TIM_MODE_NONE);
     // Reset peripheral.
     _TIM_reset(instance);
     // Update local interrupt handler.
@@ -587,8 +588,9 @@ TIM_status_t TIM_MCH_init(TIM_instance_t instance, uint8_t nvic_priority) {
 #if (STM32L0XX_DRIVERS_RCC_LSE_MODE == 1)
     uint8_t lse_status = 0;
 #endif
-    // Check instance.
+    // Check instance and mode.
     _TIM_check_instance(instance);
+    _TIM_check_mode(instance, TIM_MODE_NONE);
     // Check supported instances.
     if (instance != TIM_INSTANCE_TIM2) {
         status = TIM_ERROR_INSTANCE;
@@ -866,8 +868,9 @@ errors:
 TIM_status_t TIM_CAL_init(TIM_instance_t instance, uint8_t nvic_priority) {
     // Local variables.
     TIM_status_t status = TIM_SUCCESS;
-    // Check instance.
+    // Check instance and mode.
     _TIM_check_instance(instance);
+    _TIM_check_mode(instance, TIM_MODE_NONE);
     // Check supported instances.
     if (instance != TIM_INSTANCE_TIM21) {
         status = TIM_ERROR_INSTANCE;
@@ -950,8 +953,9 @@ TIM_status_t TIM_PWM_init(TIM_instance_t instance, TIM_gpio_t* pins) {
     TIM_status_t status = TIM_SUCCESS;
     TIM_channel_t channel = 0;
     uint8_t idx = 0;
-    // Check instance and GPIOs.
+    // Check instance, mode and GPIOs.
     _TIM_check_instance(instance);
+    _TIM_check_mode(instance, TIM_MODE_NONE);
     _TIM_check_gpio();
 #if (STM32L0XX_REGISTERS_MCU_CATEGORY == 3) || (STM32L0XX_REGISTERS_MCU_CATEGORY == 5)
     // Check supported instance.
@@ -1091,8 +1095,9 @@ TIM_status_t TIM_OPM_init(TIM_instance_t instance, TIM_gpio_t* pins) {
     TIM_status_t status = TIM_SUCCESS;
     TIM_channel_t channel = 0;
     uint8_t idx = 0;
-    // Check instance and GPIOs.
+    // Check instance, mode and GPIOs.
     _TIM_check_instance(instance);
+    _TIM_check_mode(instance, TIM_MODE_NONE);
     _TIM_check_gpio();
 #if (STM32L0XX_REGISTERS_MCU_CATEGORY == 3) || (STM32L0XX_REGISTERS_MCU_CATEGORY == 5)
     // Check supported instance.

@@ -818,7 +818,7 @@ TIM_status_t TIM_MCH_wait_channel_completion(TIM_instance_t instance, TIM_channe
     case TIM_WAITING_MODE_SLEEP:
         // Enter sleep mode.
         while (tim_mch_ctx.channel[channel].irq_flag == 0) {
-            PWR_enter_sleep_mode();
+            PWR_enter_sleep_mode(PWR_SLEEP_MODE_NORMAL);
             // Internal watchdog.
             status = _TIM_MCH_internal_watchdog(time_start, &time_reference);
             if (status != TIM_SUCCESS) goto errors;
@@ -832,7 +832,7 @@ TIM_status_t TIM_MCH_wait_channel_completion(TIM_instance_t instance, TIM_channe
             RCC_exit_error(TIM_ERROR_BASE_RCC);
             // Enter low power sleep mode.
             while (tim_mch_ctx.channel[channel].irq_flag == 0) {
-                PWR_enter_low_power_sleep_mode();
+                PWR_enter_sleep_mode(PWR_SLEEP_MODE_LOW_POWER);
                 // Internal watchdog.
                 status = _TIM_MCH_internal_watchdog(time_start, &time_reference);
                 if (status != TIM_SUCCESS) goto errors;
@@ -844,7 +844,7 @@ TIM_status_t TIM_MCH_wait_channel_completion(TIM_instance_t instance, TIM_channe
         else {
             // Enter sleep mode.
             while (tim_mch_ctx.channel[channel].irq_flag == 0) {
-                PWR_enter_sleep_mode();
+                PWR_enter_sleep_mode(PWR_SLEEP_MODE_NORMAL);
                 // Internal watchdog.
                 status = _TIM_MCH_internal_watchdog(time_start, &time_reference);
                 if (status != TIM_SUCCESS) goto errors;

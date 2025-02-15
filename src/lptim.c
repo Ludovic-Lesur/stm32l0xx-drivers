@@ -188,7 +188,7 @@ LPTIM_status_t LPTIM_delay_milliseconds(uint32_t delay_ms, LPTIM_delay_mode_t de
         NVIC_enable_interrupt(NVIC_INTERRUPT_LPTIM1);
         // Enter sleep mode.
         while (lptim_ctx.flags.wake_up == 0) {
-            PWR_enter_sleep_mode();
+            PWR_enter_sleep_mode(PWR_SLEEP_MODE_NORMAL);
         }
         // Disable interrupt.
         NVIC_disable_interrupt(NVIC_INTERRUPT_LPTIM1);
@@ -198,7 +198,7 @@ LPTIM_status_t LPTIM_delay_milliseconds(uint32_t delay_ms, LPTIM_delay_mode_t de
         NVIC_enable_interrupt(NVIC_INTERRUPT_LPTIM1);
         // Enter stop mode.
         while (lptim_ctx.flags.wake_up == 0) {
-            PWR_enter_stop_mode();
+            PWR_enter_deepsleep_mode(PWR_DEEPSLEEP_MODE_STOP);
         }
         // Disable interrupt.
         NVIC_disable_interrupt(NVIC_INTERRUPT_LPTIM1);

@@ -48,48 +48,56 @@ void PWR_init(void) {
 }
 
 /*******************************************************************/
-void PWR_enter_sleep_mode(void) {
-    // Regulator in normal mode.
-    PWR->CR &= ~(0b1 << 0); // LPSDSR='0'.
-    // Enter low power sleep mode.
+void PWR_enter_sleep_mode(PWR_sleep_mode_t sleep_mode) {
+    // Configure mode.
+    switch (sleep_mode) {
+    case PWR_SLEEP_MODE_NORMAL:
+        // Regulator in normal mode.
+        PWR->CR &= ~(0b1 << 0); // LPSDSR='0'.
+        break;
+    case PWR_SLEEP_MODE_LOW_POWER:
+        // Regulator in low power mode.
+        PWR->CR |= (0b1 << 0); // LPSDSR='1'.
+        break;
+    default:
+        break;
+    }
+    // Enter sleep mode.
     SCB->SCR &= ~(0b1 << 2); // SLEEPDEEP='0'.
     // Wait For Interrupt core instruction.
     __asm volatile ("wfi");
 }
 
 /*******************************************************************/
-void PWR_enter_low_power_sleep_mode(void) {
-    // Regulator in low power mode.
-    PWR->CR |= (0b1 << 0); // LPSDSR='1'.
-    // Enter low power sleep mode.
-    SCB->SCR &= ~(0b1 << 2); // SLEEPDEEP='0'.
-    // Wait For Interrupt core instruction.
-    __asm volatile ("wfi");
-}
-
-/*******************************************************************/
-void PWR_enter_stop_mode(void) {
-    // Select wakeup clock.
+void PWR_enter_deepsleep_mode(PWR_deepsleep_mode_t deepsleep_mode) {
+    // Select wakeup clock in case of stop mode.
     if (RCC_get_system_clock() == RCC_CLOCK_MSI) {
-        // Use MSI.
-        RCC->CFGR &= ~(0b1 << 15);
+        RCC->CFGR &= ~(0b1 << 15); // Use MSI.
     }
     else {
-        // Use HSI.
-        RCC->CFGR |= (0b1 << 15);
+        RCC->CFGR |= (0b1 << 15); // Use HSI.
+    }
+    // Select low power mode.
+    switch (deepsleep_mode) {
+    case PWR_DEEPSLEEP_MODE_STOP:
+        PWR->CR &= ~(0b1 << 1); // PDDS='0'.
+        break;
+    case PWR_DEEPSLEEP_MODE_STANDBY:
+        PWR->CR |= (0b1 << 1); // PDDS='1'.
+        break;
+    default:
+        break;
     }
     // Regulator in low power mode.
     PWR->CR |= (0b1 << 0); // LPSDSR='1'.
-    // Clear WUF flag.
+    // Clear wake-up flag.
     PWR->CR |= (0b1 << 2); // CWUF='1'.
-    // Enter stop mode when CPU enters deepsleep.
-    PWR->CR &= ~(0b1 << 1); // PDDS='0'.
     // Clear all EXTI, RTC and peripherals interrupt pending bits.
     RCC->CICR |= 0x000001BF;
-    EXTI->PR |= 0x007BFFFF; // PIFx='1'.
-    RTC->ISR &= 0xFFFF005F; // Reset alarms, wake-up, tamper and timestamp flags.
-    NVIC->ICPR = 0xFFFFFFFF; // CLEARPENDx='1'.
-    // Enter stop mode.
+    EXTI->PR |= 0x007BFFFF;
+    RTC->ISR &= 0xFFFF005F;
+    NVIC->ICPR = 0xFFFFFFFF;
+    // Enter deep sleep mode.
     SCB->SCR |= (0b1 << 2); // SLEEPDEEP='1'.
     // Wait For Interrupt core instruction.
     __asm volatile ("wfi");

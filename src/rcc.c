@@ -72,7 +72,7 @@ static void _RCC_enable_lsi(void) {
     NVIC_enable_interrupt(NVIC_INTERRUPT_RCC_CRS);
     // Wait for LSI to be stable.
     while (((RCC->CSR) & (0b1 << 1)) == 0) {
-        PWR_enter_sleep_mode();
+        PWR_enter_sleep_mode(PWR_SLEEP_MODE_NORMAL);
     }
     NVIC_disable_interrupt(NVIC_INTERRUPT_RCC_CRS);
 }

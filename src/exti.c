@@ -69,14 +69,14 @@ static EXTI_context_t exti_ctx = { .enabled_gpio_mask = 0, .gpio_irq_callbacks =
 /*******************************************************************/
 #define _EXTI_irq_handler(pin) { \
     /* Check flag */ \
-    if (((EXTI -> PR) & (0b1 << pin)) != 0) { \
+    if (((EXTI->PR) & (0b1 << pin)) != 0) { \
         /* Check mask and callback */ \
-        if ((((EXTI -> IMR) & (0b1 << pin)) != 0) && (exti_ctx.gpio_irq_callbacks[pin] != NULL)) { \
+        if ((((EXTI->IMR) & (0b1 << pin)) != 0) && (exti_ctx.gpio_irq_callbacks[pin] != NULL)) { \
             /* Execute callback */ \
             exti_ctx.gpio_irq_callbacks[pin](); \
         } \
         /* Clear flag */ \
-        EXTI -> PR |= (0b1 << pin); \
+        EXTI->PR |= (0b1 << pin); \
     } \
 }
 
@@ -147,30 +147,30 @@ void __attribute__((optimize("-O0"))) EXTI4_15_IRQHandler(void) {
 #endif
 
 /*******************************************************************/
-static void _EXTI_set_trigger(EXTI_trigger_t trigger, uint8_t line_idx) {
+static void _EXTI_set_trigger(EXTI_line_t line, EXTI_trigger_t trigger) {
     // Select triggers.
     switch (trigger) {
     // Rising edge only.
     case EXTI_TRIGGER_RISING_EDGE:
-        EXTI->RTSR |= (0b1 << line_idx);
-        EXTI->FTSR &= ~(0b1 << line_idx);
+        EXTI->RTSR |= (0b1 << line);
+        EXTI->FTSR &= ~(0b1 << line);
         break;
-        // Falling edge only.
+    // Falling edge only.
     case EXTI_TRIGGER_FALLING_EDGE:
-        EXTI->RTSR &= ~(0b1 << line_idx);
-        EXTI->FTSR |= (0b1 << line_idx);
+        EXTI->RTSR &= ~(0b1 << line);
+        EXTI->FTSR |= (0b1 << line);
         break;
-        // Both edges.
+    // Both edges.
     case EXTI_TRIGGER_ANY_EDGE:
-        EXTI->RTSR |= (0b1 << line_idx);
-        EXTI->FTSR |= (0b1 << line_idx);
+        EXTI->RTSR |= (0b1 << line);
+        EXTI->FTSR |= (0b1 << line);
         break;
-        // Unknown configuration.
+    // Unknown configuration.
     default:
         goto errors;
     }
     // Clear flag.
-    EXTI->PR |= (0b1 << line_idx);
+    EXTI->PR |= (0b1 << line);
 errors:
     return;
 }
@@ -180,45 +180,47 @@ errors:
 /*******************************************************************/
 void EXTI_init(void) {
     // Enable peripheral clock.
-    RCC->APB2ENR |= (0b1 << 0); // SYSCFEN='1'.
+    RCC->APB2ENR |= (0b1 << 0);
     // Mask all sources by default.
     EXTI->IMR = 0;
     // Clear all flags.
-    EXTI->PR |= 0x007BFFFF; // PIFx='1'.
+    EXTI->PR |= 0x007BFFFF;
 }
 
 /*******************************************************************/
 void EXTI_enable_line(EXTI_line_t line, EXTI_trigger_t trigger) {
     // Select triggers.
-    _EXTI_set_trigger(trigger, line);
+    _EXTI_set_trigger(line, trigger);
     // Set mask.
-    EXTI->IMR |= (0b1 << line); // IMx='1'.
+    EXTI->IMR |= (0b1 << line);
 }
 
 /*******************************************************************/
 void EXTI_disable_line(EXTI_line_t line) {
     // Set mask.
-    EXTI->IMR &= ~(0b1 << line); // IMx='0'.
+    EXTI->IMR &= ~(0b1 << line);
 }
 
 /*******************************************************************/
 void EXTI_clear_line_flag(EXTI_line_t line) {
     // Clear flag.
-    EXTI->PR |= line; // PIFx='1'.
+    EXTI->PR |= (0b1 << line);
 }
 
 #if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_ALL) != 0)
 /*******************************************************************/
 void EXTI_configure_gpio(const GPIO_pin_t* gpio, GPIO_pull_resistor_t pull_resistor, EXTI_trigger_t trigger, EXTI_gpio_irq_cb_t irq_callback, uint8_t nvic_priority) {
+    // Local variables.
+    uint8_t line_idx = (gpio->pin);
     // Select GPIO port.
-    SYSCFG->EXTICR[((gpio->pin) >> 2)] &= ~(0b1111 << (((gpio->pin) % 4) << 2));
-    SYSCFG->EXTICR[((gpio->pin) >> 2)] |= ((gpio->port_index) << (((gpio->pin) % 4) << 2));
+    SYSCFG->EXTICR[(line_idx >> 2)] &= ~(0b1111 << ((line_idx % 4) << 2));
+    SYSCFG->EXTICR[(line_idx >> 2)] |= ((gpio->port_index) << ((line_idx % 4) << 2));
     // Select triggers.
-    _EXTI_set_trigger(trigger, (gpio->pin));
+    _EXTI_set_trigger(line_idx, trigger);
     // Set interrupt priority.
-    NVIC_set_priority(EXTI_DESCRIPTOR[gpio->pin].nvic_interrupt, nvic_priority);
+    NVIC_set_priority(EXTI_DESCRIPTOR[line_idx].nvic_interrupt, nvic_priority);
     // Register callback.
-    exti_ctx.gpio_irq_callbacks[gpio->pin] = irq_callback;
+    exti_ctx.gpio_irq_callbacks[line_idx] = irq_callback;
     // Configure GPIO.
     GPIO_configure(gpio, GPIO_MODE_INPUT, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_LOW, pull_resistor);
 }
@@ -237,25 +239,29 @@ void EXTI_release_gpio(const GPIO_pin_t* gpio, GPIO_mode_t released_mode) {
 #if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_ALL) != 0)
 /*******************************************************************/
 void EXTI_enable_gpio_interrupt(const GPIO_pin_t* gpio) {
+    // Local variables.
+    uint8_t line_idx = (gpio->pin);
     // Update mask.
-    exti_ctx.enabled_gpio_mask |= (0b1 << (gpio->pin));
+    exti_ctx.enabled_gpio_mask |= (0b1 << line_idx);
     // Set mask.
-    EXTI->IMR |= (0b1 << ((gpio->pin))); // IMx='1'.
+    EXTI->IMR |= (0b1 << line_idx);
     // Enable interrupt.
-    NVIC_enable_interrupt(EXTI_DESCRIPTOR[gpio->pin].nvic_interrupt);
+    NVIC_enable_interrupt(EXTI_DESCRIPTOR[line_idx].nvic_interrupt);
 }
 #endif
 
 #if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_ALL) != 0)
 /*******************************************************************/
 void EXTI_disable_gpio_interrupt(const GPIO_pin_t* gpio) {
+    // Local variables.
+    uint8_t line_idx = (gpio->pin);
     // Update mask.
-    exti_ctx.enabled_gpio_mask &= ~(0b1 << (gpio->pin));
+    exti_ctx.enabled_gpio_mask &= ~(0b1 << line_idx);
     // Set mask.
-    EXTI->IMR &= ~(0b1 << ((gpio->pin))); // IMx='0'.
+    EXTI->IMR &= ~(0b1 << line_idx);
     // Disable interrupt.
-    if ((exti_ctx.enabled_gpio_mask & EXTI_DESCRIPTOR[gpio->pin].nvic_shared_mask) == 0) {
-        NVIC_disable_interrupt(EXTI_DESCRIPTOR[gpio->pin].nvic_interrupt);
+    if ((exti_ctx.enabled_gpio_mask & EXTI_DESCRIPTOR[line_idx].nvic_shared_mask) == 0) {
+        NVIC_disable_interrupt(EXTI_DESCRIPTOR[line_idx].nvic_interrupt);
     }
 }
 #endif
@@ -263,7 +269,9 @@ void EXTI_disable_gpio_interrupt(const GPIO_pin_t* gpio) {
 #if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_ALL) != 0)
 /*******************************************************************/
 void EXTI_clear_gpio_flag(const GPIO_pin_t* gpio) {
+    // Local variables.
+    uint8_t line_idx = (gpio->pin);
     // Clear flag.
-    EXTI->PR |= (gpio->pin); // PIFx='1'.
+    EXTI->PR |= (0b1 << line_idx);
 }
 #endif

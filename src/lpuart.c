@@ -201,7 +201,7 @@ LPUART_status_t LPUART_init(const LPUART_gpio_t* pins, LPUART_configuration_t* c
 #if (STM32L0XX_DRIVERS_LPUART_MODE == 2)
     LPUART1->CR1 |= 0x00002822;
     LPUART1->CR2 |= ((configuration->self_address) << 24) | (0b1 << 4);
-    LPUART1->CR3 |= 0x00805000;
+    LPUART1->CR3 |= 0x00005000;
     status = _LPUART_set_rx_mode(configuration->rx_mode);
     if (status != LPUART_SUCCESS) goto errors;
 #endif

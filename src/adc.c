@@ -118,6 +118,7 @@ ADC_status_t ADC_init(const ADC_gpio_t* pins) {
     if (status != ADC_SUCCESS) goto errors;
     // Enable ADC voltage regulator.
     ADC1->CR |= (0b1 << 28);
+    // Wait for regulator startup time.
     lptim_status = LPTIM_delay_milliseconds(ADC_INIT_DELAY_MS_REGULATOR, LPTIM_DELAY_MODE_ACTIVE);
     LPTIM_exit_error(ADC_ERROR_BASE_LPTIM);
     // ADC configuration.

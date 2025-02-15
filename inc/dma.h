@@ -40,7 +40,8 @@ typedef enum {
     DMA_ERROR_NULL_PARAMETER,
     DMA_ERROR_CHANNEL,
     DMA_ERROR_DIRECTION,
-    DMA_ERROR_TRANSFER_SIZE,
+    DMA_ERROR_MEMORY_DATA_SIZE,
+    DMA_ERROR_PERIPHERAL_DATA_SIZE,
     DMA_ERROR_PRIORITY,
     DMA_ERROR_REQUEST_NUMBER,
     DMA_ERROR_UNINITIALIZED,
@@ -89,15 +90,15 @@ typedef union {
 } DMA_flags_t;
 
 /*!******************************************************************
- * \enum DMA_transfer_size_t
- * \brief DMA transfer sizes list.
+ * \enum DMA_data_size_t
+ * \brief DMA data sizes list.
  *******************************************************************/
 typedef enum {
-    DMA_TRANSFER_SIZE_8_BITS = 0,
-    DMA_TRANSFER_SIZE_16_BITS,
-    DMA_TRANSFER_SIZE_32_BITS,
-    DMA_TRANSFER_SIZE_LAST
-} DMA_transfer_size_t;
+    DMA_DATA_SIZE_8_BITS = 0,
+    DMA_DATA_SIZE_16_BITS,
+    DMA_DATA_SIZE_32_BITS,
+    DMA_DATA_SIZE_LAST
+} DMA_data_size_t;
 
 /*!******************************************************************
  * \enum DMA_priority_t
@@ -124,11 +125,12 @@ typedef void (*DMA_transfer_complete_irq_cb_t)(void);
 typedef struct {
     DMA_direction_t direction;
     DMA_flags_t flags;
-    DMA_transfer_size_t transfer_size;
-    DMA_priority_t priority;
-    uint16_t number_of_data;
     uint32_t memory_address;
+    DMA_data_size_t memory_data_size;
     uint32_t peripheral_address;
+    DMA_data_size_t peripheral_data_size;
+    uint16_t number_of_data;
+    DMA_priority_t priority;
     uint8_t request_number;
     DMA_transfer_complete_irq_cb_t irq_callback;
     uint8_t nvic_priority;

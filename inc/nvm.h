@@ -30,6 +30,8 @@ typedef enum {
     NVM_ERROR_BASE_LAST = 0x0100
 } NVM_status_t;
 
+#if ((defined STM32L0XX_DRIVERS_NVM_ADDRESS_LAST) && (STM32L0XX_DRIVERS_NVM_ADDRESS_LAST > 0))
+
 /*** NVM functions ***/
 
 /*!******************************************************************
@@ -58,5 +60,7 @@ NVM_status_t NVM_write_byte(uint32_t address, uint8_t data);
 
 /*******************************************************************/
 #define NVM_stack_exit_error(base, code) { ERROR_check_stack_exit(nvm_status, NVM_SUCCESS, base, code) }
+
+#endif /* STM32L0XX_DRIVERS_NVM_ADDRESS_LAST */
 
 #endif /* __NVM_H__ */

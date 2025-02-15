@@ -56,9 +56,9 @@ void NVIC_set_priority(NVIC_interrupt_t irq_index, uint8_t priority) {
         priority = NVIC_PRIORITY_MIN;
     }
     // Reset bits.
-    NVIC->IPR[(irq_index >> 2)] &= ~(0xFF << (8 * (irq_index % 4)));
+    NVIC->IPR[irq_index >> 2] &= ~(0xFF << ((irq_index % 4) << 3));
     // Set priority.
-    NVIC->IPR[(irq_index >> 2)] |= ((priority << 6) << (8 * (irq_index % 4)));
+    NVIC->IPR[irq_index >> 2] |= ((priority << 6) << ((irq_index % 4) << 3));
 errors:
     return;
 }

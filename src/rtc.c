@@ -26,10 +26,10 @@
 typedef struct {
     volatile uint32_t uptime_seconds;
     RTC_irq_cb_t wakeup_timer_irq_callback;
-#if ((STM32L0XX_DRIVERS_RTC_ALARM_MASK & 0x01) != 0)
+#if ((STM32L0XX_DRIVERS_RTC_ALARM_MASK & RTC_ALARM_MASK_A) != 0)
     RTC_irq_cb_t alarm_a_irq_callback;
 #endif
-#if ((STM32L0XX_DRIVERS_RTC_ALARM_MASK & 0x02) != 0)
+#if ((STM32L0XX_DRIVERS_RTC_ALARM_MASK & RTC_ALARM_MASK_B) != 0)
     RTC_irq_cb_t alarm_b_irq_callback;
 #endif
 } RTC_context_t;
@@ -44,7 +44,7 @@ static RTC_context_t rtc_ctx;
 void __attribute__((optimize("-O0"))) RTC_IRQHandler(void) {
     // Wakeup timer interrupt.
     if (((RTC->ISR) & (0b1 << 10)) != 0) {
-        // Increment update and call callback.
+        // Increment time and call callback.
         if (((RTC->CR) & (0b1 << 14)) != 0) {
             rtc_ctx.uptime_seconds += STM32L0XX_DRIVERS_RTC_WAKEUP_PERIOD_SECONDS;
             if (rtc_ctx.wakeup_timer_irq_callback != NULL) {
@@ -55,7 +55,7 @@ void __attribute__((optimize("-O0"))) RTC_IRQHandler(void) {
         RTC->ISR &= ~(0b1 << 10); // WUTF='0'.
         EXTI_clear_line_flag(EXTI_LINE_RTC_WAKEUP_TIMER);
     }
-#if ((STM32L0XX_DRIVERS_RTC_ALARM_MASK & 0x01) != 0)
+#if ((STM32L0XX_DRIVERS_RTC_ALARM_MASK & RTC_ALARM_MASK_A) != 0)
     // Alarm A interrupt.
     if (((RTC->ISR) & (0b1 << 8)) != 0) {
         // Call callback.
@@ -67,7 +67,7 @@ void __attribute__((optimize("-O0"))) RTC_IRQHandler(void) {
         EXTI_clear_line_flag(EXTI_LINE_RTC_ALARM);
     }
 #endif
-#if ((STM32L0XX_DRIVERS_RTC_ALARM_MASK & 0x02) != 0)
+#if ((STM32L0XX_DRIVERS_RTC_ALARM_MASK & RTC_ALARM_MASK_B) != 0)
     // Alarm B interrupt.
     if (((RTC->ISR) & (0b1 << 9)) != 0) {
         // Call callback.
@@ -185,7 +185,7 @@ uint32_t RTC_get_uptime_seconds(void) {
     return (rtc_ctx.uptime_seconds);
 }
 
-#if (STM32L0XX_DRIVERS_RTC_ALARM_MASK != 0)
+#if ((STM32L0XX_DRIVERS_RTC_ALARM_MASK & RTC_ALARM_MASK_ALL) != 0)
 /*******************************************************************/
 RTC_status_t RTC_start_alarm(RTC_alarm_t alarm, RTC_alarm_configuration_t* configuration, RTC_irq_cb_t irq_callback) {
     // Local variables.
@@ -225,7 +225,7 @@ RTC_status_t RTC_start_alarm(RTC_alarm_t alarm, RTC_alarm_configuration_t* confi
     if (status != RTC_SUCCESS) goto errors;
     // Check alarm.
     switch (alarm) {
-#if ((STM32L0XX_DRIVERS_RTC_ALARM_MASK & 0x01) != 0)
+#if ((STM32L0XX_DRIVERS_RTC_ALARM_MASK & RTC_ALARM_MASK_A) != 0)
     case RTC_ALARM_A:
         // Register callback.
         rtc_ctx.alarm_a_irq_callback = irq_callback;
@@ -238,7 +238,7 @@ RTC_status_t RTC_start_alarm(RTC_alarm_t alarm, RTC_alarm_configuration_t* confi
         RTC->CR |= (0b1 << 12) | (0b1 << 8);
         break;
 #endif
-#if ((STM32L0XX_DRIVERS_RTC_ALARM_MASK & 0x02) != 0)
+#if ((STM32L0XX_DRIVERS_RTC_ALARM_MASK & RTC_ALARM_MASK_B) != 0)
     case RTC_ALARM_B:
         // Register callback.
         rtc_ctx.alarm_b_irq_callback = irq_callback;
@@ -259,7 +259,7 @@ errors:
 }
 #endif
 
-#if (STM32L0XX_DRIVERS_RTC_ALARM_MASK != 0)
+#if ((STM32L0XX_DRIVERS_RTC_ALARM_MASK & RTC_ALARM_MASK_ALL) != 0)
 /*******************************************************************/
 RTC_status_t RTC_stop_alarm(RTC_alarm_t alarm) {
     // Local variables.
@@ -269,18 +269,22 @@ RTC_status_t RTC_stop_alarm(RTC_alarm_t alarm) {
     if (status != RTC_SUCCESS) goto errors;
     // Check alarm.
     switch (alarm) {
+#if ((STM32L0XX_DRIVERS_RTC_ALARM_MASK & RTC_ALARM_MASK_A) != 0)
     case RTC_ALARM_A:
         // Stop alarm A.
         RTC->CR &= ~(0b1 << 12) & ~(0b1 << 8);
         // Clear flag.
         RTC->ISR &= ~(0b1 << 8);
         break;
+#endif
+#if ((STM32L0XX_DRIVERS_RTC_ALARM_MASK & RTC_ALARM_MASK_B) != 0)
     case RTC_ALARM_B:
         // Stop alarm A.
         RTC->CR &= ~(0b1 << 13) & ~(0b1 << 9);
         // Clear flag.
         RTC->ISR &= ~(0b1 << 9);
         break;
+#endif
     default:
         status = RTC_ERROR_ALARM;
         goto errors;
@@ -290,7 +294,7 @@ errors:
 }
 #endif
 
-#if (STM32L0XX_DRIVERS_RTC_ALARM_MASK != 0)
+#if ((STM32L0XX_DRIVERS_RTC_ALARM_MASK & RTC_ALARM_MASK_ALL) != 0)
 /*******************************************************************/
 RTC_status_t RTC_set_time(RTC_time_t* time) {
     // Local variables.
@@ -341,7 +345,7 @@ errors:
 }
 #endif
 
-#if (STM32L0XX_DRIVERS_RTC_ALARM_MASK != 0)
+#if ((STM32L0XX_DRIVERS_RTC_ALARM_MASK & RTC_ALARM_MASK_ALL) != 0)
 /*******************************************************************/
 RTC_status_t RTC_get_time(RTC_time_t* time) {
     // Local variables.

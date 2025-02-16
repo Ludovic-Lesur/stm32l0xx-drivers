@@ -27,6 +27,10 @@
 
 #define RTC_AFTERNOON_HOUR_THRESHOLD    12
 
+#define RTC_ALARM_MASK_A                0x01
+#define RTC_ALARM_MASK_B                0x02
+#define RTC_ALARM_MASK_ALL              0x03
+
 /*** RTC structures ***/
 
 /*!******************************************************************
@@ -42,10 +46,10 @@ typedef enum {
     RTC_ERROR_ALARM,
     RTC_ERROR_ALARM_MODE,
     // Last base value.
-    RTC_ERROR_BASE_LAST = 0x100
+    RTC_ERROR_BASE_LAST = 0x0100
 } RTC_status_t;
 
-#if (STM32L0XX_DRIVERS_RTC_ALARM_MASK != 0)
+#if ((STM32L0XX_DRIVERS_RTC_ALARM_MASK & RTC_ALARM_MASK_ALL) != 0)
 /*!******************************************************************
  * \enum RTC_alarm_t
  * \brief RTC alarms list.
@@ -57,7 +61,7 @@ typedef enum {
 } RTC_alarm_t;
 #endif
 
-#if (STM32L0XX_DRIVERS_RTC_ALARM_MASK != 0)
+#if ((STM32L0XX_DRIVERS_RTC_ALARM_MASK & RTC_ALARM_MASK_ALL) != 0)
 /*!******************************************************************
  * \enum RTC_alarm_mode_t
  * \brief RTC alarm modes list.
@@ -69,7 +73,7 @@ typedef enum {
 } RTC_alarm_mode_t;
 #endif
 
-#if (STM32L0XX_DRIVERS_RTC_ALARM_MASK != 0)
+#if ((STM32L0XX_DRIVERS_RTC_ALARM_MASK & RTC_ALARM_MASK_ALL) != 0)
 /*!******************************************************************
  * \union RTC_alarm_field_t
  * \brief RTC alarm field type.
@@ -83,7 +87,7 @@ typedef union {
 } RTC_alarm_field_t;
 #endif
 
-#if (STM32L0XX_DRIVERS_RTC_ALARM_MASK != 0)
+#if ((STM32L0XX_DRIVERS_RTC_ALARM_MASK & RTC_ALARM_MASK_ALL) != 0)
 /*!******************************************************************
  * \struct RTC_alarm_configuration_t
  * \brief RTC alarm configuration structure.
@@ -139,7 +143,7 @@ RTC_status_t RTC_init(RTC_irq_cb_t wakeup_timer_irq_callback, uint8_t nvic_prior
  *******************************************************************/
 uint32_t RTC_get_uptime_seconds(void);
 
-#if (STM32L0XX_DRIVERS_RTC_ALARM_MASK != 0)
+#if ((STM32L0XX_DRIVERS_RTC_ALARM_MASK & RTC_ALARM_MASK_ALL) != 0)
 /*!******************************************************************
  * \fn RTC_status_t RTC_start_alarm(RTC_alarm_t alarm, RTC_alarm_configuration_t* configuration, RTC_irq_cb_t irq_callback)
  * \brief Configure and start RTC alarm.
@@ -152,7 +156,7 @@ uint32_t RTC_get_uptime_seconds(void);
 RTC_status_t RTC_start_alarm(RTC_alarm_t alarm, RTC_alarm_configuration_t* configuration, RTC_irq_cb_t irq_callback);
 #endif
 
-#if (STM32L0XX_DRIVERS_RTC_ALARM_MASK != 0)
+#if ((STM32L0XX_DRIVERS_RTC_ALARM_MASK & RTC_ALARM_MASK_ALL) != 0)
 /*!******************************************************************
  * \fn RTC_status_t RTC_stop_alarm(RTC_alarm_t alarm)
  * \brief Stop RTC alarm.
@@ -163,7 +167,7 @@ RTC_status_t RTC_start_alarm(RTC_alarm_t alarm, RTC_alarm_configuration_t* confi
 RTC_status_t RTC_stop_alarm(RTC_alarm_t alarm);
 #endif
 
-#if (STM32L0XX_DRIVERS_RTC_ALARM_MASK != 0)
+#if ((STM32L0XX_DRIVERS_RTC_ALARM_MASK & RTC_ALARM_MASK_ALL) != 0)
 /*!******************************************************************
  * \fn RTC_status_t RTC_set_time(RTC_time_t* time)
  * \brief Calibrate RTC calendar.
@@ -174,7 +178,7 @@ RTC_status_t RTC_stop_alarm(RTC_alarm_t alarm);
 RTC_status_t RTC_set_time(RTC_time_t* time);
 #endif
 
-#if (STM32L0XX_DRIVERS_RTC_ALARM_MASK != 0)
+#if ((STM32L0XX_DRIVERS_RTC_ALARM_MASK & RTC_ALARM_MASK_ALL) != 0)
 /*!******************************************************************
  * \fn RTC_status_t RTC_get_time(RTC_time_t* time)
  * \brief Get RTC time.

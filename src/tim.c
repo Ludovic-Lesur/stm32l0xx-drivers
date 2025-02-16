@@ -466,6 +466,7 @@ static void _TIM_de_init(TIM_instance_t instance) {
     (*TIM_DESCRIPTOR[instance].rcc_enr) &= ~(TIM_DESCRIPTOR[instance].rcc_mask);
     // Update mode.
     tim_ctx.mode[instance] = TIM_MODE_NONE;
+    tim_ctx.irq_handler[instance] = NULL;
 }
 #endif
 

@@ -11,8 +11,8 @@
 #include "stm32l0xx_drivers_flags.h"
 #endif
 #include "error.h"
-#include "gpio.h"
 #include "flash.h"
+#include "gpio.h"
 #include "nvic.h"
 #include "pwr.h"
 #include "rcc_registers.h"
@@ -53,6 +53,9 @@ typedef struct {
 /*** RCC local global variables ***/
 
 static const uint32_t RCC_MSI_FREQUENCY_TYPICAL[RCC_MSI_RANGE_LAST] = { 65536, 131072, 262144, 524288, 1048000, 2097000, 4194000 };
+
+static const uint8_t RCC_MCOSEL[RCC_CLOCK_LAST] = { 0b0000, 0b0001, 0b0010, 0b0011, 0b0100, 0b0101, 0b0110, 0b0111 };
+
 static RCC_context_t rcc_ctx;
 
 /*** RCC local functions ***/
@@ -216,6 +219,7 @@ static RCC_status_t _RCC_check_frequency_range(uint32_t default_value, uint32_t 
 RCC_status_t RCC_init(uint8_t nvic_priority) {
     // Local variables.
     RCC_status_t status = RCC_SUCCESS;
+    uint8_t idx = 0;
     // Set boot configuration.
     rcc_ctx.current_sysclk.source = RCC_CLOCK_MSI;
     rcc_ctx.current_sysclk.msi_range = RCC_MSI_RANGE_5_2MHZ;
@@ -224,11 +228,13 @@ RCC_status_t RCC_init(uint8_t nvic_priority) {
 #endif
     _RCC_save_system_clock();
     // Set default frequencies.
+    for (idx = 0; idx < RCC_CLOCK_LAST ; idx++) {
+        rcc_ctx.clock_frequency[idx] = 0;
+    }
     rcc_ctx.clock_frequency[RCC_CLOCK_SYSTEM] = rcc_ctx.clock_frequency[rcc_ctx.current_sysclk.source];
     rcc_ctx.clock_frequency[RCC_CLOCK_HSI] = RCC_HSI_FREQUENCY_TYPICAL_HZ;
     rcc_ctx.clock_frequency[RCC_CLOCK_MSI] = RCC_MSI_FREQUENCY_TYPICAL[rcc_ctx.current_sysclk.msi_range];
     rcc_ctx.clock_frequency[RCC_CLOCK_HSE] = STM32L0XX_DRIVERS_RCC_HSE_FREQUENCY_HZ;
-    rcc_ctx.clock_frequency[RCC_CLOCK_PLL] = 0;
     rcc_ctx.clock_frequency[RCC_CLOCK_LSI] = RCC_LSI_FREQUENCY_TYPICAL_HZ;
     rcc_ctx.clock_frequency[RCC_CLOCK_LSE] = STM32L0XX_DRIVERS_RCC_LSE_FREQUENCY_HZ;
     rcc_ctx.hsi_stop_mode_request_count = 0;
@@ -288,7 +294,7 @@ RCC_status_t RCC_switch_to_hse(RCC_hse_mode_t hse_mode) {
     }
     // Enable HSE.
     RCC->CR |= (0b1 << 16); // HSEON='1'.
-    // Wait for HSI to be stable.
+    // Wait for HSE to be stable.
     status = _RCC_wait_for_clock_ready(RCC_CLOCK_HSE, RCC_ERROR_HSE_READY);
     if (status != RCC_SUCCESS) goto errors;
     // Switch system clock.
@@ -369,18 +375,18 @@ RCC_status_t RCC_restore_previous_system_clock(void) {
 void RCC_set_hsi_in_stop_mode(uint8_t enable) {
     // Check parameter.
     if (enable == 0) {
-        // Update initialization count.
+        // Update request count.
         if (rcc_ctx.hsi_stop_mode_request_count > 0) {
             rcc_ctx.hsi_stop_mode_request_count--;
         }
-        // Check initialization count.
+        // Check request count.
         if (rcc_ctx.hsi_stop_mode_request_count == 0) {
             RCC->CR &= ~(0b1 << 1); // HSI16KERON='0'.
         }
     }
     else {
         RCC->CR |= (0b1 << 1); // HSI16KERON='1'.
-        // Update initialization count.
+        // Update request count.
         rcc_ctx.hsi_stop_mode_request_count++;
     }
 }
@@ -561,7 +567,7 @@ RCC_status_t RCC_set_mco(RCC_clock_t mco_clock, RCC_mco_prescaler_t mco_prescale
     // Configure clock and prescaler.
     cfgr = (RCC->CFGR);
     cfgr &= 0x80FFFFFF;
-    cfgr |= (mco_prescaler << 28) | (mco_clock << 24);
+    cfgr |= (mco_prescaler << 28) | (RCC_MCOSEL[mco_clock] << 24);
     RCC->CFGR = cfgr;
     // Configure GPIO if needed.
     if (mco_gpio != NULL) {

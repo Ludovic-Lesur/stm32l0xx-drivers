@@ -28,8 +28,8 @@
 #define TIM_TIMEOUT_COUNT                   10000000
 
 #define TIM_ARR_VALUE_MIN                   0x0001
-#define TIM_ARR_VALUE_MAX                   0xFFFF
-#define TIM_CNT_VALUE_MAX                   0xFFFF
+#define TIM_ARR_VALUE_MAX                   MATH_U16_MAX
+#define TIM_CNT_VALUE_MAX                   MATH_U16_MAX
 
 #define TIM_MCH_TARGET_TRIGGER_CLOCK_HZ     2048
 
@@ -42,9 +42,9 @@
 #define TIM_MCH_CLOCK_SWITCH_LATENCY_MS     2
 
 #define TIM_MCH_TIMER_PERIOD_MS_MIN         1
-#define TIM_MCH_TIMER_PERIOD_MS_MAX         ((TIM_CNT_VALUE_MAX * 1000) / (tim_mch_ctx.etrf_clock_hz))
+#define TIM_MCH_TIMER_PERIOD_MS_MAX         ((TIM_CNT_VALUE_MAX * 1000) / (tim_mch_ctx.ck_cnt_hz))
 
-#define TIM_MCH_WATCHDOG_PERIOD_SECONDS     ((TIM_MCH_TIMER_PERIOD_MS_MAX / 1000) + 5)
+#define TIM_MCH_WATCHDOG_PERIOD_SECONDS     ((TIM_CNT_VALUE_MAX / tim_mch_ctx.ck_cnt_hz) + 5)
 
 #define TIM_CAL_INPUT_CAPTURE_PRESCALER     2
 #define TIM_CAL_MEDIAN_FILTER_SIZE          9
@@ -57,6 +57,7 @@
 /*******************************************************************/
 typedef struct {
     TIM_registers_t* peripheral;
+    uint8_t number_of_channels;
     volatile uint32_t* rcc_reset;
     volatile uint32_t* rcc_enr;
     volatile uint32_t* rcc_smenr;
@@ -76,7 +77,7 @@ typedef enum {
 } TIM_mode_t;
 
 /*******************************************************************/
-typedef void (*TIM_irq_handler_cb_t)(TIM_instance_t instance, TIM_registers_t* peripheral);
+typedef void (*TIM_irq_handler_cb_t)(TIM_instance_t instance);
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_STANDARD) != 0)
 /*******************************************************************/
@@ -99,7 +100,7 @@ typedef struct {
 /*******************************************************************/
 typedef struct {
     RCC_clock_t clock_source;
-    uint32_t etrf_clock_hz;
+    uint32_t ck_cnt_hz;
     TIM_MCH_channel_context_t channel[TIM_CHANNEL_LAST];
 } TIM_MCH_context_t;
 #endif
@@ -133,17 +134,17 @@ typedef struct {
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_ALL) != 0)
 static const TIM_descriptor_t TIM_DESCRIPTOR[TIM_INSTANCE_LAST] = {
-    { TIM2,  &(RCC->APB1RSTR), &(RCC->APB1SMENR), &(RCC->APB1ENR), (0b1 << 0), NVIC_INTERRUPT_TIM2 },
-    { TIM21, &(RCC->APB2RSTR), &(RCC->APB2SMENR), &(RCC->APB2ENR), (0b1 << 2), NVIC_INTERRUPT_TIM21 },
+    { TIM2,  4, &(RCC->APB1RSTR), &(RCC->APB1SMENR), &(RCC->APB1ENR), (0b1 << 0), NVIC_INTERRUPT_TIM2 },
+    { TIM21, 2, &(RCC->APB2RSTR), &(RCC->APB2SMENR), &(RCC->APB2ENR), (0b1 << 2), NVIC_INTERRUPT_TIM21 },
 #if (STM32L0XX_REGISTERS_MCU_CATEGORY == 2) || (STM32L0XX_REGISTERS_MCU_CATEGORY == 3) || (STM32L0XX_REGISTERS_MCU_CATEGORY == 5)
-    { TIM22, &(RCC->APB2RSTR), &(RCC->APB2SMENR), &(RCC->APB2ENR), (0b1 << 5), NVIC_INTERRUPT_TIM22 },
+    { TIM22, 2, &(RCC->APB2RSTR), &(RCC->APB2SMENR), &(RCC->APB2ENR), (0b1 << 5), NVIC_INTERRUPT_TIM22 },
 #endif
 #if (STM32L0XX_REGISTERS_MCU_CATEGORY == 3) || (STM32L0XX_REGISTERS_MCU_CATEGORY == 5)
-    { TIM6,  &(RCC->APB1RSTR), &(RCC->APB1SMENR), &(RCC->APB1ENR), (0b1 << 4), NVIC_INTERRUPT_TIM6 },
+    { TIM6,  0, &(RCC->APB1RSTR), &(RCC->APB1SMENR), &(RCC->APB1ENR), (0b1 << 4), NVIC_INTERRUPT_TIM6 },
 #endif
 #if (STM32L0XX_REGISTERS_MCU_CATEGORY == 5)
-    { TIM3,  &(RCC->APB1RSTR), &(RCC->APB1SMENR), &(RCC->APB1ENR), (0b1 << 1), NVIC_INTERRUPT_TIM3 },
-    { TIM7,  &(RCC->APB1RSTR), &(RCC->APB1SMENR), &(RCC->APB1ENR), (0b1 << 5), NVIC_INTERRUPT_TIM7 },
+    { TIM3,  4, &(RCC->APB1RSTR), &(RCC->APB1SMENR), &(RCC->APB1ENR), (0b1 << 1), NVIC_INTERRUPT_TIM3 },
+    { TIM7,  0, &(RCC->APB1RSTR), &(RCC->APB1SMENR), &(RCC->APB1ENR), (0b1 << 5), NVIC_INTERRUPT_TIM7 },
 #endif
 };
 #endif
@@ -184,10 +185,14 @@ static TIM_context_t tim_ctx = { .mode = { TIM_MODE_NONE }, .irq_handler = { NUL
 }
 
 /*******************************************************************/
-#define _TIM_check_channel(channel) { \
+#define _TIM_check_channel(instance, channel) { \
     /* Check channel */ \
     if (channel >= TIM_CHANNEL_LAST) { \
         status = TIM_ERROR_CHANNEL; \
+        goto errors; \
+    } \
+    if (channel >= TIM_DESCRIPTOR[instance].number_of_channels) { \
+        status = TIM_ERROR_CHANNEL_NOT_SUPPORTED; \
         goto errors; \
     } \
 }
@@ -210,10 +215,10 @@ static TIM_context_t tim_ctx = { .mode = { TIM_MODE_NONE }, .irq_handler = { NUL
 }
 
 /*******************************************************************/
-#define _TIM_irq_handler(instance, peripheral) { \
+#define _TIM_irq_handler(instance) { \
     /* Execute internal callback */ \
     if (tim_ctx.irq_handler[instance] != NULL) { \
-        tim_ctx.irq_handler[instance](instance, peripheral); \
+        tim_ctx.irq_handler[instance](instance); \
     } \
 }
 
@@ -221,7 +226,7 @@ static TIM_context_t tim_ctx = { .mode = { TIM_MODE_NONE }, .irq_handler = { NUL
 /*******************************************************************/
 void __attribute__((optimize("-O0"))) TIM2_IRQHandler(void) {
     // Execute internal callback.
-    _TIM_irq_handler(TIM_INSTANCE_TIM2, TIM2);
+    _TIM_irq_handler(TIM_INSTANCE_TIM2);
 }
 #endif
 
@@ -229,7 +234,7 @@ void __attribute__((optimize("-O0"))) TIM2_IRQHandler(void) {
 /*******************************************************************/
 void __attribute__((optimize("-O0"))) TIM21_IRQHandler(void) {
     // Execute internal callback.
-    _TIM_irq_handler(TIM_INSTANCE_TIM21, TIM21);
+    _TIM_irq_handler(TIM_INSTANCE_TIM21);
 }
 #endif
 
@@ -237,7 +242,7 @@ void __attribute__((optimize("-O0"))) TIM21_IRQHandler(void) {
 /*******************************************************************/
 void __attribute__((optimize("-O0"))) TIM22_IRQHandler(void) {
     // Execute internal callback.
-    _TIM_irq_handler(TIM_INSTANCE_TIM22, TIM22);
+    _TIM_irq_handler(TIM_INSTANCE_TIM22);
 }
 #endif
 
@@ -245,7 +250,7 @@ void __attribute__((optimize("-O0"))) TIM22_IRQHandler(void) {
 /*******************************************************************/
 void __attribute__((optimize("-O0"))) TIM6_IRQHandler(void) {
     // Execute internal callback.
-    _TIM_irq_handler(TIM_INSTANCE_TIM6, TIM6);
+    _TIM_irq_handler(TIM_INSTANCE_TIM6);
 }
 #endif
 
@@ -253,7 +258,7 @@ void __attribute__((optimize("-O0"))) TIM6_IRQHandler(void) {
 /*******************************************************************/
 void __attribute__((optimize("-O0"))) TIM3_IRQHandler(void) {
     // Execute internal callback.
-    _TIM_irq_handler(TIM_INSTANCE_TIM3, TIM3);
+    _TIM_irq_handler(TIM_INSTANCE_TIM3);
 }
 #endif
 
@@ -261,43 +266,41 @@ void __attribute__((optimize("-O0"))) TIM3_IRQHandler(void) {
 /*******************************************************************/
 void __attribute__((optimize("-O0"))) TIM7_IRQHandler(void) {
     // Execute internal callback.
-    _TIM_irq_handler(TIM_INSTANCE_TIM7, TIM7);
+    _TIM_irq_handler(TIM_INSTANCE_TIM7);
 }
 #endif
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_STANDARD) != 0)
 /*******************************************************************/
-static void __attribute__((optimize("-O0"))) _TIM_STD_irq_handler(TIM_instance_t instance, TIM_registers_t* peripheral) {
+static void __attribute__((optimize("-O0"))) _TIM_STD_irq_handler(TIM_instance_t instance) {
     // Update interrupt.
-    if (((peripheral->SR) & (0b1 << 0)) != 0) {
+    if (((TIM_DESCRIPTOR[instance].peripheral->SR) & (0b1 << 0)) != 0) {
         // Call callback.
         if (tim_std_ctx[instance].irq_callback != NULL) {
             tim_std_ctx[instance].irq_callback();
         }
         // Clear flag.
-        peripheral->SR &= ~(0b1 << 0);
+        TIM_DESCRIPTOR[instance].peripheral->SR &= ~(0b1 << 0);
     }
 }
 #endif
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_MULTI_CHANNEL) != 0)
 /*******************************************************************/
-static void __attribute__((optimize("-O0"))) _TIM_MCH_irq_handler(TIM_instance_t instance, TIM_registers_t* peripheral) {
+static void __attribute__((optimize("-O0"))) _TIM_MCH_irq_handler(TIM_instance_t instance) {
     // Local variables.
     uint8_t channel_idx = 0;
     uint8_t channel_mask = 0;
-    // Unused parameter.
-    UNUSED(instance);
     // Channels loop.
     for (channel_idx = 0; channel_idx < TIM_CHANNEL_LAST; channel_idx++) {
         // Compute mask.
         channel_mask = (0b1 << (channel_idx + 1));
         // Check flag.
-        if (((peripheral->SR) & channel_mask) != 0) {
+        if (((TIM_DESCRIPTOR[instance].peripheral->SR) & channel_mask) != 0) {
             // Set local flag if channel is active.
             tim_mch_ctx.channel[channel_idx].irq_flag = tim_mch_ctx.channel[channel_idx].running_flag;
             // Clear flag.
-            peripheral->SR &= ~(channel_mask);
+            TIM_DESCRIPTOR[instance].peripheral->SR &= ~(channel_mask);
         }
     }
 }
@@ -307,7 +310,9 @@ static void __attribute__((optimize("-O0"))) _TIM_MCH_irq_handler(TIM_instance_t
 /*******************************************************************/
 static void _TIM_MCH_compute_compare_value(TIM_instance_t instance, TIM_channel_t channel) {
     // Update compare value.
-    TIM_DESCRIPTOR[instance].peripheral->CCRx[channel] = ((TIM_DESCRIPTOR[instance].peripheral->CNT) + ((tim_mch_ctx.channel[channel].duration_ms * tim_mch_ctx.etrf_clock_hz) / (1000))) % TIM_CNT_VALUE_MAX;
+    TIM_DESCRIPTOR[instance].peripheral->CCRx[channel] = (((TIM_DESCRIPTOR[instance].peripheral->CNT)
+                                                         + ((tim_mch_ctx.channel[channel].duration_ms * tim_mch_ctx.ck_cnt_hz) / (1000)))
+                                                         % TIM_CNT_VALUE_MAX);
 }
 #endif
 
@@ -334,24 +339,22 @@ static TIM_status_t _TIM_MCH_internal_watchdog(uint32_t time_start, uint32_t* ti
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_CALIBRATION) != 0)
 /*******************************************************************/
-static void __attribute__((optimize("-O0"))) _TIM_CAL_irq_handler(TIM_instance_t instance, TIM_registers_t* peripheral) {
-    // Unused parameter.
-    UNUSED(instance);
+static void __attribute__((optimize("-O0"))) _TIM_CAL_irq_handler(TIM_instance_t instance) {
     // TI1 interrupt.
-    if (((peripheral->SR) & (0b1 << 1)) != 0) {
+    if (((TIM_DESCRIPTOR[instance].peripheral->SR) & (0b1 << 1)) != 0) {
         // Update flags.
         if (tim_cal_ctx.capture_done == 0) {
             // Check count.
             if (tim_cal_ctx.capture_count == 0) {
                 // Store start value.
-                tim_cal_ctx.ccr1_start = (uint16_t) (peripheral->CCR1);
+                tim_cal_ctx.ccr1_start = (uint16_t) (TIM_DESCRIPTOR[instance].peripheral->CCR1);
                 tim_cal_ctx.capture_count++;
             }
             else {
                 // Check rollover.
-                if ((peripheral->CCR1) > tim_cal_ctx.ccr1_end) {
+                if ((TIM_DESCRIPTOR[instance].peripheral->CCR1) > tim_cal_ctx.ccr1_end) {
                     // Store new value.
-                    tim_cal_ctx.ccr1_end = (uint16_t) (peripheral->CCR1);
+                    tim_cal_ctx.ccr1_end = (uint16_t) (TIM_DESCRIPTOR[instance].peripheral->CCR1);
                     tim_cal_ctx.capture_count++;
                 }
                 else {
@@ -360,7 +363,7 @@ static void __attribute__((optimize("-O0"))) _TIM_CAL_irq_handler(TIM_instance_t
                 }
             }
         }
-        peripheral->SR &= ~(0b1 << 1);
+        TIM_DESCRIPTOR[instance].peripheral->SR &= ~(0b1 << 1);
     }
 }
 #endif
@@ -489,8 +492,10 @@ TIM_status_t TIM_STD_init(TIM_instance_t instance, uint8_t nvic_priority) {
     (*TIM_DESCRIPTOR[instance].rcc_smenr) |= TIM_DESCRIPTOR[instance].rcc_mask;
     // Enable preload.
     TIM_DESCRIPTOR[instance].peripheral->CR1 |= (0b1 << 7); // ARPE='1'.
+    // Use update event as trigger output.
+    TIM_DESCRIPTOR[instance].peripheral->CR2 |= (0b010 << 4); // MMS='010'.
     // Set trigger selection to reserved value to ensure there is no link with other timers.
-    TIM_DESCRIPTOR[instance].peripheral->SMCR |= (0b011 << 4);
+    TIM_DESCRIPTOR[instance].peripheral->SMCR |= (0b111 << 4);
     // Enable interrupt.
     TIM_DESCRIPTOR[instance].peripheral->DIER |= (0b1 << 0);
     NVIC_set_priority(TIM_DESCRIPTOR[instance].nvic_interrupt, nvic_priority);
@@ -594,7 +599,7 @@ TIM_status_t TIM_MCH_init(TIM_instance_t instance, uint8_t nvic_priority) {
     _TIM_check_mode(instance, TIM_MODE_NONE);
     // Check supported instances.
     if (instance != TIM_INSTANCE_TIM2) {
-        status = TIM_ERROR_INSTANCE;
+        status = TIM_ERROR_INSTANCE_NOT_SUPPORTED;
         goto errors;
     }
     // Reset peripheral.
@@ -629,26 +634,26 @@ TIM_status_t TIM_MCH_init(TIM_instance_t instance, uint8_t nvic_priority) {
     TIM_DESCRIPTOR[instance].peripheral->PSC = (TIM_MCH_PRESCALER_PSC_HSI - 1);
     TIM_DESCRIPTOR[instance].peripheral->OR |= (0b011 << 0);
     // Update clock frequency.
-    tim_mch_ctx.etrf_clock_hz = ((tim_clock_hz) / (TIM_MCH_PRESCALER_ETRF_HSI * TIM_MCH_PRESCALER_PSC_HSI));
+    tim_mch_ctx.ck_cnt_hz = ((tim_clock_hz) / (TIM_MCH_PRESCALER_ETRF_HSI * TIM_MCH_PRESCALER_PSC_HSI));
 #elif (STM32L0XX_DRIVERS_RCC_LSE_MODE == 1)
     // Select trigger.
     if (lse_status != 0) {
         // Use LSE as trigger.
-        RCC->CR &= ~(0b1 << 5);// HSI16OUTEN='0'.
+        RCC->CR &= ~(0b1 << 5); // HSI16OUTEN='0'.
         TIM_DESCRIPTOR[instance].peripheral->SMCR &= ~(0b11 << 12);// No prescaler on ETRF.
         TIM_DESCRIPTOR[instance].peripheral->PSC = (TIM_MCH_PRESCALER_PSC_LSE - 1);
         TIM_DESCRIPTOR[instance].peripheral->OR |= (0b101 << 0);
         // Update clock frequency.
-        tim_mch_ctx.etrf_clock_hz = ((tim_clock_hz) / (TIM_MCH_PRESCALER_ETRF_LSE * TIM_MCH_PRESCALER_PSC_LSE));
+        tim_mch_ctx.ck_cnt_hz = ((tim_clock_hz) / (TIM_MCH_PRESCALER_ETRF_LSE * TIM_MCH_PRESCALER_PSC_LSE));
     }
     else {
         // Use HSI as trigger.
-        RCC->CR |= (0b1 << 5);// HSI16OUTEN='1'.
+        RCC->CR |= (0b1 << 5); // HSI16OUTEN='1'.
         TIM_DESCRIPTOR[instance].peripheral->SMCR |= (0b11 << 12);// ETRF prescaler = 8 (minimum 4 due to CK_INT clock ratio constraint).
         TIM_DESCRIPTOR[instance].peripheral->PSC = (TIM_MCH_PRESCALER_PSC_HSI - 1);
         TIM_DESCRIPTOR[instance].peripheral->OR |= (0b011 << 0);
         /// Update clock frequency.
-        tim_mch_ctx.etrf_clock_hz = ((tim_clock_hz) / (TIM_MCH_PRESCALER_ETRF_HSI * TIM_MCH_PRESCALER_PSC_HSI));
+        tim_mch_ctx.ck_cnt_hz = ((tim_clock_hz) / (TIM_MCH_PRESCALER_ETRF_HSI * TIM_MCH_PRESCALER_PSC_HSI));
     }
 #else
     // Use LSE as trigger.
@@ -657,7 +662,7 @@ TIM_status_t TIM_MCH_init(TIM_instance_t instance, uint8_t nvic_priority) {
     TIM_DESCRIPTOR[instance].peripheral->PSC = (TIM_MCH_PRESCALER_PSC_LSE - 1);
     TIM_DESCRIPTOR[instance].peripheral->OR |= (0b101 << 0);
     // Update clock frequency.
-    tim_mch_ctx.etrf_clock_hz = ((tim_clock_hz) / (TIM_MCH_PRESCALER_ETRF_LSE * TIM_MCH_PRESCALER_PSC_LSE));
+    tim_mch_ctx.ck_cnt_hz = ((tim_clock_hz) / (TIM_MCH_PRESCALER_ETRF_LSE * TIM_MCH_PRESCALER_PSC_LSE));
 #endif
     // No overflow.
     TIM_DESCRIPTOR[instance].peripheral->ARR = TIM_ARR_VALUE_MAX;
@@ -702,7 +707,7 @@ TIM_status_t TIM_MCH_start_channel(TIM_instance_t instance, TIM_channel_t channe
     // Check instance, mode and channel.
     _TIM_check_instance(instance);
     _TIM_check_mode(instance, TIM_MODE_MULTI_CHANNEL);
-    _TIM_check_channel(channel);
+    _TIM_check_channel(instance, channel);
     // Check parameters.
     if (waiting_mode >= TIM_WAITING_MODE_LAST) {
         status = TIM_ERROR_WAITING_MODE;
@@ -732,9 +737,8 @@ TIM_status_t TIM_MCH_start_channel(TIM_instance_t instance, TIM_channel_t channe
     _TIM_MCH_compute_compare_value(instance, channel);
     // Clear flag.
     TIM_DESCRIPTOR[instance].peripheral->SR &= ~(0b1 << (channel + 1));
-    // Enable channel.
-    TIM_DESCRIPTOR[instance].peripheral->DIER |= (0b1 << (channel + 1));
     // Enable interrupt.
+    TIM_DESCRIPTOR[instance].peripheral->DIER |= (0b1 << (channel + 1));
     NVIC_enable_interrupt(TIM_DESCRIPTOR[instance].nvic_interrupt);
     // Enable counter.
     TIM_DESCRIPTOR[instance].peripheral->CR1 |= (0b1 << 0);
@@ -751,7 +755,7 @@ TIM_status_t TIM_MCH_stop_channel(TIM_instance_t instance, TIM_channel_t channel
     // Check instance, mode and channel.
     _TIM_check_instance(instance);
     _TIM_check_mode(instance, TIM_MODE_MULTI_CHANNEL);
-    _TIM_check_channel(channel);
+    _TIM_check_channel(instance, channel);
     // Disable interrupt.
     TIM_DESCRIPTOR[instance].peripheral->DIER &= ~(0b1 << (channel + 1));
     // Clear flag.
@@ -764,7 +768,7 @@ TIM_status_t TIM_MCH_stop_channel(TIM_instance_t instance, TIM_channel_t channel
         // Disable counter.
         TIM_DESCRIPTOR[instance].peripheral->CR1 &= ~(0b1 << 0);
         // Disable interrupt.
-        NVIC_enable_interrupt(TIM_DESCRIPTOR[instance].nvic_interrupt);
+        NVIC_disable_interrupt(TIM_DESCRIPTOR[instance].nvic_interrupt);
     }
 errors:
     return status;
@@ -779,7 +783,7 @@ TIM_status_t TIM_MCH_get_channel_status(TIM_instance_t instance, TIM_channel_t c
     // Check instance, mode and channel.
     _TIM_check_instance(instance);
     _TIM_check_mode(instance, TIM_MODE_MULTI_CHANNEL);
-    _TIM_check_channel(channel);
+    _TIM_check_channel(instance, channel);
     // Check parameters.
     if (timer_has_elapsed == NULL) {
         status = TIM_ERROR_NULL_PARAMETER;
@@ -803,7 +807,7 @@ TIM_status_t TIM_MCH_wait_channel_completion(TIM_instance_t instance, TIM_channe
     // Check instance, mode and channel.
     _TIM_check_instance(instance);
     _TIM_check_mode(instance, TIM_MODE_MULTI_CHANNEL);
-    _TIM_check_channel(channel);
+    _TIM_check_channel(instance, channel);
     // Directly exit if the IRQ already occurred.
     if ((tim_mch_ctx.channel[channel].running_flag == 0) || (tim_mch_ctx.channel[channel].irq_flag != 0)) goto errors;
     // Sleep until channel is not running.
@@ -874,7 +878,7 @@ TIM_status_t TIM_CAL_init(TIM_instance_t instance, uint8_t nvic_priority) {
     _TIM_check_mode(instance, TIM_MODE_NONE);
     // Check supported instances.
     if (instance != TIM_INSTANCE_TIM21) {
-        status = TIM_ERROR_INSTANCE;
+        status = TIM_ERROR_INSTANCE_NOT_SUPPORTED;
         goto errors;
     }
     // Reset peripheral.
@@ -885,10 +889,10 @@ TIM_status_t TIM_CAL_init(TIM_instance_t instance, uint8_t nvic_priority) {
     (*TIM_DESCRIPTOR[instance].rcc_enr) |= TIM_DESCRIPTOR[instance].rcc_mask;
     (*TIM_DESCRIPTOR[instance].rcc_smenr) |= TIM_DESCRIPTOR[instance].rcc_mask;
     // Channel input on TI1, CH1 mapped on MCO and capture done every 2 edges.
-    TIM_DESCRIPTOR[instance].peripheral->CCMR1 |= (0b01 << 0) | (0b01 << 2);
+    TIM_DESCRIPTOR[instance].peripheral->CCMR1 |= (0b01 << 2) | (0b01 << 0);
     TIM_DESCRIPTOR[instance].peripheral->OR |= (0b111 << 2);
     // Set trigger selection to reserved value to ensure there is no link with other timers.
-    TIM_DESCRIPTOR[instance].peripheral->SMCR |= (0b011 << 4);
+    TIM_DESCRIPTOR[instance].peripheral->SMCR |= (0b111 << 4);
     // Enable interrupt.
     TIM_DESCRIPTOR[instance].peripheral->DIER |= (0b1 << 1); // CC1IE='1'.
     NVIC_set_priority(TIM_DESCRIPTOR[instance].nvic_interrupt, nvic_priority);
@@ -958,17 +962,16 @@ TIM_status_t TIM_PWM_init(TIM_instance_t instance, TIM_gpio_t* pins) {
     _TIM_check_instance(instance);
     _TIM_check_mode(instance, TIM_MODE_NONE);
     _TIM_check_gpio();
-#if (STM32L0XX_REGISTERS_MCU_CATEGORY == 3) || (STM32L0XX_REGISTERS_MCU_CATEGORY == 5)
     // Check supported instance.
+#if (STM32L0XX_REGISTERS_MCU_CATEGORY == 3) || (STM32L0XX_REGISTERS_MCU_CATEGORY == 5)
     if (instance == TIM_INSTANCE_TIM6) {
-        status = TIM_ERROR_INSTANCE;
+        status = TIM_ERROR_INSTANCE_NOT_SUPPORTED;
         goto errors;
     }
 #endif
 #if (STM32L0XX_REGISTERS_MCU_CATEGORY == 5)
-    // Check supported instance.
     if (instance == TIM_INSTANCE_TIM7) {
-        status = TIM_ERROR_INSTANCE;
+        status = TIM_ERROR_INSTANCE_NOT_SUPPORTED;
         goto errors;
     }
 #endif
@@ -985,12 +988,12 @@ TIM_status_t TIM_PWM_init(TIM_instance_t instance, TIM_gpio_t* pins) {
     TIM_DESCRIPTOR[instance].peripheral->CR1 |= (0b1 << 7); // ARPE='1'.
     TIM_DESCRIPTOR[instance].peripheral->ARR = 0xFFFE;
     // Set trigger selection to reserved value to ensure there is no link with other timers.
-    TIM_DESCRIPTOR[instance].peripheral->SMCR |= (0b011 << 4);
+    TIM_DESCRIPTOR[instance].peripheral->SMCR |= (0b111 << 4);
     // Configure channels.
     for (idx = 0; idx < (pins->list_size); idx++) {
         // Check channel.
         channel = ((pins->list)[idx])->channel;
-        _TIM_check_channel(channel);
+        _TIM_check_channel(instance, channel);
         // Use PWM mode 2 with preload (OCxM='111' and OCxPE='1').
         TIM_DESCRIPTOR[instance].peripheral->CCMRx[channel >> 1] |= (0b1111 << (((channel % 2) << 3) + 3));
         // Set polarity.
@@ -1044,7 +1047,7 @@ TIM_status_t TIM_PWM_set_waveform(TIM_instance_t instance, TIM_channel_t channel
     // Check instance, mode and channel.
     _TIM_check_instance(instance);
     _TIM_check_mode(instance, TIM_MODE_PWM);
-    _TIM_check_channel(channel);
+    _TIM_check_channel(instance, channel);
     // Check parameters.
     if (frequency_mhz == 0) {
         status = TIM_ERROR_FREQUENCY;
@@ -1100,17 +1103,16 @@ TIM_status_t TIM_OPM_init(TIM_instance_t instance, TIM_gpio_t* pins) {
     _TIM_check_instance(instance);
     _TIM_check_mode(instance, TIM_MODE_NONE);
     _TIM_check_gpio();
-#if (STM32L0XX_REGISTERS_MCU_CATEGORY == 3) || (STM32L0XX_REGISTERS_MCU_CATEGORY == 5)
     // Check supported instance.
+#if (STM32L0XX_REGISTERS_MCU_CATEGORY == 3) || (STM32L0XX_REGISTERS_MCU_CATEGORY == 5)
     if (instance == TIM_INSTANCE_TIM6) {
-        status = TIM_ERROR_INSTANCE;
+        status = TIM_ERROR_INSTANCE_NOT_SUPPORTED;
         goto errors;
     }
 #endif
 #if (STM32L0XX_REGISTERS_MCU_CATEGORY == 5)
-    // Check supported instance.
     if (instance == TIM_INSTANCE_TIM7) {
-        status = TIM_ERROR_INSTANCE;
+        status = TIM_ERROR_INSTANCE_NOT_SUPPORTED;
         goto errors;
     }
 #endif
@@ -1125,12 +1127,12 @@ TIM_status_t TIM_OPM_init(TIM_instance_t instance, TIM_gpio_t* pins) {
     TIM_DESCRIPTOR[instance].peripheral->CR1 |= (0b1 << 7) | (0b1 << 3); // ARPE='1' and OPM='1'.
     TIM_DESCRIPTOR[instance].peripheral->ARR = 0xFFFE;
     // Set trigger selection to reserved value to ensure there is no link with other timers.
-    TIM_DESCRIPTOR[instance].peripheral->SMCR |= (0b011 << 4);
+    TIM_DESCRIPTOR[instance].peripheral->SMCR |= (0b111 << 4);
     // Configure channels.
     for (idx = 0; idx < (pins->list_size); idx++) {
         // Check channel.
         channel = ((pins->list)[idx])->channel;
-        _TIM_check_channel(channel);
+        _TIM_check_channel(instance, channel);
         // Use PWM mode 2 with preload (OCxM='111', OCxPE='1' and OCxFE='1').
         TIM_DESCRIPTOR[instance].peripheral->CCMRx[channel >> 1] |= (0b11111 << (((channel % 2) << 3) + 2));
         // Set polarity.
@@ -1184,7 +1186,7 @@ TIM_status_t TIM_OPM_make_pulse(TIM_instance_t instance, TIM_channel_t channel, 
     // Check instance, mode and channel.
     _TIM_check_instance(instance);
     _TIM_check_mode(instance, TIM_MODE_OPM);
-    _TIM_check_channel(channel);
+    _TIM_check_channel(instance, channel);
     // Check parameters.
     if ((delay_ns + pulse_duration_ns) == 0) {
         status = TIM_ERROR_PULSE;
@@ -1220,7 +1222,7 @@ TIM_status_t TIM_OPM_get_pulse_status(TIM_instance_t instance, TIM_channel_t cha
     // Check instance, mode and channel.
     _TIM_check_instance(instance);
     _TIM_check_mode(instance, TIM_MODE_OPM);
-    _TIM_check_channel(channel);
+    _TIM_check_channel(instance, channel);
     // Check parameter.
     if (pulse_is_done == NULL) {
         status = TIM_ERROR_NULL_PARAMETER;

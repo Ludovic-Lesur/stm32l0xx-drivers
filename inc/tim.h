@@ -233,7 +233,7 @@ TIM_status_t TIM_MCH_de_init(TIM_instance_t instance);
  * \param[in]   period_ms: Timer channel period in ms.
  * \param[in]   waiting_mode: Completion waiting mode.
  * \param[out]  none
- * \retval      none
+ * \retval      Function execution status.
  *******************************************************************/
 TIM_status_t TIM_MCH_start_channel(TIM_instance_t instance, TIM_channel_t channel, uint32_t period_ms, TIM_waiting_mode_t waiting_mode);
 #endif
@@ -361,7 +361,7 @@ TIM_status_t TIM_OPM_init(TIM_instance_t instance, TIM_gpio_t* pins);
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_OPM) != 0)
 /*!******************************************************************
- * \fn TIM_status_t TIM_OPM_de_init(TIM_instance_t instance, TIM_gpio_t* pins_list, uint8_t number_of_pins)
+ * \fn TIM_status_t TIM_OPM_de_init(TIM_instance_t instance, TIM_gpio_t* pins)
  * \brief Release a timer peripheral.
  * \param[in]   instance: Timer instance to release.
  * \param[in]   pins: List of timer pins to release.

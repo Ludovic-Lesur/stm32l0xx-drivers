@@ -170,14 +170,14 @@ errors:
 LPUART_status_t LPUART_init(const LPUART_gpio_t* pins, LPUART_configuration_t* configuration) {
     // Local variables.
     LPUART_status_t status = LPUART_SUCCESS;
-    // Check init flag.
-    if (lpuart_ctx.init_flag != 0) {
-        status = LPUART_ERROR_ALREADY_INITIALIZED;
-        goto errors;
-    }
     // Check parameters.
     if ((pins == NULL) || (configuration == NULL)) {
         status = LPUART_ERROR_NULL_PARAMETER;
+        goto errors;
+    }
+    // Check state.
+    if (lpuart_ctx.init_flag != 0) {
+        status = LPUART_ERROR_ALREADY_INITIALIZED;
         goto errors;
     }
     // Enable peripheral clock.
@@ -227,7 +227,7 @@ LPUART_status_t LPUART_init(const LPUART_gpio_t* pins, LPUART_configuration_t* c
 #if (STM32L0XX_DRIVERS_LPUART_MODE == 1)
     lpuart_ctx.cmf_callback = (configuration->cmf_callback);
 #endif
-    // Update initialization count.
+    // Update initialization flag.
     lpuart_ctx.init_flag = 1;
 errors:
     return status;
@@ -237,14 +237,14 @@ errors:
 LPUART_status_t LPUART_de_init(const LPUART_gpio_t* pins) {
     // Local variables.
     LPUART_status_t status = LPUART_SUCCESS;
-    // Check state.
-    if (lpuart_ctx.init_flag == 0) {
-        status = LPUART_ERROR_UNINITIALIZED;
-        goto errors;
-    }
     // Check parameter.
     if (pins == NULL) {
         status = LPUART_ERROR_NULL_PARAMETER;
+        goto errors;
+    }
+    // Check state.
+    if (lpuart_ctx.init_flag == 0) {
+        status = LPUART_ERROR_UNINITIALIZED;
         goto errors;
     }
     // Disable HSI in stop mode.
@@ -263,7 +263,7 @@ LPUART_status_t LPUART_de_init(const LPUART_gpio_t* pins) {
     LPUART1->CR1 &= ~(0b1 << 0); // UE='0'.
     // Disable peripheral clock.
     RCC->APB1ENR &= ~(0b1 << 18); // LPUARTEN='0'.
-    // Update initialization count.
+    // Update initialization flag.
     lpuart_ctx.init_flag = 0;
 errors:
     return status;
@@ -320,14 +320,14 @@ LPUART_status_t LPUART_write(uint8_t* data, uint32_t data_size_bytes) {
     LPUART_status_t status = LPUART_SUCCESS;
     uint32_t idx = 0;
     uint32_t loop_count = 0;
-    // Check state.
-    if (lpuart_ctx.init_flag == 0) {
-        status = LPUART_ERROR_UNINITIALIZED;
-        goto errors;
-    }
     // Check parameter.
     if (data == NULL) {
         status = LPUART_ERROR_NULL_PARAMETER;
+        goto errors;
+    }
+    // Check state.
+    if (lpuart_ctx.init_flag == 0) {
+        status = LPUART_ERROR_UNINITIALIZED;
         goto errors;
     }
     // Fill TX buffer with new bytes.

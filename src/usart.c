@@ -39,7 +39,7 @@ typedef struct {
 
 /*******************************************************************/
 typedef struct {
-    uint8_t init_count[USART_INSTANCE_LAST];
+    uint8_t init_flag[USART_INSTANCE_LAST];
 #if (STM32L0XX_DRIVERS_USART_MODE == 0)
     USART_rx_irq_cb_t rxne_callback[USART_INSTANCE_LAST];
 #endif
@@ -61,7 +61,7 @@ static const USART_descriptor_t USART_DESCRIPTOR[USART_INSTANCE_LAST] = {
 #endif
 };
 static USART_context_t usart_ctx = {
-    .init_count = { 0 },
+    .init_flag = { 0 },
 #if (STM32L0XX_DRIVERS_USART_MODE == 0)
     .rxne_callback = { NULL },
 #endif
@@ -165,6 +165,11 @@ USART_status_t USART_init(USART_instance_t instance, const USART_gpio_t* pins, U
         status = USART_ERROR_NULL_PARAMETER;
         goto errors;
     }
+    // Check state.
+    if (usart_ctx.init_flag[instance] != 0) {
+        status = USART_ERROR_ALREADY_INITIALIZED;
+        goto errors;
+    }
     // Get clock source frequency.
     RCC_get_frequency_hz(USART_DESCRIPTOR[instance].clock_source, &usart_clock_hz);
     // Select HSI as peripheral clock for USART1 and USART2.
@@ -205,8 +210,8 @@ USART_status_t USART_init(USART_instance_t instance, const USART_gpio_t* pins, U
 #if (STM32L0XX_DRIVERS_USART_MODE == 1)
     usart_ctx.cmf_callback[instance] = (configuration->cmf_callback);
 #endif
-    // Update initialization count.
-    usart_ctx.init_count[instance]++;
+    // Update initialization flag.
+    usart_ctx.init_flag[instance] = 1;
 errors:
     return status;
 }
@@ -220,15 +225,14 @@ USART_status_t USART_de_init(USART_instance_t instance, const USART_gpio_t* pins
         status = USART_ERROR_INSTANCE;
         goto errors;
     }
-    // Update initialization count.
-    if (usart_ctx.init_count[instance] > 0) {
-        usart_ctx.init_count[instance]--;
-    }
-    // Check initialization count.
-    if (usart_ctx.init_count[instance] > 0) goto errors;
     // Check parameters.
     if (pins == NULL) {
         status = USART_ERROR_NULL_PARAMETER;
+        goto errors;
+    }
+    // Check state.
+    if (usart_ctx.init_flag[instance] == 0) {
+        status = USART_ERROR_UNINITIALIZED;
         goto errors;
     }
     // Disable HSI in stop mode.
@@ -240,6 +244,8 @@ USART_status_t USART_de_init(USART_instance_t instance, const USART_gpio_t* pins
     USART_DESCRIPTOR[instance].peripheral->CR1 &= ~(0b1 << 0); // UE='0'.
     // Disable peripheral clock.
     (*USART_DESCRIPTOR[instance].rcc_enr) &= ~(USART_DESCRIPTOR[instance].rcc_mask);
+    // Update initialization flag.
+    usart_ctx.init_flag[instance] = 0;
 errors:
     return status;
 }
@@ -254,7 +260,7 @@ USART_status_t USART_enable_rx(USART_instance_t instance) {
         goto errors;
     }
     // Check state.
-    if (usart_ctx.init_count[instance] == 0) {
+    if (usart_ctx.init_flag[instance] == 0) {
         status = USART_ERROR_UNINITIALIZED;
         goto errors;
     }
@@ -278,7 +284,7 @@ USART_status_t USART_disable_rx(USART_instance_t instance) {
         goto errors;
     }
     // Check state.
-    if (usart_ctx.init_count[instance] == 0) {
+    if (usart_ctx.init_flag[instance] == 0) {
         status = USART_ERROR_UNINITIALIZED;
         goto errors;
     }
@@ -299,14 +305,14 @@ USART_status_t USART_write(USART_instance_t instance, uint8_t* data, uint32_t da
         status = USART_ERROR_INSTANCE;
         goto errors;
     }
-    // Check state.
-    if (usart_ctx.init_count[instance] == 0) {
-        status = USART_ERROR_UNINITIALIZED;
-        goto errors;
-    }
     // Check parameters.
     if ((data == NULL) || (data_size_bytes == 0)) {
         status = USART_ERROR_NULL_PARAMETER;
+        goto errors;
+    }
+    // Check state.
+    if (usart_ctx.init_flag[instance] == 0) {
+        status = USART_ERROR_UNINITIALIZED;
         goto errors;
     }
     // Byte loop.

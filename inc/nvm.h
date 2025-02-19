@@ -8,6 +8,9 @@
 #ifndef __NVM_H__
 #define __NVM_H__
 
+#ifndef STM32L0XX_DRIVERS_DISABLE_FLAGS_FILE
+#include "stm32l0xx_drivers_flags.h"
+#endif
 #include "types.h"
 
 /*** NVM structures ***/

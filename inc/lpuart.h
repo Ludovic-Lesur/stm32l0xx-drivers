@@ -27,8 +27,8 @@ typedef enum {
     LPUART_ERROR_ALREADY_INITIALIZED,
     LPUART_ERROR_UNINITIALIZED,
     LPUART_ERROR_BAUD_RATE,
-    LPUART_ERROR_RX_MODE,
     LPUART_ERROR_TX_TIMEOUT,
+    LPUART_ERROR_RS485_MODE,
     LPUART_ERROR_TC_TIMEOUT,
     // Last base value.
     LPUART_ERROR_BASE_LAST = 0x0100
@@ -41,38 +41,28 @@ typedef enum {
 typedef struct {
     const GPIO_pin_t* tx;
     const GPIO_pin_t* rx;
-#if (STM32L0XX_DRIVERS_LPUART_MODE == 2)
+#ifdef STM32L0XX_DRIVERS_LPUART_RS485
     const GPIO_pin_t* de;
     const GPIO_pin_t* nre;
 #endif
 } LPUART_gpio_t;
 
-#if ((STM32L0XX_DRIVERS_LPUART_MODE == 0) || (STM32L0XX_DRIVERS_LPUART_MODE == 2))
 /*!******************************************************************
  * \fn LPUART_rx_irq_cb_t
  * \brief LPUART RX interrupt callback.
  *******************************************************************/
 typedef void (*LPUART_rx_irq_cb_t)(uint8_t data);
-#endif
 
-#if (STM32L0XX_DRIVERS_LPUART_MODE == 1)
+#ifdef STM32L0XX_DRIVERS_LPUART_RS485
 /*!******************************************************************
- * \fn LPUART_character_match_irq_cb_t
- * \brief LPUART character match interrupt callback.
- *******************************************************************/
-typedef void (*LPUART_character_match_irq_cb_t)(void);
-#endif
-
-#if (STM32L0XX_DRIVERS_LPUART_MODE == 2)
-/*!******************************************************************
- * \enum LPUART_rx_mode_t
- * \brief LPUART RX modes list.
+ * \enum LPUART_rs485_mode_t
+ * \brief LPUART RS485 modes list.
  *******************************************************************/
 typedef enum {
-    LPUART_RX_MODE_ADDRESSED = 0,
-    LPUART_RX_MODE_DIRECT,
-    LPUART_RX_MODE_LAST
-} LPUART_rx_mode_t;
+    LPUART_RS485_MODE_ADDRESSED = 0,
+    LPUART_RS485_MODE_DIRECT,
+    LPUART_RS485_MODE_LAST
+} LPUART_rs485_mode_t;
 #endif
 
 /*!******************************************************************
@@ -82,16 +72,10 @@ typedef enum {
 typedef struct {
     uint32_t baud_rate;
     uint8_t nvic_priority;
-#if ((STM32L0XX_DRIVERS_LPUART_MODE == 0) || (STM32L0XX_DRIVERS_LPUART_MODE == 2))
     LPUART_rx_irq_cb_t rxne_callback;
-#endif
-#if (STM32L0XX_DRIVERS_LPUART_MODE == 1)
-    char_t match_character;
-    LPUART_character_match_irq_cb_t cmf_callback;
-#endif
-#if (STM32L0XX_DRIVERS_LPUART_MODE == 2)
+#ifdef STM32L0XX_DRIVERS_LPUART_RS485
+    LPUART_rs485_mode_t rs485_mode;
     uint8_t self_address;
-    LPUART_rx_mode_t rx_mode;
 #endif
 } LPUART_configuration_t;
 

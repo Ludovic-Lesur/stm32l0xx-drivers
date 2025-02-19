@@ -25,6 +25,9 @@
 
 #define USART_TIMEOUT_COUNT     100000
 
+#define USART_BRR_VALUE_MIN     0x0010
+#define USART_BRR_VALUE_MAX     0xFFFF
+
 /*** USART local structures ***/
 
 /*******************************************************************/
@@ -33,86 +36,47 @@ typedef struct {
     volatile uint32_t* rcc_enr;
     volatile uint32_t* rcc_smenr;
     uint32_t rcc_mask;
-    RCC_clock_t clock_source;
     NVIC_interrupt_t nvic_interrupt;
 } USART_descriptor_t;
 
 /*******************************************************************/
 typedef struct {
     uint8_t init_flag[USART_INSTANCE_LAST];
-#if (STM32L0XX_DRIVERS_USART_MODE == 0)
     USART_rx_irq_cb_t rxne_callback[USART_INSTANCE_LAST];
-#endif
-#if (STM32L0XX_DRIVERS_USART_MODE == 1)
-    USART_character_match_irq_cb_t cmf_callback[USART_INSTANCE_LAST];
-#endif
 } USART_context_t;
 
 /*** USART local global variables ***/
 
 static const USART_descriptor_t USART_DESCRIPTOR[USART_INSTANCE_LAST] = {
-    { USART2, &(RCC->APB1ENR), &(RCC->APB1SMENR), (0b1 << 17), RCC_CLOCK_HSI, NVIC_INTERRUPT_USART2 },
+    { USART2, &(RCC->APB1ENR), &(RCC->APB1SMENR), (0b1 << 17), NVIC_INTERRUPT_USART2 },
 #if (STM32L0XX_REGISTERS_MCU_CATEGORY == 3) || (STM32L0XX_REGISTERS_MCU_CATEGORY == 5)
-    { USART1, &(RCC->APB2ENR), &(RCC->APB2SMENR), (0b1 << 14), RCC_CLOCK_HSI, NVIC_INTERRUPT_USART1 },
-#endif
-#if (STM32L0XX_REGISTERS_MCU_CATEGORY == 5)
-    { USART4, &(RCC->APB1ENR), &(RCC->APB1SMENR), (0b1 << 19), RCC_CLOCK_SYSTEM, NVIC_INTERRUPT_USART4_USART5 },
-    { USART5, &(RCC->APB1ENR), &(RCC->APB1SMENR), (0b1 << 20), RCC_CLOCK_SYSTEM, NVIC_INTERRUPT_USART4_USART5 },
+    { USART1, &(RCC->APB2ENR), &(RCC->APB2SMENR), (0b1 << 14), NVIC_INTERRUPT_USART1 },
 #endif
 };
-static USART_context_t usart_ctx = {
-    .init_flag = { 0 },
-#if (STM32L0XX_DRIVERS_USART_MODE == 0)
-    .rxne_callback = { NULL },
-#endif
-#if (STM32L0XX_DRIVERS_USART_MODE == 1)
-    .cmf_callback = { NULL },
-#endif
-};
+
+static USART_context_t usart_ctx = { .init_flag = { 0 }, .rxne_callback = { NULL } };
 
 /*** USART local functions ***/
 
-#if (STM32L0XX_DRIVERS_USART_MODE == 0)
 /*******************************************************************/
-static void __attribute__((optimize("-O0"))) _USART_irq_handler_rxne(USART_instance_t instance, USART_registers_t* peripheral) {
+static void __attribute__((optimize("-O0"))) _USART_irq_handler_rxne(USART_instance_t instance) {
     // Local variables.
     uint8_t rx_byte = 0;
     // RXNE interrupt.
-    if (((peripheral->ISR) & (0b1 << 5)) != 0) {
+    if (((USART_DESCRIPTOR[instance].peripheral->ISR) & (0b1 << 5)) != 0) {
         // Read incoming byte.
-        rx_byte = (uint8_t) (peripheral->RDR);
+        rx_byte = (uint8_t) (USART_DESCRIPTOR[instance].peripheral->RDR);
         // Transmit byte to upper layer.
-        if ((((peripheral->CR1) & (0b1 << 5)) != 0) && (usart_ctx.rxne_callback[instance] != NULL)) {
+        if ((((USART_DESCRIPTOR[instance].peripheral->CR1) & (0b1 << 5)) != 0) && (usart_ctx.rxne_callback[instance] != NULL)) {
             usart_ctx.rxne_callback[instance](rx_byte);
         }
     }
 }
-#endif
-
-#if (STM32L0XX_DRIVERS_USART_MODE == 1)
-/*******************************************************************/
-static void __attribute__((optimize("-O0"))) _USART_irq_handler_cmf(USART_instance_t instance, USART_registers_t* peripheral) {
-    // CMF interrupt.
-    if (((peripheral->ISR) & (0b1 << 17)) != 0) {
-        // Notify upper layer.
-        if ((((peripheral->CR1) & (0b1 << 14)) != 0) && (usart_ctx.cmf_callback[instance] != NULL)) {
-            usart_ctx.cmf_callback[instance]();
-        }
-        // Clear CM flag.
-        peripheral->ICR |= (0b1 << 17);
-    }
-}
-#endif
 
 /*******************************************************************/
 void __attribute__((optimize("-O0"))) USART2_IRQHandler(void) {
     // Execute internal callback.
-#if (STM32L0XX_DRIVERS_USART_MODE == 0)
-    _USART_irq_handler_rxne(USART_INSTANCE_USART2, USART2);
-#endif
-#if (STM32L0XX_DRIVERS_USART_MODE == 1)
-    _USART_irq_handler_cmf(USART_INSTANCE_USART2, USART2);
-#endif
+    _USART_irq_handler_rxne(USART_INSTANCE_USART2);
     // Clear EXTI line.
     EXTI_clear_line_flag(EXTI_LINE_USART2);
 }
@@ -121,29 +85,9 @@ void __attribute__((optimize("-O0"))) USART2_IRQHandler(void) {
 /*******************************************************************/
 void __attribute__((optimize("-O0"))) USART1_IRQHandler(void) {
     // Execute internal callback.
-#if (STM32L0XX_DRIVERS_USART_MODE == 0)
-    _USART_irq_handler_rxne(USART_INSTANCE_USART1, USART1);
-#endif
-#if (STM32L0XX_DRIVERS_USART_MODE == 1)
-    _USART_irq_handler_cmf(USART_INSTANCE_USART1, USART1);
-#endif
+    _USART_irq_handler_rxne(USART_INSTANCE_USART1);
     // Clear EXTI line.
     EXTI_clear_line_flag(EXTI_LINE_USART1);
-}
-#endif
-
-#if (STM32L0XX_REGISTERS_MCU_CATEGORY == 5)
-/*******************************************************************/
-void __attribute__((optimize("-O0"))) USART4_5_IRQHandler(void) {
-    // Execute internal callback.
-#if (STM32L0XX_DRIVERS_USART_MODE == 0)
-    _USART_irq_handler_rxne(USART_INSTANCE_USART4, USART4);
-    _USART_irq_handler_rxne(USART_INSTANCE_USART5, USART5);
-#endif
-#if (STM32L0XX_DRIVERS_USART_MODE == 1)
-    _USART_irq_handler_cmf(USART_INSTANCE_USART4, USART4);
-    _USART_irq_handler_cmf(USART_INSTANCE_USART5, USART5);
-#endif
 }
 #endif
 
@@ -171,9 +115,9 @@ USART_status_t USART_init(USART_instance_t instance, const USART_gpio_t* pins, U
         goto errors;
     }
     // Get clock source frequency.
-    RCC_get_frequency_hz(USART_DESCRIPTOR[instance].clock_source, &usart_clock_hz);
-    // Select HSI as peripheral clock for USART1 and USART2.
-    RCC->CCIPR &= ~(0b1111 << 0); // Reset bits 2-3.
+    RCC_get_frequency_hz(RCC_CLOCK_HSI, &usart_clock_hz);
+    // Select HSI as peripheral clock.
+    RCC->CCIPR &= ~(0b1111 << 0);
     RCC->CCIPR |= (0b1010 << 0); // USARTxSEL='10'.
     // Enable HSI in stop mode.
     RCC_set_hsi_in_stop_mode(1);
@@ -184,16 +128,14 @@ USART_status_t USART_init(USART_instance_t instance, const USART_gpio_t* pins, U
     USART_DESCRIPTOR[instance].peripheral->CR3 |= (0b1 << 12) | (0b1 << 23);
     // Baud rate.
     brr = ((usart_clock_hz) / (configuration->baud_rate));
-    USART_DESCRIPTOR[instance].peripheral->BRR = (brr & 0x000FFFFF); // BRR = (fCK)/(baud rate).
+    // Check value.
+    if ((brr < USART_BRR_VALUE_MIN) || (brr > USART_BRR_VALUE_MAX)) {
+        status = USART_ERROR_BAUD_RATE;
+        goto errors;
+    }
+    USART_DESCRIPTOR[instance].peripheral->BRR = (brr & 0x0000FFFF); // BRR = (fCK)/(baud rate).
     // Configure peripheral.
-#if (STM32L0XX_DRIVERS_USART_MODE == 0)
-    USART_DESCRIPTOR[instance].peripheral->CR1 |= (0b1 << 5); // Enable RXNE interrupt (RXNEIE='1').
-#endif
-#if (STM32L0XX_DRIVERS_USART_MODE == 1)
-    USART_DESCRIPTOR[instance].peripheral->CR2 |= ((configuration->match_character) << 24);
-    USART_DESCRIPTOR[instance].peripheral->CR3 |= (0b1 << 6); // Transfer is performed after each RXNE event.
-    USART_DESCRIPTOR[instance].peripheral->CR1 |= (0b1 << 14); // Enable CM interrupt (CMIE='1').
-#endif
+    USART_DESCRIPTOR[instance].peripheral->CR1 |= (0b1 << 5); // RXNEIE='1'.
     // Set interrupt priority.
     NVIC_set_priority(USART_DESCRIPTOR[instance].nvic_interrupt, (configuration->nvic_priority));
     // Configure GPIOs.
@@ -204,12 +146,7 @@ USART_status_t USART_init(USART_instance_t instance, const USART_gpio_t* pins, U
     // Enable peripheral.
     USART_DESCRIPTOR[instance].peripheral->CR1 |= (0b11 << 0); // UE='1' and UESM='1'.
     // Register callback.
-#if (STM32L0XX_DRIVERS_USART_MODE == 0)
     usart_ctx.rxne_callback[instance] = (configuration->rxne_callback);
-#endif
-#if (STM32L0XX_DRIVERS_USART_MODE == 1)
-    usart_ctx.cmf_callback[instance] = (configuration->cmf_callback);
-#endif
     // Update initialization flag.
     usart_ctx.init_flag[instance] = 1;
 errors:
@@ -270,6 +207,8 @@ USART_status_t USART_enable_rx(USART_instance_t instance) {
     }
     // Enable interrupt.
     NVIC_enable_interrupt(USART_DESCRIPTOR[instance].nvic_interrupt);
+    // Enable receiver.
+    USART_DESCRIPTOR[instance].peripheral->CR1 |= (0b1 << 2); // RE='1'.
 errors:
     return status;
 }
@@ -288,6 +227,8 @@ USART_status_t USART_disable_rx(USART_instance_t instance) {
         status = USART_ERROR_UNINITIALIZED;
         goto errors;
     }
+    // Disable receiver.
+    USART_DESCRIPTOR[instance].peripheral->CR1 &= ~(0b1 << 2); // RE='0'.
     // Disable interrupt.
     NVIC_disable_interrupt(USART_DESCRIPTOR[instance].nvic_interrupt);
 errors:

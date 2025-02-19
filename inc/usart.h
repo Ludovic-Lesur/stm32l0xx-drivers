@@ -30,6 +30,7 @@ typedef enum {
     USART_ERROR_INSTANCE,
     USART_ERROR_ALREADY_INITIALIZED,
     USART_ERROR_UNINITIALIZED,
+    USART_ERROR_BAUD_RATE,
     USART_ERROR_TX_TIMEOUT,
     // Last base value.
     USART_ERROR_BASE_LAST = 0x0100
@@ -44,10 +45,6 @@ typedef enum {
 #if (STM32L0XX_REGISTERS_MCU_CATEGORY == 3) || (STM32L0XX_REGISTERS_MCU_CATEGORY == 5)
     USART_INSTANCE_USART1,
 #endif
-#if (STM32L0XX_REGISTERS_MCU_CATEGORY == 5)
-    USART_INSTANCE_USART4,
-    USART_INSTANCE_USART5,
-#endif
     USART_INSTANCE_LAST
 } USART_instance_t;
 
@@ -60,21 +57,11 @@ typedef struct {
     const GPIO_pin_t* rx;
 } USART_gpio_t;
 
-#if (STM32L0XX_DRIVERS_USART_MODE == 0)
 /*!******************************************************************
  * \fn USART_rx_irq_cb_t
  * \brief USART RX interrupt callback.
  *******************************************************************/
 typedef void (*USART_rx_irq_cb_t)(uint8_t data);
-#endif
-
-#if (STM32L0XX_DRIVERS_USART_MODE == 1)
-/*!******************************************************************
- * \fn USART_character_match_irq_cb_t
- * \brief USART character match interrupt callback.
- *******************************************************************/
-typedef void (*USART_character_match_irq_cb_t)(void);
-#endif
 
 /*!******************************************************************
  * \struct USART_configuration_t
@@ -83,13 +70,7 @@ typedef void (*USART_character_match_irq_cb_t)(void);
 typedef struct {
     uint32_t baud_rate;
     uint8_t nvic_priority;
-#if (STM32L0XX_DRIVERS_USART_MODE == 0)
     USART_rx_irq_cb_t rxne_callback;
-#endif
-#if (STM32L0XX_DRIVERS_USART_MODE == 1)
-    char_t match_character;
-    USART_character_match_irq_cb_t cmf_callback;
-#endif
 } USART_configuration_t;
 
 /*** USART functions ***/

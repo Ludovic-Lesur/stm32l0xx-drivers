@@ -32,18 +32,13 @@
 #define TIM_CNT_VALUE_MAX                   MATH_U16_MAX
 
 #define TIM_MCH_TARGET_TRIGGER_CLOCK_HZ     2048
-
 #define TIM_MCH_PRESCALER_ETRF_LSE          1
 #define TIM_MCH_PRESCALER_PSC_LSE           ((tim_clock_hz) / (TIM_MCH_TARGET_TRIGGER_CLOCK_HZ * TIM_MCH_PRESCALER_ETRF_LSE))
-
 #define TIM_MCH_PRESCALER_ETRF_HSI          8
 #define TIM_MCH_PRESCALER_PSC_HSI           ((tim_clock_hz) / (TIM_MCH_TARGET_TRIGGER_CLOCK_HZ * TIM_MCH_PRESCALER_ETRF_HSI))
-
 #define TIM_MCH_CLOCK_SWITCH_LATENCY_MS     2
-
 #define TIM_MCH_TIMER_PERIOD_MS_MIN         1
 #define TIM_MCH_TIMER_PERIOD_MS_MAX         ((TIM_CNT_VALUE_MAX * 1000) / (tim_mch_ctx.ck_cnt_hz))
-
 #define TIM_MCH_WATCHDOG_PERIOD_SECONDS     ((TIM_CNT_VALUE_MAX / tim_mch_ctx.ck_cnt_hz) + 5)
 
 #define TIM_CAL_INPUT_CAPTURE_PRESCALER     2
@@ -1140,7 +1135,7 @@ TIM_status_t TIM_OPM_init(TIM_instance_t instance, TIM_gpio_t* pins) {
             TIM_DESCRIPTOR[instance].peripheral->CCER |= (0b1 << ((channel << 2) + 1));
         }
         // Disable output by default.
-        TIM_DESCRIPTOR[instance].peripheral->CCRx[idx] = 0xFFFF;
+        TIM_DESCRIPTOR[instance].peripheral->CCRx[channel] = 0xFFFF;
         // Generate event to update registers.
         TIM_DESCRIPTOR[instance].peripheral->EGR |= (0b1 << 0); // UG='1'.
         // Enable channel.
@@ -1216,13 +1211,12 @@ errors:
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_OPM) != 0)
 /*******************************************************************/
-TIM_status_t TIM_OPM_get_pulse_status(TIM_instance_t instance, TIM_channel_t channel, uint8_t* pulse_is_done) {
+TIM_status_t TIM_OPM_get_pulse_status(TIM_instance_t instance, uint8_t* pulse_is_done) {
     // Local variables.
     TIM_status_t status = TIM_SUCCESS;
     // Check instance, mode and channel.
     _TIM_check_instance(instance);
     _TIM_check_mode(instance, TIM_MODE_OPM);
-    _TIM_check_channel(instance, channel);
     // Check parameter.
     if (pulse_is_done == NULL) {
         status = TIM_ERROR_NULL_PARAMETER;

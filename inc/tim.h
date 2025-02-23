@@ -387,14 +387,13 @@ TIM_status_t TIM_OPM_make_pulse(TIM_instance_t instance, TIM_channel_t channel, 
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_OPM) != 0)
 /*!******************************************************************
- * \fn TIM_status_t TIM_OPM_get_pulse_status(TIM_instance_t instance, TIM_channel_t channel, uint8_t* pulse_is_done)
+ * \fn TIM_status_t TIM_OPM_get_pulse_status(TIM_instance_t instance, uint8_t* pulse_is_done)
  * \brief Get single output pulse status
  * \param[in]   instance: Timer instance to use.
- * \param[in]   channel: Channel to read.
  * \param[out]  pulse_is_done: Pointer to byte that will contain the pulse status.
  * \retval      Function execution status.
  *******************************************************************/
-TIM_status_t TIM_OPM_get_pulse_status(TIM_instance_t instance, TIM_channel_t channel, uint8_t* pulse_is_done);
+TIM_status_t TIM_OPM_get_pulse_status(TIM_instance_t instance, uint8_t* pulse_is_done);
 #endif
 
 /*******************************************************************/

@@ -69,6 +69,7 @@ static LPUART_status_t _LPUART_set_baud_rate(uint32_t baud_rate) {
     RCC_clock_t lpuart_clock;
     uint32_t lpuart_clock_hz = 0;
     uint64_t brr = 0;
+    uint32_t reg_value = 0;
 #if (STM32L0XX_DRIVERS_RCC_LSE_MODE != 0)
     uint8_t lse_status = 0;
 #endif
@@ -77,6 +78,8 @@ static LPUART_status_t _LPUART_set_baud_rate(uint32_t baud_rate) {
     // Select peripheral clock.
     RCC->CCIPR &= ~(0b11 << 10); // Reset bits 10-11.
 #if (STM32L0XX_DRIVERS_RCC_LSE_MODE == 0)
+    // Enable HSI in stop mode.
+    RCC_set_hsi_in_stop_mode(1);
     // Use HSI.
     RCC->CCIPR |= (0b10 << 10); // LPUART1SEL='10'.
     lpuart_clock = RCC_CLOCK_HSI;
@@ -93,7 +96,7 @@ static LPUART_status_t _LPUART_set_baud_rate(uint32_t baud_rate) {
         // Enable HSI in stop mode.
         RCC_set_hsi_in_stop_mode(1);
         // Use HSI.
-        RCC->CCIPR &= ~(0b10 << 10); // LPUART1SEL='10'.
+        RCC->CCIPR |= (0b10 << 10); // LPUART1SEL='10'.
         lpuart_clock = RCC_CLOCK_HSI;
     }
 #endif
@@ -107,7 +110,11 @@ static LPUART_status_t _LPUART_set_baud_rate(uint32_t baud_rate) {
         status = LPUART_ERROR_BAUD_RATE;
         goto errors;
     }
-    LPUART1->BRR = (uint32_t) (brr & 0x000FFFFF); // BRR = (256*fCK)/(baud rate). See p.730 of RM0377 datasheet.
+    // Set baud rate.
+    reg_value = (LPUART1->BRR);
+    reg_value &= 0xFFF00000;
+    reg_value |= (uint32_t) (brr & 0x000FFFFF);
+    LPUART1->BRR = reg_value;
 errors:
     return status;
 }

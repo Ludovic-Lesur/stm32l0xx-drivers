@@ -14,8 +14,6 @@
 #include "rcc_registers.h"
 #include "types.h"
 
-#if ((defined STM32L0XX_DRIVERS_NVM_ADDRESS_LAST) && (STM32L0XX_DRIVERS_NVM_ADDRESS_LAST > 0))
-
 /*** NVM linker generated symbols ***/
 
 extern uint32_t __eeprom_address__;
@@ -90,10 +88,6 @@ NVM_status_t NVM_read_byte(uint32_t address, uint8_t* data) {
         status = NVM_ERROR_OVERFLOW;
         goto errors;
     }
-    if (address >= STM32L0XX_DRIVERS_NVM_ADDRESS_LAST) {
-        status = NVM_ERROR_ADDRESS;
-        goto errors;
-    }
     if (data == NULL) {
         status = NVM_ERROR_NULL_PARAMETER;
         goto errors;
@@ -121,10 +115,6 @@ NVM_status_t NVM_write_byte(uint32_t address, uint8_t data) {
         status = NVM_ERROR_OVERFLOW;
         goto errors;
     }
-    if (address >= STM32L0XX_DRIVERS_NVM_ADDRESS_LAST) {
-        status = NVM_ERROR_ADDRESS;
-        goto errors;
-    }
     // Enable peripheral.
     RCC->AHBENR |= (0b1 << 8); // MIFEN='1'.
     // Unlock memory.
@@ -148,5 +138,3 @@ errors:
     RCC->AHBENR &= ~(0b1 << 8); // MIFEN='0'.
     return status;
 }
-
-#endif /* STM32L0XX_DRIVERS_NVM_ADDRESS_LAST */

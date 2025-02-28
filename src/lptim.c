@@ -35,6 +35,7 @@ typedef union {
     struct {
         unsigned wake_up :1;
         unsigned running :1;
+        unsigned init : 1;
     };
     uint8_t all;
 } LPTIM_flags_t;
@@ -48,7 +49,11 @@ typedef struct {
 
 /*** LPTIM local global variables ***/
 
-static LPTIM_context_t lptim_ctx;
+static LPTIM_context_t lptim_ctx = {
+    .clock_source = RCC_CLOCK_NONE,
+    .clock_frequency_hz = 0,
+    .flags.all = 0
+};
 
 /*** LPTIM local functions ***/
 
@@ -79,12 +84,18 @@ static void __attribute__((optimize("-O0"))) _LPTIM_reset(void) {
 /*** LPTIM functions ***/
 
 /*******************************************************************/
-void LPTIM_init(uint8_t nvic_priority) {
+LPTIM_status_t LPTIM_init(uint8_t nvic_priority) {
     // Local variables.
+    LPTIM_status_t status = LPTIM_SUCCESS;
     uint32_t lptim_clock_hz = 0;
 #if (STM32L0XX_DRIVERS_RCC_LSE_MODE == 1)
     uint8_t lse_status = 0;
 #endif
+    // Check state.
+    if (lptim_ctx.flags.init != 0) {
+        status = LPTIM_ERROR_ALREADY_INITIALIZED;
+        goto errors;
+    }
 #if (STM32L0XX_DRIVERS_RCC_LSE_MODE == 0)
     // Use LSI.
     lptim_ctx.clock_source = RCC_CLOCK_LSI;
@@ -100,12 +111,31 @@ void LPTIM_init(uint8_t nvic_priority) {
     // Get clock source frequency.
     RCC_get_frequency_hz(lptim_ctx.clock_source, &lptim_clock_hz);
     lptim_ctx.clock_frequency_hz = (lptim_clock_hz >> 3);
-    // Reset flags.
-    lptim_ctx.flags.all = 0;
     // Set interrupt priority.
     NVIC_set_priority(NVIC_INTERRUPT_LPTIM1, nvic_priority);
     // Enable LPTIM EXTI line.
     EXTI_enable_line(EXTI_LINE_LPTIM1, EXTI_TRIGGER_RISING_EDGE);
+    // Update initialization flag.
+    lptim_ctx.flags.init = 1;
+errors:
+    return status;
+}
+
+/*******************************************************************/
+LPTIM_status_t LPTIM_de_init(void) {
+    // Local variables.
+    LPTIM_status_t status = LPTIM_SUCCESS;
+    // Check state.
+    if (lptim_ctx.flags.init == 0) {
+        status = LPTIM_ERROR_UNINITIALIZED;
+        goto errors;
+    }
+    // Disable peripheral clock.
+    RCC->APB1ENR &= ~(0b1 << 31); // LPTIM1EN='0'.
+    // Update initialization flag.
+    lptim_ctx.flags.init = 0;
+errors:
+    return status;
 }
 
 /*******************************************************************/
@@ -114,6 +144,11 @@ LPTIM_status_t LPTIM_delay_milliseconds(uint32_t delay_ms, LPTIM_delay_mode_t de
     LPTIM_status_t status = LPTIM_SUCCESS;
     uint32_t arr = 0;
     uint32_t loop_count = 0;
+    // Check state.
+    if (lptim_ctx.flags.init == 0) {
+        status = LPTIM_ERROR_UNINITIALIZED;
+        goto errors;
+    }
     // Check delay.
     if ((delay_ms > LPTIM_DELAY_MS_MAX) || (delay_ms > (IWDG_FREE_DELAY_SECONDS_MAX * 1000))) {
         status = LPTIM_ERROR_DELAY_OVERFLOW;

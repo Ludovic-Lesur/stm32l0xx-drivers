@@ -62,6 +62,8 @@ typedef enum {
     TIM_ERROR_BASE_LAST = (TIM_ERROR_BASE_MATH + MATH_ERROR_BASE_LAST)
 } TIM_status_t;
 
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_ALL) != 0)
+
 /*!******************************************************************
  * \enum TIM_instance_t
  * \brief TIM instances list.
@@ -404,5 +406,7 @@ TIM_status_t TIM_OPM_get_pulse_status(TIM_instance_t instance, uint8_t* pulse_is
 
 /*******************************************************************/
 #define TIM_stack_exit_error(base, code) { ERROR_check_stack_exit(tim_status, TIM_SUCCESS, base, code) }
+
+#endif /* STM32L0XX_DRIVERS_TIM_MODE_MASK */
 
 #endif /* __TIM_H__ */

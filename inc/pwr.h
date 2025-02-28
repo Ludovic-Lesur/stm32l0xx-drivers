@@ -36,12 +36,21 @@ typedef enum {
 
 /*!******************************************************************
  * \fn void PWR_init(void)
- * \brief Init PWR interface.
+ * \brief Init power interface.
  * \param[in]   none
  * \param[out]  none
  * \retval      none
  *******************************************************************/
 void PWR_init(void);
+
+/*!******************************************************************
+ * \fn void PWR_de_init(void)
+ * \brief Release power interface.
+ * \param[in]   none
+ * \param[out]  none
+ * \retval      none
+ *******************************************************************/
+void PWR_de_init(void);
 
 /*!******************************************************************
  * \fn void PWR_enter_sleep_mode(PWR_sleep_mode_t sleep_mode)

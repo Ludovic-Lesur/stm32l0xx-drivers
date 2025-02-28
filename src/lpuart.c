@@ -24,8 +24,11 @@
 
 #define LPUART_BAUD_RATE_CLOCK_THRESHOLD    4000
 
+#define LPUART_REGISTER_MASK_BRR            0x000FFFFF
+#define LPUART_REGISTER_MASK_TDR            0x000000FF
+
 #define LPUART_BRR_VALUE_MIN                0x00300
-#define LPUART_BRR_VALUE_MAX                0xFFFFF
+#define LPUART_BRR_VALUE_MAX                LPUART_REGISTER_MASK_BRR
 
 /*** LPUART local structures ***/
 
@@ -37,7 +40,10 @@ typedef struct {
 
 /*** LPUART local global variables ***/
 
-static LPUART_context_t lpuart_ctx = { .init_flag = 0, .rxne_callback = NULL };
+static LPUART_context_t lpuart_ctx = {
+    .init_flag = 0,
+    .rxne_callback = NULL
+};
 
 /*** LPUART local functions ***/
 
@@ -111,9 +117,8 @@ static LPUART_status_t _LPUART_set_baud_rate(uint32_t baud_rate) {
         goto errors;
     }
     // Set baud rate.
-    reg_value = (LPUART1->BRR);
-    reg_value &= 0xFFF00000;
-    reg_value |= (uint32_t) (brr & 0x000FFFFF);
+    reg_value = ((LPUART1->BRR) & (~LPUART_REGISTER_MASK_BRR));
+    reg_value |= (uint32_t) (brr & LPUART_REGISTER_MASK_BRR);
     LPUART1->BRR = reg_value;
 errors:
     return status;
@@ -285,6 +290,7 @@ errors:
 LPUART_status_t LPUART_write(uint8_t* data, uint32_t data_size_bytes) {
     // Local variables.
     LPUART_status_t status = LPUART_SUCCESS;
+    uint32_t reg_value = 0;
     uint32_t idx = 0;
     uint32_t loop_count = 0;
     // Check parameter.
@@ -304,7 +310,9 @@ LPUART_status_t LPUART_write(uint8_t* data, uint32_t data_size_bytes) {
         if (data[idx] == 0) continue;
 #endif
         // Fill transmit register.
-        LPUART1->TDR = data[idx];
+        reg_value = ((LPUART1->TDR) & (~LPUART_REGISTER_MASK_TDR));
+        reg_value |= (uint32_t) (data[idx] & LPUART_REGISTER_MASK_TDR);
+        LPUART1->TDR = reg_value;
         // Wait for transmission to complete.
         while (((LPUART1->ISR) & (0b1 << 7)) == 0) {
             // Wait for TXE='1' or timeout.

@@ -30,7 +30,7 @@ typedef struct {
 
 /*******************************************************************/
 typedef struct {
-    uint8_t init_count[SPI_INSTANCE_LAST];
+    uint8_t init_count;
 } SPI_context_t;
 
 /*** SPI local global variables ***/
@@ -41,7 +41,12 @@ static const SPI_descriptor_t SPI_DESCRIPTOR[SPI_INSTANCE_LAST] = {
     { SPI2, &(RCC->APB1ENR), (0b1 << 14) },
 #endif
 };
-static SPI_context_t spi_ctx = { .init_count = { 0 } };
+
+static SPI_context_t spi_ctx[SPI_INSTANCE_LAST] = {
+    [0 ... (SPI_INSTANCE_LAST - 1)] = {
+        .init_count = 0
+    }
+};
 
 /*** SPI local functions ***/
 
@@ -58,7 +63,7 @@ static SPI_context_t spi_ctx = { .init_count = { 0 } };
         goto errors; \
     } \
     /* Check state */ \
-    if (spi_ctx.init_count[instance] == 0) { \
+    if (spi_ctx[instance].init_count == 0) { \
         status = SPI_ERROR_UNINITIALIZED; \
         goto errors; \
     } \
@@ -169,7 +174,7 @@ SPI_status_t SPI_init(SPI_instance_t instance, const SPI_gpio_t* pins, SPI_confi
     GPIO_configure((pins->mosi), GPIO_MODE_ALTERNATE_FUNCTION, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_HIGH, GPIO_PULL_NONE);
     GPIO_configure((pins->miso), GPIO_MODE_ALTERNATE_FUNCTION, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_HIGH, GPIO_PULL_NONE);
     // Update initialization count.
-    spi_ctx.init_count[instance]++;
+    spi_ctx[instance].init_count++;
 errors:
     return status;
 }
@@ -189,11 +194,11 @@ SPI_status_t SPI_de_init(SPI_instance_t instance, const SPI_gpio_t* pins) {
         goto errors;
     }
     // Update initialization count.
-    if (spi_ctx.init_count[instance] > 0) {
-        spi_ctx.init_count[instance]--;
+    if (spi_ctx[instance].init_count > 0) {
+        spi_ctx[instance].init_count--;
     }
     // Check initialization count.
-    if (spi_ctx.init_count[instance] > 0) goto errors;
+    if (spi_ctx[instance].init_count > 0) goto errors;
     // Disable SPI alternate function.
     GPIO_configure((pins->sclk), GPIO_MODE_OUTPUT, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_LOW, GPIO_PULL_NONE);
     GPIO_configure((pins->mosi), GPIO_MODE_OUTPUT, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_LOW, GPIO_PULL_NONE);

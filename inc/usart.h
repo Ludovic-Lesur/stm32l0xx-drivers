@@ -15,6 +15,7 @@
 #include "stm32l0xx_drivers_flags.h"
 #endif
 #include "gpio.h"
+#include "rcc.h"
 #include "types.h"
 
 /*** USART structures ***/
@@ -30,6 +31,7 @@ typedef enum {
     USART_ERROR_INSTANCE,
     USART_ERROR_ALREADY_INITIALIZED,
     USART_ERROR_UNINITIALIZED,
+    USART_ERROR_CLOCK,
     USART_ERROR_BAUD_RATE,
     USART_ERROR_TX_TIMEOUT,
     // Last base value.
@@ -68,9 +70,10 @@ typedef void (*USART_rx_irq_cb_t)(uint8_t data);
  * \brief USART configuration structure.
  *******************************************************************/
 typedef struct {
+    RCC_clock_t clock;
     uint32_t baud_rate;
     uint8_t nvic_priority;
-    USART_rx_irq_cb_t rxne_callback;
+    USART_rx_irq_cb_t rxne_irq_callback;
 } USART_configuration_t;
 
 /*** USART functions ***/
@@ -124,6 +127,15 @@ USART_status_t USART_disable_rx(USART_instance_t instance);
  * \retval      Function execution status.
  *******************************************************************/
 USART_status_t USART_write(USART_instance_t instance, uint8_t* data, uint32_t data_size_bytes);
+
+/*!******************************************************************
+ * \fn uint32_t USART_get_rdr_register_address(USART_instance_t instance)
+ * \brief Get USART RDR register address.
+ * \param[in]   instance: USART instance to read.
+ * \param[out]  none
+ * \retval      RDR register address.
+ *******************************************************************/
+uint32_t USART_get_rdr_register_address(USART_instance_t instance);
 
 /*******************************************************************/
 #define USART_exit_error(base) { ERROR_check_exit(usart_status, USART_SUCCESS, base) }

@@ -48,6 +48,12 @@ void PWR_init(void) {
 }
 
 /*******************************************************************/
+void PWR_de_init(void) {
+    // Disable power interface clock.
+    RCC->APB1ENR &= ~(0b1 << 28); // PWREN='0'.
+}
+
+/*******************************************************************/
 void PWR_enter_sleep_mode(PWR_sleep_mode_t sleep_mode) {
     // Configure mode.
     switch (sleep_mode) {

@@ -24,7 +24,9 @@ typedef struct {
 
 /*** AES local global variables ***/
 
-static AES_context_t aes_ctx = { .init_count = 0 };
+static AES_context_t aes_ctx = {
+    .init_count = 0
+};
 
 /*** AES functions ***/
 

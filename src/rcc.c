@@ -115,7 +115,7 @@ static void _RCC_enable_lse(void) {
     NVIC_enable_interrupt(NVIC_INTERRUPT_RCC_CRS);
     // Wait for LSE to be stable.
     while (((RCC->CSR) & (0b1 << 9)) == 0) {
-        PWR_enter_sleep_mode();
+        PWR_enter_sleep_mode(PWR_SLEEP_MODE_NORMAL);
     }
     NVIC_disable_interrupt(NVIC_INTERRUPT_RCC_CRS);
 }
@@ -269,6 +269,8 @@ RCC_status_t RCC_switch_to_hsi(void) {
     // Switch system clock.
     status = _RCC_switch_system_clock(RCC_CLOCK_HSI, RCC_ERROR_HSI_SWITCH);
     if (status != RCC_SUCCESS) goto errors;
+    // Turn HSE off.
+    RCC->CR &= ~(0b1 << 16); // HSEON='0'.
     // Update clocks context.
     rcc_ctx.current_sysclk.source = RCC_CLOCK_HSI;
 errors:

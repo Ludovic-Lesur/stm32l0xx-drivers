@@ -23,7 +23,7 @@ static void _GPIO_set_mode(const GPIO_pin_t* gpio, GPIO_mode_t mode) {
     // Local variables.
     uint32_t reg_value = 0;
     // Read register.
-    reg_value = ((gpio->port)->MODER);
+    reg_value = (gpio->port->MODER);
     // Analog mode by default.
     reg_value |= (0b11 << ((gpio->pin) << 1)); // MODERy = '11'.
     // Set required bits.
@@ -47,7 +47,7 @@ static void _GPIO_set_mode(const GPIO_pin_t* gpio, GPIO_mode_t mode) {
         goto errors;
     }
     // Write register.
-    (gpio->port)->MODER = reg_value;
+    gpio->port->MODER = reg_value;
 errors:
     return;
 }
@@ -55,7 +55,7 @@ errors:
 /*******************************************************************/
 static GPIO_mode_t _GPIO_get_mode(const GPIO_pin_t* gpio) {
     // Get mode.
-    GPIO_mode_t gpio_mode = (((gpio->port)->MODER) & (0b11 << ((gpio->pin) << 1))) >> ((gpio->pin) << 1);
+    GPIO_mode_t gpio_mode = ((gpio->port->MODER) & (0b11 << ((gpio->pin) << 1))) >> ((gpio->pin) << 1);
     return gpio_mode;
 }
 
@@ -65,11 +65,11 @@ static void _GPIO_set_output_type(const GPIO_pin_t* gpio, GPIO_output_type_t out
     switch (output_type) {
     case GPIO_TYPE_PUSH_PULL:
         // OTy = '0'.
-        (gpio->port)->OTYPER &= ~(0b1 << (gpio->pin));
+        gpio->port->OTYPER &= ~(0b1 << (gpio->pin));
         break;
     case GPIO_TYPE_OPEN_DRAIN:
         // OTy = '1'.
-        (gpio->port)->OTYPER |= (0b1 << (gpio->pin));
+        gpio->port->OTYPER |= (0b1 << (gpio->pin));
         break;
     default:
         break;
@@ -81,7 +81,7 @@ static void _GPIO_set_output_speed(const GPIO_pin_t* gpio, GPIO_output_speed_t o
     // Local variables.
     uint32_t reg_value = 0;
     // Read register.
-    reg_value = ((gpio->port)->OSPEEDR);
+    reg_value = (gpio->port->OSPEEDR);
     // Low speed by default.
     reg_value &= ~(0b11 << ((gpio->pin) << 1));
     // Set required bits.
@@ -105,7 +105,7 @@ static void _GPIO_set_output_speed(const GPIO_pin_t* gpio, GPIO_output_speed_t o
         goto errors;
     }
     // Write register.
-    (gpio->port)->OSPEEDR = reg_value;
+    gpio->port->OSPEEDR = reg_value;
 errors:
     return;
 }
@@ -115,7 +115,7 @@ static void _GPIO_set_pull_resistor(const GPIO_pin_t* gpio, GPIO_pull_resistor_t
     // Local variables.
     uint32_t reg_value = 0;
     // Read registers.
-    reg_value = ((gpio->port)->PUPDR);
+    reg_value = (gpio->port->PUPDR);
     // Disable resistors by default.
     reg_value &= ~(0b11 << ((gpio->pin) << 1));
     // Set required bits.
@@ -135,7 +135,7 @@ static void _GPIO_set_pull_resistor(const GPIO_pin_t* gpio, GPIO_pull_resistor_t
         goto errors;
     }
     // Write register.
-    (gpio->port)->PUPDR = reg_value;
+    gpio->port->PUPDR = reg_value;
 errors:
     return;
 }
@@ -149,21 +149,21 @@ static void _GPIO_set_alternate_function(const GPIO_pin_t* gpio, uint8_t alterna
     // Select proper register to set.
     if ((gpio->pin) < GPIO_AFRH_OFFSET) {
         // Read register.
-        reg_value = ((gpio->port)->AFRL);
+        reg_value = (gpio->port->AFRL);
         // Set AFRL register: AFRy = 'alternate_function'.
         reg_value &= ~(0b1111 << ((gpio->pin) << 2));
         reg_value |= (alternate_function << ((gpio->pin) << 2));
         // Write register.
-        (gpio->port)->AFRL = reg_value;
+        gpio->port->AFRL = reg_value;
     }
     else {
         // Read register.
-        reg_value = ((gpio->port)->AFRH);
+        reg_value = (gpio->port->AFRH);
         // Set AFRH register: AFRy = 'alternate_function'.
         reg_value &= ~(0b1111 << (((gpio->pin) - GPIO_AFRH_OFFSET) << 2));
         reg_value |= (alternate_function << (((gpio->pin) - GPIO_AFRH_OFFSET) << 2));
         // Write register.
-        (gpio->port)->AFRH = reg_value;
+        gpio->port->AFRH = reg_value;
     }
 errors:
     return;
@@ -175,6 +175,12 @@ errors:
 void GPIO_init(void) {
     // Enable all GPIOx clocks.
     RCC->IOPENR |= (0b111 << 0); // IOPxEN='1'.
+}
+
+/*******************************************************************/
+void GPIO_de_init(void) {
+    // Disable all GPIOx clocks.
+    RCC->IOPENR &= ~(0b111 << 0); // IOPxEN='0'.
 }
 
 /*******************************************************************/
@@ -191,10 +197,10 @@ void GPIO_configure(const GPIO_pin_t* gpio, GPIO_mode_t mode, GPIO_output_type_t
 void __attribute__((optimize("-O0"))) GPIO_write(const GPIO_pin_t* gpio, uint8_t state) {
     // Set bit.
     if (state == 0) {
-        (gpio->port)->ODR &= ~(0b1 << (gpio->pin));
+        gpio->port->ODR &= ~(0b1 << (gpio->pin));
     }
     else {
-        (gpio->port)->ODR |= (0b1 << (gpio->pin));
+        gpio->port->ODR |= (0b1 << (gpio->pin));
     }
 }
 
@@ -205,11 +211,11 @@ uint8_t __attribute__((optimize("-O0"))) GPIO_read(const GPIO_pin_t* gpio) {
     // Check mode.
     if (_GPIO_get_mode(gpio) == GPIO_MODE_INPUT) {
         // Read IDR register.
-        state = (((gpio->port)->IDR) >> (gpio->pin)) & 0x01;
+        state = ((gpio->port->IDR) >> (gpio->pin)) & 0x01;
     }
     else {
         // Read ODR register.
-        state = (((gpio->port)->ODR) >> (gpio->pin)) & 0x01;
+        state = ((gpio->port->ODR) >> (gpio->pin)) & 0x01;
     }
     return state;
 }
@@ -217,5 +223,5 @@ uint8_t __attribute__((optimize("-O0"))) GPIO_read(const GPIO_pin_t* gpio) {
 /*******************************************************************/
 void __attribute__((optimize("-O0"))) GPIO_toggle(const GPIO_pin_t* gpio) {
     // Toggle ODR bit.
-    (gpio->port)->ODR ^= (0b1 << (gpio->pin));
+    gpio->port->ODR ^= (0b1 << (gpio->pin));
 }

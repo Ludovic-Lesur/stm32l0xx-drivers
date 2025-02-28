@@ -35,7 +35,7 @@ typedef struct {
 
 /*******************************************************************/
 typedef struct {
-    uint8_t init_count[I2C_INSTANCE_LAST];
+    uint8_t init_count;
 } I2C_context_t;
 
 /*** I2C local global variables ***/
@@ -49,7 +49,12 @@ static const I2C_descriptor_t I2C_DESCRIPTOR[I2C_INSTANCE_LAST] = {
     { I2C3, &(RCC->APB1ENR), (0b1 << 30) },
 #endif
 };
-static I2C_context_t i2c_ctx = { .init_count = { 0 } };
+
+static I2C_context_t i2c_ctx[I2C_INSTANCE_LAST] = {
+    [0 ... (I2C_INSTANCE_LAST - 1)] = {
+        .init_count = 0
+    }
+};
 
 /*** I2C local functions ***/
 
@@ -103,7 +108,7 @@ I2C_status_t I2C_init(I2C_instance_t instance, const I2C_gpio_t* pins) {
     GPIO_configure((pins->scl), GPIO_MODE_ALTERNATE_FUNCTION, GPIO_TYPE_OPEN_DRAIN, GPIO_SPEED_LOW, GPIO_PULL_NONE);
     GPIO_configure((pins->sda), GPIO_MODE_ALTERNATE_FUNCTION, GPIO_TYPE_OPEN_DRAIN, GPIO_SPEED_LOW, GPIO_PULL_NONE);
     // Update initialization count.
-    i2c_ctx.init_count[instance]++;
+    i2c_ctx[instance].init_count++;
 errors:
     return status;
 }
@@ -123,11 +128,11 @@ I2C_status_t I2C_de_init(I2C_instance_t instance, const I2C_gpio_t* pins) {
         goto errors;
     }
     // Update initialization count.
-    if (i2c_ctx.init_count[instance] > 0) {
-        i2c_ctx.init_count[instance]--;
+    if (i2c_ctx[instance].init_count > 0) {
+        i2c_ctx[instance].init_count--;
     }
     // Check initialization count.
-    if (i2c_ctx.init_count[instance] > 0) goto errors;
+    if (i2c_ctx[instance].init_count > 0) goto errors;
     // Disable I2C alternate function.
     GPIO_configure((pins->scl), GPIO_MODE_OUTPUT, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_LOW, GPIO_PULL_NONE);
     GPIO_configure((pins->sda), GPIO_MODE_OUTPUT, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_LOW, GPIO_PULL_NONE);
@@ -151,7 +156,7 @@ I2C_status_t I2C_write(I2C_instance_t instance, uint8_t slave_address, uint8_t* 
         goto errors;
     }
     // Check state.
-    if (i2c_ctx.init_count[instance] == 0) {
+    if (i2c_ctx[instance].init_count == 0) {
         status = I2C_ERROR_UNINITIALIZED;
         goto errors;
     }
@@ -243,7 +248,7 @@ I2C_status_t I2C_read(I2C_instance_t instance, uint8_t slave_address, uint8_t* d
         goto errors;
     }
     // Check state.
-    if (i2c_ctx.init_count[instance] == 0) {
+    if (i2c_ctx[instance].init_count == 0) {
         status = I2C_ERROR_UNINITIALIZED;
         goto errors;
     }

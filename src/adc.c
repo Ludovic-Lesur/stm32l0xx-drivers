@@ -38,7 +38,9 @@ typedef struct {
 
 /*** ADC local global variables ***/
 
-static ADC_context_t adc_ctx = { .init_count = 0 };
+static ADC_context_t adc_ctx = {
+    .init_count = 0
+};
 
 /*** ADC local functions ***/
 

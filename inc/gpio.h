@@ -85,6 +85,15 @@ typedef enum {
 void GPIO_init(void);
 
 /*!******************************************************************
+ * \fn void GPIO_de_init(void)
+ * \brief Release GPIO driver.
+ * \param[in]   none
+ * \param[out]  none
+ * \retval      none
+ *******************************************************************/
+void GPIO_de_init(void);
+
+/*!******************************************************************
  * \fn void GPIO_configure(const GPIO_pin_t* gpio, GPIO_mode_t mode, GPIO_output_type_t output_type, GPIO_output_speed_t output_speed, GPIO_pull_resistor_t pull_resistor)
  * \brief Configure a GPIO.
  * \param[in]   gpio: GPIO to configure.

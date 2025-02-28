@@ -11,13 +11,13 @@
 #include "scb_registers.h"
 #include "types.h"
 
+/*** NVIC linker generated symbols ***/
+
+extern uint32_t __Vectors;
+
 /*** NVIC local macros ***/
 
 #define NVIC_PRIORITY_MIN   3
-
-/*** NVIC local global variables ***/
-
-extern uint32_t __Vectors;
 
 /*** NVIC functions ***/
 

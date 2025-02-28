@@ -20,6 +20,13 @@
 
 #define RTC_INIT_TIMEOUT_COUNT  1000000
 
+#define RTC_REGISTER_MASK_WPR   0x000000FF
+#define RTC_REGISTER_MASK_CR    0x00FFFF7F
+#define RTC_REGISTER_MASK_PRER  0x007F7FFF
+#define RTC_REGISTER_MASK_WUTR  0x0000FFFF
+#define RTC_REGISTER_MASK_DR    0x00FFFF3F
+#define RTC_REGISTER_MASK_TR    0x007F7F7F
+
 /*** RTC local structures ***/
 
 /*******************************************************************/
@@ -85,10 +92,16 @@ void __attribute__((optimize("-O0"))) RTC_IRQHandler(void) {
 static RTC_status_t __attribute__((optimize("-O0"))) _RTC_enter_initialization_mode(void) {
     // Local variables.
     RTC_status_t status = RTC_SUCCESS;
+    uint32_t reg_value = (RTC->WPR);
     uint32_t loop_count = 0;
     // Enter key.
-    RTC->WPR = 0xCA;
-    RTC->WPR = 0x53;
+    reg_value &= (~RTC_REGISTER_MASK_WPR);
+    reg_value |= (0xCA & RTC_REGISTER_MASK_WPR);
+    RTC->WPR = reg_value;
+    reg_value &= (~RTC_REGISTER_MASK_WPR);
+    reg_value |= (0x53 & RTC_REGISTER_MASK_WPR);
+    RTC->WPR = reg_value;
+    // Enter initialization mode.
     RTC->ISR |= (0b1 << 7); // INIT='1'.
     // Wait for initialization mode.
     while (((RTC->ISR) & (0b1 << 6)) == 0) {
@@ -115,6 +128,7 @@ RTC_status_t RTC_init(RTC_irq_cb_t wakeup_timer_irq_callback, uint8_t nvic_prior
     RTC_status_t status = RTC_SUCCESS;
     RCC_clock_t rtc_clock = RCC_CLOCK_LSE;
     uint32_t rtc_clock_hz = 0;
+    uint32_t reg_value = 0;
     uint32_t loop_count = 0;
 #if (STM32L0XX_DRIVERS_RCC_LSE_MODE == 1)
     uint8_t lse_status = 0;
@@ -146,7 +160,7 @@ RTC_status_t RTC_init(RTC_irq_cb_t wakeup_timer_irq_callback, uint8_t nvic_prior
 #endif
     // Get clock source frequency.
     RCC_get_frequency_hz(rtc_clock, &rtc_clock_hz);
-    // Enable RTC and register access.
+    // Enable RTC.
     RCC->CSR |= (0b1 << 18); // RTCEN='1'.
     // Enter initialization mode.
     status = _RTC_enter_initialization_mode();
@@ -161,16 +175,22 @@ RTC_status_t RTC_init(RTC_irq_cb_t wakeup_timer_irq_callback, uint8_t nvic_prior
         }
     }
     // Compute prescaler.
-    RTC->PRER = (127 << 16) | (((rtc_clock_hz >> 7) - 1) << 0);
+    reg_value = ((RTC->PRER) & (~RTC_REGISTER_MASK_PRER));
+    reg_value |= (((127 << 16) | (((rtc_clock_hz >> 7) - 1) << 0)) & RTC_REGISTER_MASK_PRER);
+    RTC->PRER = reg_value;
     // Configure wake-up timer.
-    RTC->WUTR = (STM32L0XX_DRIVERS_RTC_WAKEUP_PERIOD_SECONDS - 1);
+    reg_value = ((RTC->WUTR) & (~RTC_REGISTER_MASK_WUTR));
+    reg_value |= ((STM32L0XX_DRIVERS_RTC_WAKEUP_PERIOD_SECONDS - 1) & RTC_REGISTER_MASK_WUTR);
+    RTC->WUTR = reg_value;
     // Register callback.
     rtc_ctx.wakeup_timer_irq_callback = wakeup_timer_irq_callback;
     // Configure interrupt.
     EXTI_enable_line(EXTI_LINE_RTC_WAKEUP_TIMER, EXTI_TRIGGER_RISING_EDGE);
     NVIC_set_priority(NVIC_INTERRUPT_RTC, nvic_priority);
     // Enable wake-up timer clocked by RTC clock (1Hz).
-    RTC->CR = 0x00004424;
+    reg_value = ((RTC->CR) & (~RTC_REGISTER_MASK_CR));
+    reg_value |= (0x00004424 & RTC_REGISTER_MASK_CR);
+    RTC->CR = reg_value;
     // Clear all flags.
     RTC->ISR &= 0xFFFF005F;
     // Enable interrupt.
@@ -242,6 +262,8 @@ RTC_status_t RTC_start_alarm(RTC_alarm_t alarm, RTC_alarm_configuration_t* confi
     case RTC_ALARM_B:
         // Register callback.
         rtc_ctx.alarm_b_irq_callback = irq_callback;
+        // Configure alarm.
+        RTC->ALRMBR = alrmxr;
         // Clear flag.
         RTC->ISR &= ~(0b1 << 9);
         // Enable alarm B.
@@ -279,7 +301,7 @@ RTC_status_t RTC_stop_alarm(RTC_alarm_t alarm) {
 #endif
 #if ((STM32L0XX_DRIVERS_RTC_ALARM_MASK & RTC_ALARM_MASK_B) != 0)
     case RTC_ALARM_B:
-        // Stop alarm A.
+        // Stop alarm B.
         RTC->CR &= ~(0b1 << 13) & ~(0b1 << 9);
         // Clear flag.
         RTC->ISR &= ~(0b1 << 9);
@@ -299,8 +321,8 @@ errors:
 RTC_status_t RTC_set_time(RTC_time_t* time) {
     // Local variables.
     RTC_status_t status = RTC_SUCCESS;
-    uint32_t tr_value = 0;
-    uint32_t dr_value = 0;
+    uint32_t dr_value = ((RTC->DR) & (~RTC_REGISTER_MASK_DR));
+    uint32_t tr_value = ((RTC->TR) & (~RTC_REGISTER_MASK_DR));
     uint8_t tens = 0;
     uint8_t units = 0;
     // Check parameters.
@@ -358,8 +380,8 @@ RTC_status_t RTC_get_time(RTC_time_t* time) {
         goto errors;
     }
     // Read registers.
-    dr_value = (RTC->DR) & 0x00FFFF3F; // Mask reserved bits.
-    tr_value = (RTC->TR) & 0x007F7F7F; // Mask reserved bits.
+    dr_value = ((RTC->DR) & RTC_REGISTER_MASK_DR);
+    tr_value = ((RTC->TR) & RTC_REGISTER_MASK_TR);
     // Parse registers into time structure.
     time->year = (uint16_t) (2000 + ((dr_value & (0b1111 << 20)) >> 20) * 10 + ((dr_value & (0b1111 << 16)) >> 16));
     time->month = (uint8_t) (((dr_value & (0b1 << 12)) >> 12) * 10 + ((dr_value & (0b1111 << 8)) >> 8));

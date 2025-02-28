@@ -19,6 +19,8 @@
 typedef enum {
     // Driver errors.
     LPTIM_SUCCESS = 0,
+    LPTIM_ERROR_ALREADY_INITIALIZED,
+    LPTIM_ERROR_UNINITIALIZED,
     LPTIM_ERROR_DELAY_UNDERFLOW,
     LPTIM_ERROR_DELAY_OVERFLOW,
     LPTIM_ERROR_DELAY_MODE,
@@ -47,9 +49,18 @@ typedef enum {
  * \brief Init LPTIM peripheral for delay operation.
  * \param[in]   nvic_priority: Interrupt priority.
  * \param[out]  none
- * \retval      none
+ * \retval      Function execution status.
  *******************************************************************/
-void LPTIM_init(uint8_t nvic_priority);
+LPTIM_status_t LPTIM_init(uint8_t nvic_priority);
+
+/*!******************************************************************
+ * \fn LPTIM_status_t LPTIM_de_init(void)
+ * \brief Release LPTIM peripheral.
+ * \param[in]   none
+ * \param[out]  none
+ * \retval      Function execution status.
+ *******************************************************************/
+LPTIM_status_t LPTIM_de_init(void);
 
 /*!******************************************************************
  * \fn LPTIM_status_t LPTIM_delay_milliseconds(uint32_t delay_ms, LPTIM_delay_mode_t delay_mode)

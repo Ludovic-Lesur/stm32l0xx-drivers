@@ -23,10 +23,13 @@
 
 /*** USART local macros ***/
 
-#define USART_TIMEOUT_COUNT     100000
+#define USART_TIMEOUT_COUNT         100000
 
-#define USART_BRR_VALUE_MIN     0x0010
-#define USART_BRR_VALUE_MAX     0xFFFF
+#define USART_REGISTER_MASK_BRR     0x0000FFFF
+#define USART_REGISTER_MASK_TDR     0x000000FF
+
+#define USART_BRR_VALUE_MIN         0x0010
+#define USART_BRR_VALUE_MAX         USART_REGISTER_MASK_BRR
 
 /*** USART local structures ***/
 
@@ -36,30 +39,36 @@ typedef struct {
     volatile uint32_t* rcc_enr;
     volatile uint32_t* rcc_smenr;
     uint32_t rcc_mask;
+    uint32_t rcc_ccipr_shift;
     NVIC_interrupt_t nvic_interrupt;
 } USART_descriptor_t;
 
 /*******************************************************************/
 typedef struct {
-    uint8_t init_flag[USART_INSTANCE_LAST];
-    USART_rx_irq_cb_t rxne_callback[USART_INSTANCE_LAST];
+    uint8_t init_flag;
+    USART_rx_irq_cb_t rxne_irq_callback;
 } USART_context_t;
 
 /*** USART local global variables ***/
 
 static const USART_descriptor_t USART_DESCRIPTOR[USART_INSTANCE_LAST] = {
-    { USART2, &(RCC->APB1ENR), &(RCC->APB1SMENR), (0b1 << 17), NVIC_INTERRUPT_USART2 },
+    { USART2, &(RCC->APB1ENR), &(RCC->APB1SMENR), (0b1 << 17), 2, NVIC_INTERRUPT_USART2 },
 #if (STM32L0XX_REGISTERS_MCU_CATEGORY == 3) || (STM32L0XX_REGISTERS_MCU_CATEGORY == 5)
-    { USART1, &(RCC->APB2ENR), &(RCC->APB2SMENR), (0b1 << 14), NVIC_INTERRUPT_USART1 },
+    { USART1, &(RCC->APB2ENR), &(RCC->APB2SMENR), (0b1 << 14), 0, NVIC_INTERRUPT_USART1 },
 #endif
 };
 
-static USART_context_t usart_ctx = { .init_flag = { 0 }, .rxne_callback = { NULL } };
+static USART_context_t usart_ctx[USART_INSTANCE_LAST] = {
+    [0 ... (USART_INSTANCE_LAST - 1)] = {
+        .init_flag = 0,
+        .rxne_irq_callback = NULL
+    }
+};
 
 /*** USART local functions ***/
 
 /*******************************************************************/
-static void __attribute__((optimize("-O0"))) _USART_irq_handler_rxne(USART_instance_t instance) {
+static void __attribute__((optimize("-O0"))) _USART_irq_handler(USART_instance_t instance) {
     // Local variables.
     uint8_t rx_byte = 0;
     // RXNE interrupt.
@@ -67,8 +76,8 @@ static void __attribute__((optimize("-O0"))) _USART_irq_handler_rxne(USART_insta
         // Read incoming byte.
         rx_byte = (uint8_t) (USART_DESCRIPTOR[instance].peripheral->RDR);
         // Transmit byte to upper layer.
-        if ((((USART_DESCRIPTOR[instance].peripheral->CR1) & (0b1 << 5)) != 0) && (usart_ctx.rxne_callback[instance] != NULL)) {
-            usart_ctx.rxne_callback[instance](rx_byte);
+        if ((((USART_DESCRIPTOR[instance].peripheral->CR1) & (0b1 << 5)) != 0) && (usart_ctx[instance].rxne_irq_callback != NULL)) {
+            usart_ctx[instance].rxne_irq_callback(rx_byte);
         }
     }
 }
@@ -76,7 +85,7 @@ static void __attribute__((optimize("-O0"))) _USART_irq_handler_rxne(USART_insta
 /*******************************************************************/
 void __attribute__((optimize("-O0"))) USART2_IRQHandler(void) {
     // Execute internal callback.
-    _USART_irq_handler_rxne(USART_INSTANCE_USART2);
+    _USART_irq_handler(USART_INSTANCE_USART2);
     // Clear EXTI line.
     EXTI_clear_line_flag(EXTI_LINE_USART2);
 }
@@ -85,7 +94,7 @@ void __attribute__((optimize("-O0"))) USART2_IRQHandler(void) {
 /*******************************************************************/
 void __attribute__((optimize("-O0"))) USART1_IRQHandler(void) {
     // Execute internal callback.
-    _USART_irq_handler_rxne(USART_INSTANCE_USART1);
+    _USART_irq_handler(USART_INSTANCE_USART1);
     // Clear EXTI line.
     EXTI_clear_line_flag(EXTI_LINE_USART1);
 }
@@ -99,6 +108,7 @@ USART_status_t USART_init(USART_instance_t instance, const USART_gpio_t* pins, U
     USART_status_t status = USART_SUCCESS;
     uint32_t usart_clock_hz = 0;
     uint32_t brr = 0;
+    uint32_t reg_value = 0;
     // Check instance.
     if (instance >= USART_INSTANCE_LAST) {
         status = USART_ERROR_INSTANCE;
@@ -110,17 +120,29 @@ USART_status_t USART_init(USART_instance_t instance, const USART_gpio_t* pins, U
         goto errors;
     }
     // Check state.
-    if (usart_ctx.init_flag[instance] != 0) {
+    if (usart_ctx[instance].init_flag != 0) {
         status = USART_ERROR_ALREADY_INITIALIZED;
         goto errors;
     }
+    // Select peripheral clock.
+    RCC->CCIPR &= ~(0b11 << USART_DESCRIPTOR[instance].rcc_ccipr_shift);
+    switch (configuration->clock) {
+    case RCC_CLOCK_SYSTEM:
+        // Nothing to do.
+        break;
+    case RCC_CLOCK_HSI:
+        RCC->CCIPR |= (0b10 << USART_DESCRIPTOR[instance].rcc_ccipr_shift);
+        RCC_set_hsi_in_stop_mode(1);
+        break;
+    case RCC_CLOCK_LSE:
+        RCC->CCIPR |= (0b11 << USART_DESCRIPTOR[instance].rcc_ccipr_shift);
+        break;
+    default:
+        status = USART_ERROR_CLOCK;
+        goto errors;
+    }
     // Get clock source frequency.
-    RCC_get_frequency_hz(RCC_CLOCK_HSI, &usart_clock_hz);
-    // Select HSI as peripheral clock.
-    RCC->CCIPR &= ~(0b1111 << 0);
-    RCC->CCIPR |= (0b1010 << 0); // USARTxSEL='10'.
-    // Enable HSI in stop mode.
-    RCC_set_hsi_in_stop_mode(1);
+    RCC_get_frequency_hz((configuration->clock), &usart_clock_hz);
     // Enable peripheral clock.
     (*USART_DESCRIPTOR[instance].rcc_enr) |= USART_DESCRIPTOR[instance].rcc_mask;
     (*USART_DESCRIPTOR[instance].rcc_smenr) |= USART_DESCRIPTOR[instance].rcc_mask;
@@ -133,7 +155,9 @@ USART_status_t USART_init(USART_instance_t instance, const USART_gpio_t* pins, U
         status = USART_ERROR_BAUD_RATE;
         goto errors;
     }
-    USART_DESCRIPTOR[instance].peripheral->BRR = (brr & 0x0000FFFF); // BRR = (fCK)/(baud rate).
+    reg_value = ((USART_DESCRIPTOR[instance].peripheral->BRR) & (~USART_REGISTER_MASK_BRR));
+    reg_value |= (brr & USART_REGISTER_MASK_BRR);
+    USART_DESCRIPTOR[instance].peripheral->BRR = reg_value;
     // Configure peripheral.
     USART_DESCRIPTOR[instance].peripheral->CR1 |= (0b1 << 5); // RXNEIE='1'.
     // Set interrupt priority.
@@ -146,9 +170,9 @@ USART_status_t USART_init(USART_instance_t instance, const USART_gpio_t* pins, U
     // Enable peripheral.
     USART_DESCRIPTOR[instance].peripheral->CR1 |= (0b11 << 0); // UE='1' and UESM='1'.
     // Register callback.
-    usart_ctx.rxne_callback[instance] = (configuration->rxne_callback);
+    usart_ctx[instance].rxne_irq_callback = (configuration->rxne_irq_callback);
     // Update initialization flag.
-    usart_ctx.init_flag[instance] = 1;
+    usart_ctx[instance].init_flag = 1;
 errors:
     return status;
 }
@@ -168,12 +192,13 @@ USART_status_t USART_de_init(USART_instance_t instance, const USART_gpio_t* pins
         goto errors;
     }
     // Check state.
-    if (usart_ctx.init_flag[instance] == 0) {
+    if (usart_ctx[instance].init_flag == 0) {
         status = USART_ERROR_UNINITIALIZED;
         goto errors;
     }
-    // Disable HSI in stop mode.
-    RCC_set_hsi_in_stop_mode(0);
+    if (((RCC->CCIPR >> USART_DESCRIPTOR[instance].rcc_ccipr_shift) & 0x03) == 0b10) {
+        RCC_set_hsi_in_stop_mode(0);
+    }
     // Disable USART alternate function.
     GPIO_configure((pins->tx), GPIO_MODE_ANALOG, GPIO_TYPE_OPEN_DRAIN, GPIO_SPEED_LOW, GPIO_PULL_NONE);
     GPIO_configure((pins->rx), GPIO_MODE_ANALOG, GPIO_TYPE_OPEN_DRAIN, GPIO_SPEED_LOW, GPIO_PULL_NONE);
@@ -182,7 +207,7 @@ USART_status_t USART_de_init(USART_instance_t instance, const USART_gpio_t* pins
     // Disable peripheral clock.
     (*USART_DESCRIPTOR[instance].rcc_enr) &= ~(USART_DESCRIPTOR[instance].rcc_mask);
     // Update initialization flag.
-    usart_ctx.init_flag[instance] = 0;
+    usart_ctx[instance].init_flag = 0;
 errors:
     return status;
 }
@@ -197,7 +222,7 @@ USART_status_t USART_enable_rx(USART_instance_t instance) {
         goto errors;
     }
     // Check state.
-    if (usart_ctx.init_flag[instance] == 0) {
+    if (usart_ctx[instance].init_flag == 0) {
         status = USART_ERROR_UNINITIALIZED;
         goto errors;
     }
@@ -223,7 +248,7 @@ USART_status_t USART_disable_rx(USART_instance_t instance) {
         goto errors;
     }
     // Check state.
-    if (usart_ctx.init_flag[instance] == 0) {
+    if (usart_ctx[instance].init_flag == 0) {
         status = USART_ERROR_UNINITIALIZED;
         goto errors;
     }
@@ -239,6 +264,7 @@ errors:
 USART_status_t USART_write(USART_instance_t instance, uint8_t* data, uint32_t data_size_bytes) {
     // Local variables.
     USART_status_t status = USART_SUCCESS;
+    uint32_t reg_value = 0;
     uint8_t idx = 0;
     uint32_t loop_count = 0;
     // Check instance.
@@ -252,7 +278,7 @@ USART_status_t USART_write(USART_instance_t instance, uint8_t* data, uint32_t da
         goto errors;
     }
     // Check state.
-    if (usart_ctx.init_flag[instance] == 0) {
+    if (usart_ctx[instance].init_flag == 0) {
         status = USART_ERROR_UNINITIALIZED;
         goto errors;
     }
@@ -263,7 +289,9 @@ USART_status_t USART_write(USART_instance_t instance, uint8_t* data, uint32_t da
         if (data[idx] == 0) continue;
 #endif
         // Fill transmit register.
-        USART_DESCRIPTOR[instance].peripheral->TDR = data[idx];
+        reg_value = ((USART_DESCRIPTOR[instance].peripheral->TDR) & (~USART_REGISTER_MASK_TDR));
+        reg_value |= (uint32_t) (data[idx] & USART_REGISTER_MASK_TDR);
+        USART_DESCRIPTOR[instance].peripheral->TDR = reg_value;
         // Wait for transmission to complete.
         while (((USART_DESCRIPTOR[instance].peripheral->ISR) & (0b1 << 7)) == 0) {
             // Wait for TXE='1' or timeout.
@@ -276,4 +304,16 @@ USART_status_t USART_write(USART_instance_t instance, uint8_t* data, uint32_t da
     }
 errors:
     return status;
+}
+
+/*******************************************************************/
+uint32_t USART_get_rdr_register_address(USART_instance_t instance) {
+    // Local variables.
+    uint32_t rdr_address = 0;
+    // Check instance.
+    if (instance >= USART_INSTANCE_LAST) goto errors;
+    // Update address.
+    rdr_address = ((uint32_t) &(USART_DESCRIPTOR[instance].peripheral->RDR));
+errors:
+    return rdr_address;
 }

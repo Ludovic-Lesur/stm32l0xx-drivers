@@ -1196,8 +1196,6 @@ TIM_status_t TIM_OPM_init(TIM_instance_t instance, TIM_gpio_t* pins) {
         TIM_DESCRIPTOR[instance].peripheral->CCRx[channel] |= TIM_REGISTER_MASK_ARR_PSC_CCR;
         // Generate event to update registers.
         TIM_DESCRIPTOR[instance].peripheral->EGR |= (0b1 << 0); // UG='1'.
-        // Enable channel.
-        TIM_DESCRIPTOR[instance].peripheral->CCER |= (0b1 << (channel << 2));
         // Init GPIO.
         GPIO_configure((pins->list[idx]->gpio), GPIO_MODE_ALTERNATE_FUNCTION, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_HIGH, GPIO_PULL_NONE);
     }
@@ -1231,17 +1229,19 @@ errors:
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_OPM) != 0)
 /*******************************************************************/
-TIM_status_t TIM_OPM_make_pulse(TIM_instance_t instance, TIM_channel_t channel, uint32_t delay_ns, uint32_t pulse_duration_ns) {
+TIM_status_t TIM_OPM_make_pulse(TIM_instance_t instance, uint8_t channels_mask, uint32_t delay_ns, uint32_t pulse_duration_ns) {
     // Local variables.
     TIM_status_t status = TIM_SUCCESS;
     uint32_t tim_clock_hz = 0;
     uint32_t arr = 0;
     uint64_t ccr = 0;
     uint32_t reg_value = 0;
-    // Check instance, mode and channel.
+    uint8_t idx = 0;
+    // Check instance and mode.
     _TIM_check_instance(instance);
     _TIM_check_mode(instance, TIM_MODE_OPM);
-    _TIM_check_channel(instance, channel);
+    // Directly exit if there is mask is null.
+    if (channels_mask == 0) goto errors;
     // Check parameters.
     if ((delay_ns + pulse_duration_ns) == 0) {
         status = TIM_ERROR_PULSE;
@@ -1257,10 +1257,23 @@ TIM_status_t TIM_OPM_make_pulse(TIM_instance_t instance, TIM_channel_t channel, 
     // Compute CCR value.
     ccr = (((uint64_t) delay_ns) * ((uint64_t) (arr + 1)));
     ccr /= (((uint64_t) delay_ns) + ((uint64_t) pulse_duration_ns));
-    // Write register.
-    reg_value = (TIM_DESCRIPTOR[instance].peripheral->CCRx[channel] & (~TIM_REGISTER_MASK_ARR_PSC_CCR));
-    reg_value |= (((ccr == 0) ? 1 : ccr) & TIM_REGISTER_MASK_ARR_PSC_CCR);
-    TIM_DESCRIPTOR[instance].peripheral->CCRx[channel] = reg_value;
+    // Channels loop.
+    for (idx = 0; idx < TIM_DESCRIPTOR[instance].number_of_channels; idx++) {
+        // Check mask.
+        if ((channels_mask & (0b1 << idx)) != 0) {
+            // Write register.
+            reg_value = (TIM_DESCRIPTOR[instance].peripheral->CCRx[idx] & (~TIM_REGISTER_MASK_ARR_PSC_CCR));
+            reg_value |= (((ccr == 0) ? 1 : ccr) & TIM_REGISTER_MASK_ARR_PSC_CCR);
+            TIM_DESCRIPTOR[instance].peripheral->CCRx[idx] = reg_value;
+            // Enable channel.
+            TIM_DESCRIPTOR[instance].peripheral->CCER |= (0b1 << (idx << 2));
+        }
+        else {
+            // Disable channel.
+            TIM_DESCRIPTOR[instance].peripheral->CCRx[idx] |= TIM_REGISTER_MASK_ARR_PSC_CCR;
+            TIM_DESCRIPTOR[instance].peripheral->CCER &= ~(0b1 << (idx << 2));
+        }
+    }
     // Re-enable update event.
     TIM_DESCRIPTOR[instance].peripheral->CR1 &= ~(0b1 << 1);
     // Generate event to update registers.

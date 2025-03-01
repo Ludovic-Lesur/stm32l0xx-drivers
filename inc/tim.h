@@ -375,16 +375,16 @@ TIM_status_t TIM_OPM_de_init(TIM_instance_t instance, TIM_gpio_t* pins);
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_OPM) != 0)
 /*!******************************************************************
- * \fn TIM_status_t TIM_OPM_make_pulse(TIM_instance_t instance, TIM_channel_t channel, uint32_t delay_ns, uint32_t pulse_duration_ns)
+ * \fn TIM_status_t TIM_OPM_make_pulse(TIM_instance_t instance, uint8_t channels_mask, uint32_t delay_ns, uint32_t pulse_duration_ns)
  * \brief Perform a single output pulse.
  * \param[in]   instance: Timer instance to use.
- * \param[in]   channel: Channel to use.
+ * \param[in]   channels_mask: Channels to use.
  * \param[in]   delay_ns: Delay between function call and pulse start in ns. Warning: this setting will be applied to all channels of the timer instance.
  * \param[in]   pulse_duration_ns: Pulse duration in ns. Warning: this setting will be applied to all channels of the timer instance.
  * \param[out]  none
  * \retval      Function execution status.
  *******************************************************************/
-TIM_status_t TIM_OPM_make_pulse(TIM_instance_t instance, TIM_channel_t channel, uint32_t delay_ns, uint32_t pulse_duration_ns);
+TIM_status_t TIM_OPM_make_pulse(TIM_instance_t instance, uint8_t channels_mask, uint32_t delay_ns, uint32_t pulse_duration_ns);
 #endif
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_OPM) != 0)

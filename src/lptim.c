@@ -111,6 +111,8 @@ LPTIM_status_t LPTIM_init(uint8_t nvic_priority) {
     // Get clock source frequency.
     RCC_get_frequency_hz(lptim_ctx.clock_source, &lptim_clock_hz);
     lptim_ctx.clock_frequency_hz = (lptim_clock_hz >> 3);
+    // Reset flags.
+    lptim_ctx.flags.all = 0;
     // Set interrupt priority.
     NVIC_set_priority(NVIC_INTERRUPT_LPTIM1, nvic_priority);
     // Enable LPTIM EXTI line.

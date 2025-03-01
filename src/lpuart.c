@@ -175,7 +175,12 @@ LPUART_status_t LPUART_init(const LPUART_gpio_t* pins, LPUART_configuration_t* c
     status = _LPUART_set_baud_rate(configuration->baud_rate);
     if (status != LPUART_SUCCESS) goto errors;
     // Configure peripheral.
-    LPUART1->CR1 |= (0b1 << 5); // Enable RXNE interrupt (RXNEIE='1').
+    if ((configuration->rxne_irq_callback) != NULL) {
+        LPUART1->CR1 |= (0b1 << 5); // RXNEIE='1'.
+    }
+    else {
+        LPUART1->CR1 &= ~(0b1 << 5); // RXNEIE='0'.
+    }
 #ifdef STM32L0XX_DRIVERS_LPUART_RS485
     LPUART1->CR2 |= ((configuration->self_address) << 24) | (0b1 << 4);
     LPUART1->CR3 |= 0x00004000;
@@ -198,7 +203,7 @@ LPUART_status_t LPUART_init(const LPUART_gpio_t* pins, LPUART_configuration_t* c
     // Enable peripheral.
     LPUART1->CR1 |= (0b11 << 0); // UE='1' and UESM='1'
     // Register callback.
-    lpuart_ctx.rxne_callback = (configuration->rxne_callback);
+    lpuart_ctx.rxne_callback = (configuration->rxne_irq_callback);
     // Update initialization flag.
     lpuart_ctx.init_flag = 1;
 errors:
@@ -336,4 +341,10 @@ LPUART_status_t LPUART_write(uint8_t* data, uint32_t data_size_bytes) {
 #endif
 errors:
     return status;
+}
+
+/*******************************************************************/
+uint32_t LPUART_get_rdr_register_address(void) {
+    uint32_t rdr_address = ((uint32_t) &(LPUART1->RDR));
+    return rdr_address;
 }

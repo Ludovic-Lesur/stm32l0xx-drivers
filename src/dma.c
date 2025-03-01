@@ -250,10 +250,12 @@ DMA_status_t DMA_init(DMA_channel_t channel, DMA_configuration_t* configuration)
     DMA1->CSELR |= ((configuration->request_id) << (channel << 2));
     // Set interrupt priority.
     NVIC_set_priority(DMA_CHANNEL_DESCRIPTOR[channel].nvic_interrupt, (configuration->nvic_priority));
-    // Register callback.
-    dma_ctx.channel_ctx[channel].tc_irq_callback = (configuration->irq_callback);
     // Enable transfer complete interrupt.
-    DMA1->CHx[channel].CCR |= (0b1 << 1);
+    if ((configuration->tc_irq_callback) != NULL) {
+        DMA1->CHx[channel].CCR |= (0b1 << 1);
+    }
+    // Register callback.
+    dma_ctx.channel_ctx[channel].tc_irq_callback = (configuration->tc_irq_callback);
     // Update mask.
     dma_ctx.enabled_channels_mask |= (0b1 << channel);
 errors:

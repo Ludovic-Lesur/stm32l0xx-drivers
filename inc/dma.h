@@ -134,7 +134,7 @@ typedef struct {
     uint16_t number_of_data;
     DMA_priority_t priority;
     uint8_t request_id;
-    DMA_transfer_complete_irq_cb_t irq_callback;
+    DMA_transfer_complete_irq_cb_t tc_irq_callback;
     uint8_t nvic_priority;
 } DMA_configuration_t;
 

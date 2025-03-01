@@ -28,6 +28,9 @@
 #define EXTI_NVIC_SHARED_GPIO_MASK_PIN2_PIN3    0x000C
 #define EXTI_NVIC_SHARED_GPIO_MASK_PIN4_PIN15   0xFFF0
 
+#define EXTI_REGISTER_MASK_IMR_EMR              0x37FFFFFF
+#define EXTI_REGISTER_MASK_PR                   0x007BFFFF
+
 /*** EXTI local structures ***/
 
 /*******************************************************************/
@@ -195,19 +198,19 @@ void EXTI_init(void) {
     // Enable peripheral clock.
     RCC->APB2ENR |= (0b1 << 0);
     // Mask all sources by default.
-    EXTI->IMR &= 0xC8000000;
-    EXTI->EMR &= 0xC8000000;
+    EXTI->IMR &= (~EXTI_REGISTER_MASK_IMR_EMR);
+    EXTI->EMR &= (~EXTI_REGISTER_MASK_IMR_EMR);
     // Clear all flags.
-    EXTI->PR |= 0x007BFFFF;
+    EXTI->PR |= EXTI_REGISTER_MASK_PR;
 }
 
 /*******************************************************************/
 void EXTI_de_init(void) {
     // Clear all flags.
-    EXTI->PR |= 0x007BFFFF;
-    // Mask all sources by default.
-    EXTI->IMR &= 0xC8000000;
-    EXTI->EMR &= 0xC8000000;
+    EXTI->PR |= EXTI_REGISTER_MASK_PR;
+    // Mask all sources.
+    EXTI->IMR &= (~EXTI_REGISTER_MASK_IMR_EMR);;
+    EXTI->EMR &= (~EXTI_REGISTER_MASK_IMR_EMR);;
     // Disable peripheral clock.
     RCC->APB2ENR &= ~(0b1 << 0);
 }

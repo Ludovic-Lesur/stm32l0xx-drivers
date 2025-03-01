@@ -284,3 +284,9 @@ int32_t ADC_get_vrefint_voltage_mv(void) {
     int32_t vrefint_mv = ((ADC_VREFINT_CAL * ADC_VREFINT_VCC_CALIB_MV) / (ADC_FULL_SCALE));
     return vrefint_mv;
 }
+
+/*******************************************************************/
+uint32_t ADC_get_dr_register_address(void) {
+    uint32_t dr_address = ((uint32_t) &(ADC1->DR));
+    return dr_address;
+}

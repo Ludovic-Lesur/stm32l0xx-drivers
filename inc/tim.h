@@ -398,6 +398,16 @@ TIM_status_t TIM_OPM_make_pulse(TIM_instance_t instance, TIM_channel_t channel, 
 TIM_status_t TIM_OPM_get_pulse_status(TIM_instance_t instance, uint8_t* pulse_is_done);
 #endif
 
+/*!******************************************************************
+ * \fn uint32_t TIM_get_ccr_register_address(TIM_instance_t instance, TIM_channel_t channel)
+ * \brief Get TIM CCRx register address.
+ * \param[in]   instance: Timer instance to read.
+ * \param[in]   channel: Channel to read.
+ * \param[out]  none
+ * \retval      CCRx register address.
+ *******************************************************************/
+uint32_t TIM_get_ccr_register_address(TIM_instance_t instance, TIM_channel_t channel);
+
 /*******************************************************************/
 #define TIM_exit_error(base) { ERROR_check_exit(tim_status, TIM_SUCCESS, base) }
 

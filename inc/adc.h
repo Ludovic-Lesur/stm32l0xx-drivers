@@ -145,6 +145,15 @@ ADC_status_t ADC_compute_tmcu(int32_t vmcu_mv, int32_t tmcu_12bits, int32_t* tmc
  *******************************************************************/
 int32_t ADC_get_vrefint_voltage_mv(void);
 
+/*!******************************************************************
+ * \fn uint32_t ADC_get_dr_register_address(void)
+ * \brief Get ADC data register address.
+ * \param[in]   none
+ * \param[out]  none
+ * \retval      DR register address.
+ *******************************************************************/
+uint32_t ADC_get_dr_register_address(void);
+
 /*******************************************************************/
 #define ADC_exit_error(base) { ERROR_check_exit(adc_status, ADC_SUCCESS, base) }
 

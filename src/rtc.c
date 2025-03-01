@@ -22,6 +22,7 @@
 
 #define RTC_REGISTER_MASK_WPR   0x000000FF
 #define RTC_REGISTER_MASK_CR    0x00FFFF7F
+#define RTC_REGISTER_MASK_ISR   0x0000FF20
 #define RTC_REGISTER_MASK_PRER  0x007F7FFF
 #define RTC_REGISTER_MASK_WUTR  0x0000FFFF
 #define RTC_REGISTER_MASK_DR    0x00FFFF3F
@@ -43,7 +44,16 @@ typedef struct {
 
 /*** RTC local global variables ***/
 
-static RTC_context_t rtc_ctx;
+static RTC_context_t rtc_ctx = {
+    .uptime_seconds = 0,
+    .wakeup_timer_irq_callback = NULL,
+#if ((STM32L0XX_DRIVERS_RTC_ALARM_MASK & RTC_ALARM_MASK_A) != 0)
+    .alarm_a_irq_callback = NULL,
+#endif
+#if ((STM32L0XX_DRIVERS_RTC_ALARM_MASK & RTC_ALARM_MASK_B) != 0)
+    .alarm_b_irq_callback = NULL,
+#endif
+};
 
 /*** RTC local functions ***/
 
@@ -192,7 +202,7 @@ RTC_status_t RTC_init(RTC_irq_cb_t wakeup_timer_irq_callback, uint8_t nvic_prior
     reg_value |= (0x00004424 & RTC_REGISTER_MASK_CR);
     RTC->CR = reg_value;
     // Clear all flags.
-    RTC->ISR &= 0xFFFF005F;
+    RTC->ISR &= (~RTC_REGISTER_MASK_ISR);
     // Enable interrupt.
     NVIC_enable_interrupt(NVIC_INTERRUPT_RTC);
 errors:

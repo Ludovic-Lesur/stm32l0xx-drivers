@@ -159,7 +159,12 @@ USART_status_t USART_init(USART_instance_t instance, const USART_gpio_t* pins, U
     reg_value |= (brr & USART_REGISTER_MASK_BRR);
     USART_DESCRIPTOR[instance].peripheral->BRR = reg_value;
     // Configure peripheral.
-    USART_DESCRIPTOR[instance].peripheral->CR1 |= (0b1 << 5); // RXNEIE='1'.
+    if (configuration->rxne_irq_callback != NULL) {
+        USART_DESCRIPTOR[instance].peripheral->CR1 |= (0b1 << 5); // RXNEIE='1'.
+    }
+    else {
+        USART_DESCRIPTOR[instance].peripheral->CR1 &= ~(0b1 << 5); // RXNEIE='0'.
+    }
     // Set interrupt priority.
     NVIC_set_priority(USART_DESCRIPTOR[instance].nvic_interrupt, (configuration->nvic_priority));
     // Configure GPIOs.

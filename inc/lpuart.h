@@ -72,7 +72,7 @@ typedef enum {
 typedef struct {
     uint32_t baud_rate;
     uint8_t nvic_priority;
-    LPUART_rx_irq_cb_t rxne_callback;
+    LPUART_rx_irq_cb_t rxne_irq_callback;
 #ifdef STM32L0XX_DRIVERS_LPUART_RS485
     LPUART_rs485_mode_t rs485_mode;
     uint8_t self_address;
@@ -127,6 +127,15 @@ LPUART_status_t LPUART_disable_rx(void);
  * \retval      Function execution status.
  *******************************************************************/
 LPUART_status_t LPUART_write(uint8_t* data, uint32_t data_size_bytes);
+
+/*!******************************************************************
+ * \fn uint32_t LPUART_get_rdr_register_address(void)
+ * \brief Get LPUART RDR register address.
+ * \param[in]   none
+ * \param[out]  none
+ * \retval      RDR register address.
+ *******************************************************************/
+uint32_t LPUART_get_rdr_register_address(void);
 
 /*******************************************************************/
 #define LPUART_exit_error(base) { ERROR_check_exit(lpuart_status, LPUART_SUCCESS, base) }

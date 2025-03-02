@@ -437,6 +437,17 @@ errors:
 }
 #endif
 
+#if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_OPM) != 0)
+/*******************************************************************/
+static void __attribute__((optimize("-O0"))) _TIM_OPM_irq_handler(TIM_instance_t instance) {
+    // Update interrupt.
+    if (((TIM_DESCRIPTOR[instance].peripheral->SR) & (0b1 << 0)) != 0) {
+        // Clear flag.
+        TIM_DESCRIPTOR[instance].peripheral->SR &= ~(0b1 << 0);
+    }
+}
+#endif
+
 /*******************************************************************/
 static void __attribute__((optimize("-O0"))) _TIM_reset(TIM_instance_t instance) {
     // Local variables.
@@ -1169,7 +1180,7 @@ TIM_status_t TIM_OPM_init(TIM_instance_t instance, TIM_gpio_t* pins) {
     // Reset peripheral.
     _TIM_reset(instance);
     // Update local interrupt handler.
-    tim_ctx[instance].irq_handler = NULL;
+    tim_ctx[instance].irq_handler = &_TIM_OPM_irq_handler;
     // Enable peripheral clock.
     (*TIM_DESCRIPTOR[instance].rcc_enr) |= TIM_DESCRIPTOR[instance].rcc_mask;
     (*TIM_DESCRIPTOR[instance].rcc_smenr) |= TIM_DESCRIPTOR[instance].rcc_mask;
@@ -1196,6 +1207,8 @@ TIM_status_t TIM_OPM_init(TIM_instance_t instance, TIM_gpio_t* pins) {
         TIM_DESCRIPTOR[instance].peripheral->CCRx[channel] |= TIM_REGISTER_MASK_ARR_PSC_CCR;
         // Generate event to update registers.
         TIM_DESCRIPTOR[instance].peripheral->EGR |= (0b1 << 0); // UG='1'.
+        // Enable channel.
+        TIM_DESCRIPTOR[instance].peripheral->CCER |= (0b1 << (channel << 2));
         // Init GPIO.
         GPIO_configure((pins->list[idx]->gpio), GPIO_MODE_ALTERNATE_FUNCTION, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_HIGH, GPIO_PULL_NONE);
     }
@@ -1229,7 +1242,7 @@ errors:
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_OPM) != 0)
 /*******************************************************************/
-TIM_status_t TIM_OPM_make_pulse(TIM_instance_t instance, uint8_t channels_mask, uint32_t delay_ns, uint32_t pulse_duration_ns) {
+TIM_status_t TIM_OPM_make_pulse(TIM_instance_t instance, uint8_t channels_mask, uint32_t delay_ns, uint32_t pulse_duration_ns, uint8_t internal_irq_enable) {
     // Local variables.
     TIM_status_t status = TIM_SUCCESS;
     uint32_t tim_clock_hz = 0;
@@ -1251,6 +1264,15 @@ TIM_status_t TIM_OPM_make_pulse(TIM_instance_t instance, uint8_t channels_mask, 
     RCC_get_frequency_hz(RCC_CLOCK_SYSTEM, &tim_clock_hz);
     // Disable update event during registers writing.
     TIM_DESCRIPTOR[instance].peripheral->CR1 |= (0b1 << 1);
+    // Configure interrupt.
+    if (internal_irq_enable != 0) {
+        TIM_DESCRIPTOR[instance].peripheral->DIER |= (0b1 << 0);
+        NVIC_enable_interrupt(TIM_DESCRIPTOR[instance].nvic_interrupt);
+    }
+    else {
+        TIM_DESCRIPTOR[instance].peripheral->DIER &= ~(0b1 << 0);
+        NVIC_disable_interrupt(TIM_DESCRIPTOR[instance].nvic_interrupt);
+    }
     // Compute PSC and ARR values.
     status = _TIM_compute_psc_arr(instance, tim_clock_hz, ((uint64_t) delay_ns + (uint64_t) pulse_duration_ns), &arr);
     if (status != TIM_SUCCESS) goto errors;
@@ -1265,13 +1287,10 @@ TIM_status_t TIM_OPM_make_pulse(TIM_instance_t instance, uint8_t channels_mask, 
             reg_value = (TIM_DESCRIPTOR[instance].peripheral->CCRx[idx] & (~TIM_REGISTER_MASK_ARR_PSC_CCR));
             reg_value |= (((ccr == 0) ? 1 : ccr) & TIM_REGISTER_MASK_ARR_PSC_CCR);
             TIM_DESCRIPTOR[instance].peripheral->CCRx[idx] = reg_value;
-            // Enable channel.
-            TIM_DESCRIPTOR[instance].peripheral->CCER |= (0b1 << (idx << 2));
         }
         else {
             // Disable channel.
             TIM_DESCRIPTOR[instance].peripheral->CCRx[idx] |= TIM_REGISTER_MASK_ARR_PSC_CCR;
-            TIM_DESCRIPTOR[instance].peripheral->CCER &= ~(0b1 << (idx << 2));
         }
     }
     // Re-enable update event.

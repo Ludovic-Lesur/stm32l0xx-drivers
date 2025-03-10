@@ -33,7 +33,7 @@
 
 /*!******************************************************************
  * \enum TIM_status_t
- * \brief TIM CAL driver error codes.
+ * \brief Timer driver error codes.
  *******************************************************************/
 typedef enum {
     // Driver errors.
@@ -66,7 +66,7 @@ typedef enum {
 
 /*!******************************************************************
  * \enum TIM_instance_t
- * \brief TIM instances list.
+ * \brief Timer instances list.
  *******************************************************************/
 typedef enum {
     TIM_INSTANCE_TIM2 = 0,

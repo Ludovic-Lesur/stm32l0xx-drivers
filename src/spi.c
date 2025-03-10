@@ -56,7 +56,7 @@ static SPI_context_t spi_ctx[SPI_INSTANCE_LAST] = {
     SPI_status_t status = SPI_SUCCESS; \
     uint8_t transfer_idx = 0; \
     uint32_t loop_count = 0; \
-    volatile type* spi_dr_ptr = ((volatile type*) &(SPI_DESCRIPTOR[instance].peripheral -> DR)); \
+    volatile type* spi_dr_ptr = ((volatile type*) &(SPI_DESCRIPTOR[instance].peripheral->DR)); \
     /* Check instance */ \
     if (instance >= SPI_INSTANCE_LAST) { \
         status = SPI_ERROR_INSTANCE; \
@@ -77,7 +77,7 @@ static SPI_context_t spi_ctx[SPI_INSTANCE_LAST] = {
         /* Dummy read to DR to clear RXNE flag */ \
         rx_data[transfer_idx] = (*spi_dr_ptr); \
         /* Wait for TXE flag */ \
-        while (((SPI_DESCRIPTOR[instance].peripheral -> SR) & (0b1 << 1)) == 0) { \
+        while (((SPI_DESCRIPTOR[instance].peripheral->SR) & (0b1 << 1)) == 0) { \
             /* Wait for TXE='1' or timeout */ \
             loop_count++; \
             if (loop_count > SPI_ACCESS_TIMEOUT_COUNT) { \
@@ -89,7 +89,7 @@ static SPI_context_t spi_ctx[SPI_INSTANCE_LAST] = {
         (*spi_dr_ptr) = tx_data[transfer_idx]; \
         /* Wait for incoming data */ \
         loop_count = 0; \
-        while (((SPI_DESCRIPTOR[instance].peripheral -> SR) & (0b1 << 0)) == 0) { \
+        while (((SPI_DESCRIPTOR[instance].peripheral->SR) & (0b1 << 0)) == 0) { \
             /* Wait for RXNE='1' or timeout */ \
             loop_count++; \
             if (loop_count > SPI_ACCESS_TIMEOUT_COUNT) { \
@@ -106,10 +106,10 @@ errors: \
 /*******************************************************************/
 #define _SPI_write(instance, tx_data, type) { \
     /* Send TX data */ \
-    volatile type* spi_dr_ptr = ((volatile type*) &(SPI_DESCRIPTOR[instance].peripheral -> DR)); \
+    volatile type* spi_dr_ptr = ((volatile type*) &(SPI_DESCRIPTOR[instance].peripheral->DR)); \
     (*spi_dr_ptr) = tx_data; \
     /* Wait for BSY flag */ \
-    while (((SPI_DESCRIPTOR[instance].peripheral -> SR) & (0b1 << 7)) != 0); \
+    while (((SPI_DESCRIPTOR[instance].peripheral->SR) & (0b1 << 7)) != 0); \
 }
 
 /*** SPI functions ***/

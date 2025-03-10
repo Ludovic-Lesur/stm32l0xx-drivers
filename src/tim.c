@@ -536,7 +536,7 @@ TIM_status_t TIM_STD_init(TIM_instance_t instance, uint8_t nvic_priority) {
     // Use update event as trigger output.
     TIM_DESCRIPTOR[instance].peripheral->CR2 |= (0b010 << 4); // MMS='010'.
     // Set trigger selection to reserved value to ensure there is no link with other timers.
-    TIM_DESCRIPTOR[instance].peripheral->SMCR |= (0b111 << 4);
+    TIM_DESCRIPTOR[instance].peripheral->SMCR |= (0b011 << 4);
     // Set interrupt priority.
     NVIC_set_priority(TIM_DESCRIPTOR[instance].nvic_interrupt, nvic_priority);
     // Generate event to update registers.
@@ -944,7 +944,7 @@ TIM_status_t TIM_CAL_init(TIM_instance_t instance, uint8_t nvic_priority) {
     TIM_DESCRIPTOR[instance].peripheral->CCMR1 |= (0b01 << 2) | (0b01 << 0);
     TIM_DESCRIPTOR[instance].peripheral->OR |= (0b111 << 2);
     // Set trigger selection to reserved value to ensure there is no link with other timers.
-    TIM_DESCRIPTOR[instance].peripheral->SMCR |= (0b111 << 4);
+    TIM_DESCRIPTOR[instance].peripheral->SMCR |= (0b011 << 4);
     // Enable interrupt.
     TIM_DESCRIPTOR[instance].peripheral->DIER |= (0b1 << 1); // CC1IE='1'.
     NVIC_set_priority(TIM_DESCRIPTOR[instance].nvic_interrupt, nvic_priority);
@@ -1044,7 +1044,7 @@ TIM_status_t TIM_PWM_init(TIM_instance_t instance, TIM_gpio_t* pins) {
     reg_value |= (TIM_ARR_VALUE_MAX - 1);
     TIM_DESCRIPTOR[instance].peripheral->ARR = reg_value;
     // Set trigger selection to reserved value to ensure there is no link with other timers.
-    TIM_DESCRIPTOR[instance].peripheral->SMCR |= (0b111 << 4);
+    TIM_DESCRIPTOR[instance].peripheral->SMCR |= (0b011 << 4);
     // Configure channels.
     for (idx = 0; idx < (pins->list_size); idx++) {
         // Check channel.
@@ -1191,7 +1191,7 @@ TIM_status_t TIM_OPM_init(TIM_instance_t instance, TIM_gpio_t* pins) {
     reg_value |= (TIM_ARR_VALUE_MAX - 1);
     TIM_DESCRIPTOR[instance].peripheral->ARR = reg_value;
     // Set trigger selection to reserved value to ensure there is no link with other timers.
-    TIM_DESCRIPTOR[instance].peripheral->SMCR |= (0b111 << 4);
+    TIM_DESCRIPTOR[instance].peripheral->SMCR |= (0b011 << 4);
     // Configure channels.
     for (idx = 0; idx < (pins->list_size); idx++) {
         // Check channel.

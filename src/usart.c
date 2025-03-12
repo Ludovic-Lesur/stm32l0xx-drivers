@@ -132,7 +132,6 @@ USART_status_t USART_init(USART_instance_t instance, const USART_gpio_t* pins, U
         break;
     case RCC_CLOCK_HSI:
         RCC->CCIPR |= (0b10 << USART_DESCRIPTOR[instance].rcc_ccipr_shift);
-        RCC_set_hsi_in_stop_mode(1);
         break;
     case RCC_CLOCK_LSE:
         RCC->CCIPR |= (0b11 << USART_DESCRIPTOR[instance].rcc_ccipr_shift);
@@ -201,14 +200,12 @@ USART_status_t USART_de_init(USART_instance_t instance, const USART_gpio_t* pins
         status = USART_ERROR_UNINITIALIZED;
         goto errors;
     }
-    if (((RCC->CCIPR >> USART_DESCRIPTOR[instance].rcc_ccipr_shift) & 0x03) == 0b10) {
-        RCC_set_hsi_in_stop_mode(0);
-    }
     // Disable USART alternate function.
     GPIO_configure((pins->tx), GPIO_MODE_ANALOG, GPIO_TYPE_OPEN_DRAIN, GPIO_SPEED_LOW, GPIO_PULL_NONE);
     GPIO_configure((pins->rx), GPIO_MODE_ANALOG, GPIO_TYPE_OPEN_DRAIN, GPIO_SPEED_LOW, GPIO_PULL_NONE);
     // Disable peripheral.
-    USART_DESCRIPTOR[instance].peripheral->CR1 &= ~(0b1 << 0); // UE='0'.
+    USART_DESCRIPTOR[instance].peripheral->CR3 &= ~(0b1 << 23); // UCESM='0'.
+    USART_DESCRIPTOR[instance].peripheral->CR1 &= ~(0b11 << 0); // UE='0' and UESM='0'.
     // Disable peripheral clock.
     (*USART_DESCRIPTOR[instance].rcc_enr) &= ~(USART_DESCRIPTOR[instance].rcc_mask);
     // Update initialization flag.

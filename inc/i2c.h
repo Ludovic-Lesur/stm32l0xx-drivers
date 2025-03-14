@@ -11,6 +11,7 @@
 #ifndef STM32L0XX_REGISTERS_DISABLE_FLAGS_FILE
 #include "stm32l0xx_registers_flags.h"
 #endif
+#include "error.h"
 #include "gpio.h"
 #include "lptim.h"
 #include "types.h"
@@ -35,7 +36,7 @@ typedef enum {
     I2C_ERROR_TRANSFER_COMPLETE,
     I2C_ERROR_STOP_DETECTION_FLAG,
     // Low level drivers errors.
-    I2C_ERROR_BASE_LPTIM = 0x0100,
+    I2C_ERROR_BASE_LPTIM = ERROR_BASE_STEP,
     // Last base value.
     I2C_ERROR_BASE_LAST = (I2C_ERROR_BASE_LPTIM + LPTIM_ERROR_BASE_LAST)
 } I2C_status_t;

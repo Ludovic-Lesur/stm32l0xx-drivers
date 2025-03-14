@@ -11,6 +11,7 @@
 #ifndef STM32L0XX_DRIVERS_DISABLE_FLAGS_FILE
 #include "stm32l0xx_drivers_flags.h"
 #endif
+#include "error.h"
 #include "gpio.h"
 #include "flash.h"
 #include "types.h"
@@ -39,7 +40,7 @@ typedef enum {
     RCC_ERROR_CALIBRATION_LSI,
     RCC_ERROR_MCO_PRESCALER,
     // Low level drivers errors.
-    RCC_ERROR_BASE_FLASH = 0x0100,
+    RCC_ERROR_BASE_FLASH = ERROR_BASE_STEP,
     // Last base value.
     RCC_ERROR_BASE_LAST = (RCC_ERROR_BASE_FLASH + FLASH_ERROR_BASE_LAST)
 } RCC_status_t;

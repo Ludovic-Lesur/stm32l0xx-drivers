@@ -11,6 +11,7 @@
 #ifndef STM32L0XX_DRIVERS_DISABLE_FLAGS_FILE
 #include "stm32l0xx_drivers_flags.h"
 #endif
+#include "error.h"
 #include "gpio.h"
 #include "types.h"
 
@@ -31,7 +32,7 @@ typedef enum {
     LPUART_ERROR_RS485_MODE,
     LPUART_ERROR_TC_TIMEOUT,
     // Last base value.
-    LPUART_ERROR_BASE_LAST = 0x0100
+    LPUART_ERROR_BASE_LAST = ERROR_BASE_STEP
 } LPUART_status_t;
 
 /*!******************************************************************

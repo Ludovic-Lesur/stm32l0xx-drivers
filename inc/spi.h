@@ -11,6 +11,7 @@
 #ifndef STM32L0XX_REGISTERS_DISABLE_FLAGS_FILE
 #include "stm32l0xx_registers_flags.h"
 #endif
+#include "error.h"
 #include "gpio.h"
 #include "types.h"
 
@@ -32,7 +33,7 @@ typedef enum {
     SPI_ERROR_TX_BUFFER_EMPTY,
     SPI_ERROR_RX_TIMEOUT,
     // Last base value.
-    SPI_ERROR_BASE_LAST = 0x0100
+    SPI_ERROR_BASE_LAST = ERROR_BASE_STEP
 } SPI_status_t;
 
 /*!******************************************************************

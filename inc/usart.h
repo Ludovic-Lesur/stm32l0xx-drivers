@@ -14,6 +14,7 @@
 #ifndef STM32L0XX_DRIVERS_DISABLE_FLAGS_FILE
 #include "stm32l0xx_drivers_flags.h"
 #endif
+#include "error.h"
 #include "gpio.h"
 #include "rcc.h"
 #include "types.h"
@@ -35,7 +36,7 @@ typedef enum {
     USART_ERROR_BAUD_RATE,
     USART_ERROR_TX_TIMEOUT,
     // Last base value.
-    USART_ERROR_BASE_LAST = 0x0100
+    USART_ERROR_BASE_LAST = ERROR_BASE_STEP
 } USART_status_t;
 
 /*!******************************************************************

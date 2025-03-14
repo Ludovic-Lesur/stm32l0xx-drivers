@@ -8,6 +8,7 @@
 #ifndef __LPTIM_H__
 #define __LPTIM_H__
 
+#include "error.h"
 #include "types.h"
 
 /*** LPTIM structures ***/
@@ -28,7 +29,7 @@ typedef enum {
     LPTIM_ERROR_CLOCK_SOURCE,
     LPTIM_ERROR_ALREADY_RUNNING,
     // Last base value.
-    LPTIM_ERROR_BASE_LAST = 0x0100
+    LPTIM_ERROR_BASE_LAST = ERROR_BASE_STEP
 } LPTIM_status_t;
 
 /*!******************************************************************

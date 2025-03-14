@@ -8,6 +8,7 @@
 #ifndef __IWDG_H__
 #define __IWDG_H__
 
+#include "error.h"
 #include "types.h"
 
 /*** IWDG macros ***/
@@ -27,7 +28,7 @@ typedef enum {
     IWDG_SUCCESS = 0,
     IWDG_ERROR_TIMEOUT,
     // Last base value.
-    IWDG_ERROR_BASE_LAST = 0x0100
+    IWDG_ERROR_BASE_LAST = ERROR_BASE_STEP
 } IWDG_status_t;
 
 /*** IWDG functions ***/

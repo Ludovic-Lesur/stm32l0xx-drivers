@@ -14,6 +14,7 @@
 #ifndef STM32L0XX_DRIVERS_DISABLE_FLAGS_FILE
 #include "stm32l0xx_drivers_flags.h"
 #endif
+#include "error.h"
 #include "types.h"
 
 /*** DMA macros ***/
@@ -46,7 +47,7 @@ typedef enum {
     DMA_ERROR_REQUEST_ID,
     DMA_ERROR_UNINITIALIZED,
     // Last base value.
-    DMA_ERROR_BASE_LAST = 0x0100
+    DMA_ERROR_BASE_LAST = ERROR_BASE_STEP
 } DMA_status_t;
 
 #if ((STM32L0XX_DRIVERS_DMA_CHANNEL_MASK & DMA_CHANNEL_MASK_ALL) != 0)

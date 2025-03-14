@@ -8,6 +8,7 @@
 #ifndef __AES_H__
 #define __AES_H__
 
+#include "error.h"
 #include "types.h"
 
 /*** AES structures ***/
@@ -23,7 +24,7 @@ typedef enum {
     AES_ERROR_NULL_PARAMETER,
     AES_ERROR_TIMEOUT,
     // Last base value.
-    AES_ERROR_BASE_LAST = 0x0100
+    AES_ERROR_BASE_LAST = ERROR_BASE_STEP
 } AES_status_t;
 
 /*** AES functions ***/

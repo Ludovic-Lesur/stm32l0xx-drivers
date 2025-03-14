@@ -11,6 +11,7 @@
 #ifndef STM32L0XX_DRIVERS_DISABLE_FLAGS_FILE
 #include "stm32l0xx_drivers_flags.h"
 #endif
+#include "error.h"
 #include "types.h"
 
 /*** NVM structures ***/
@@ -30,7 +31,7 @@ typedef enum {
     NVM_ERROR_READ,
     NVM_ERROR_WRITE,
     // Last base value.
-    NVM_ERROR_BASE_LAST = 0x0100
+    NVM_ERROR_BASE_LAST = ERROR_BASE_STEP
 } NVM_status_t;
 
 /*** NVM functions ***/

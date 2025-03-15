@@ -17,8 +17,6 @@
 #include "syscfg_registers.h"
 #include "types.h"
 
-#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_ALL) != 0)
-
 /*** EXTI local macros ***/
 
 #define EXTI_RTSR_FTSR_RESERVED_INDEX           18
@@ -30,6 +28,8 @@
 
 #define EXTI_REGISTER_MASK_IMR_EMR              0x37FFFFFF
 #define EXTI_REGISTER_MASK_PR                   0x007BFFFF
+
+#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_ALL) != 0)
 
 /*** EXTI local structures ***/
 
@@ -162,6 +162,8 @@ void __attribute__((optimize("-O0"))) EXTI4_15_IRQHandler(void) {
 }
 #endif
 
+#endif /* STM32L0XX_DRIVERS_EXTI_GPIO_MASK */
+
 /*******************************************************************/
 static void _EXTI_set_trigger(EXTI_line_t line, EXTI_trigger_t trigger) {
     // Select triggers.
@@ -235,6 +237,7 @@ void EXTI_clear_line_flag(EXTI_line_t line) {
     EXTI->PR |= (0b1 << line);
 }
 
+#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_ALL) != 0)
 /*******************************************************************/
 void EXTI_configure_gpio(const GPIO_pin_t* gpio, GPIO_pull_resistor_t pull_resistor, EXTI_trigger_t trigger, EXTI_gpio_irq_cb_t irq_callback, uint8_t nvic_priority) {
     // Local variables.
@@ -251,7 +254,9 @@ void EXTI_configure_gpio(const GPIO_pin_t* gpio, GPIO_pull_resistor_t pull_resis
     // Configure GPIO.
     GPIO_configure(gpio, GPIO_MODE_INPUT, GPIO_TYPE_PUSH_PULL, GPIO_SPEED_LOW, pull_resistor);
 }
+#endif
 
+#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_ALL) != 0)
 /*******************************************************************/
 void EXTI_release_gpio(const GPIO_pin_t* gpio, GPIO_mode_t released_mode) {
     // Set state.
@@ -259,7 +264,9 @@ void EXTI_release_gpio(const GPIO_pin_t* gpio, GPIO_mode_t released_mode) {
     // Release GPIO.
     GPIO_configure(gpio, released_mode, GPIO_TYPE_OPEN_DRAIN, GPIO_SPEED_LOW, GPIO_PULL_NONE);
 }
+#endif
 
+#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_ALL) != 0)
 /*******************************************************************/
 void EXTI_enable_gpio_interrupt(const GPIO_pin_t* gpio) {
     // Local variables.
@@ -271,7 +278,9 @@ void EXTI_enable_gpio_interrupt(const GPIO_pin_t* gpio) {
     // Enable interrupt.
     NVIC_enable_interrupt(EXTI_GPIO_DESCRIPTOR[line_idx].nvic_interrupt);
 }
+#endif
 
+#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_ALL) != 0)
 /*******************************************************************/
 void EXTI_disable_gpio_interrupt(const GPIO_pin_t* gpio) {
     // Local variables.
@@ -285,7 +294,9 @@ void EXTI_disable_gpio_interrupt(const GPIO_pin_t* gpio) {
         NVIC_disable_interrupt(EXTI_GPIO_DESCRIPTOR[line_idx].nvic_interrupt);
     }
 }
+#endif
 
+#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_ALL) != 0)
 /*******************************************************************/
 void EXTI_clear_gpio_flag(const GPIO_pin_t* gpio) {
     // Local variables.
@@ -293,5 +304,4 @@ void EXTI_clear_gpio_flag(const GPIO_pin_t* gpio) {
     // Clear flag.
     EXTI->PR |= (0b1 << line_idx);
 }
-
-#endif /* STM32L0XX_DRIVERS_EXTI_GPIO_MASK */
+#endif

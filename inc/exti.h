@@ -35,8 +35,6 @@
 
 #define EXTI_GPIO_MASK_ALL      0xFFFF
 
-#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_ALL) != 0)
-
 /*** EXTI structures ***/
 
 /*!******************************************************************
@@ -140,6 +138,7 @@ void EXTI_disable_line(EXTI_line_t line);
  *******************************************************************/
 void EXTI_clear_line_flag(EXTI_line_t line);
 
+#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_ALL) != 0)
 /*!******************************************************************
  * \fn void EXTI_configure_gpio(const GPIO_pin_t* gpio, GPIO_pull_resistor_t pull_resistor, EXTI_trigger_t trigger, EXTI_gpio_irq_cb_t irq_callback, uint8_t nvic_priority)
  * \brief Configure EXTI GPIO interrupt.
@@ -152,7 +151,9 @@ void EXTI_clear_line_flag(EXTI_line_t line);
  * \retval      none
  *******************************************************************/
 void EXTI_configure_gpio(const GPIO_pin_t* gpio, GPIO_pull_resistor_t pull_resistor, EXTI_trigger_t trigger, EXTI_gpio_irq_cb_t irq_callback, uint8_t nvic_priority);
+#endif
 
+#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_ALL) != 0)
 /*!******************************************************************
  * \fn void EXTI_release_gpio(const GPIO_pin_t* gpio)
  * \brief Release GPIO external interrupt.
@@ -162,7 +163,9 @@ void EXTI_configure_gpio(const GPIO_pin_t* gpio, GPIO_pull_resistor_t pull_resis
  * \retval      none
  *******************************************************************/
 void EXTI_release_gpio(const GPIO_pin_t* gpio, GPIO_mode_t released_mode);
+#endif
 
+#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_ALL) != 0)
 /*!******************************************************************
  * \fn void EXTI_enable_gpio_interrupt(const GPIO_pin_t* gpio)
  * \brief Enable GPIO external interrupt.
@@ -171,7 +174,9 @@ void EXTI_release_gpio(const GPIO_pin_t* gpio, GPIO_mode_t released_mode);
  * \retval      none
  *******************************************************************/
 void EXTI_enable_gpio_interrupt(const GPIO_pin_t* gpio);
+#endif
 
+#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_ALL) != 0)
 /*!******************************************************************
  * \fn void EXTI_disable_gpio_interrupt(const GPIO_pin_t* gpio)
  * \brief Disable GPIO external interrupt.
@@ -180,7 +185,9 @@ void EXTI_enable_gpio_interrupt(const GPIO_pin_t* gpio);
  * \retval      Function execution status.
  *******************************************************************/
 void EXTI_disable_gpio_interrupt(const GPIO_pin_t* gpio);
+#endif
 
+#if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_ALL) != 0)
 /*!******************************************************************
  * \fn void EXTI_clear_gpio_flag(const GPIO_pin_t* gpio)
  * \brief Clear EXTI GPIO flag.
@@ -189,7 +196,6 @@ void EXTI_disable_gpio_interrupt(const GPIO_pin_t* gpio);
  * \retval      none
  *******************************************************************/
 void EXTI_clear_gpio_flag(const GPIO_pin_t* gpio);
-
-#endif /* STM32L0XX_DRIVERS_EXTI_GPIO_MASK */
+#endif
 
 #endif /* __EXTI_H__ */

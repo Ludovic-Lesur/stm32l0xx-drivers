@@ -97,7 +97,7 @@ I2C_status_t I2C_init(I2C_instance_t instance, const I2C_gpio_t* pins) {
     I2C_DESCRIPTOR[instance].peripheral->CR1 &= ~(0b1 << 0); // PE='0'.
 #ifdef STM32L0XX_DRIVERS_I2C_FAST_MODE
     // Set SCL frequency to 400kHz: I2CCLK = PCLK1/(PRESC+1) = SYSCLK/(PRESC+1) = 8MHz (PRESC='0001').
-    I2C_DESCRIPTOR[instance]->TIMINGR |= (1 << 28) | (3 << 20)| (2 << 16) | (3 << 8) | (9 << 0);
+    I2C_DESCRIPTOR[instance].peripheral->TIMINGR |= (1 << 28) | (3 << 20)| (2 << 16) | (3 << 8) | (9 << 0);
 #else
     // Set SCL frequency to 10kHz: I2CCLK = PCLK1/(PRESC+1) = SYSCLK/(PRESC+1) = 2MHz (PRESC='1000').
     I2C_DESCRIPTOR[instance].peripheral->TIMINGR |= (7 << 28) | (99 << 8) | (99 << 0);

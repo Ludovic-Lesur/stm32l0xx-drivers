@@ -344,6 +344,8 @@ RTC_status_t RTC_set_time(RTC_time_t* time) {
     tens = (uint8_t) (((time->year) - 2000) / 10);
     units = (uint8_t) (((time->year) - 2000) - (tens * 10));
     dr_value |= (tens << 20) | (units << 16);
+    // Week day.
+    dr_value |= (0b1 << 13);
     // Month.
     tens = (uint8_t) ((time->month) / 10);
     units = (uint8_t) ((time->month) - (tens * 10));
@@ -382,23 +384,20 @@ errors:
 RTC_status_t RTC_get_time(RTC_time_t* time) {
     // Local variables.
     RTC_status_t status = RTC_SUCCESS;
-    uint32_t dr_value = 0;
-    uint32_t tr_value = 0;
+    uint32_t dr_value = (RTC->DR);
+    uint32_t tr_value = (RTC->TR);
     // Check parameters.
     if (time == NULL) {
         status = RTC_ERROR_NULL_PARAMETER;
         goto errors;
     }
-    // Read registers.
-    dr_value = ((RTC->DR) & RTC_REGISTER_MASK_DR);
-    tr_value = ((RTC->TR) & RTC_REGISTER_MASK_TR);
     // Parse registers into time structure.
-    time->year = (uint16_t) (2000 + ((dr_value & (0b1111 << 20)) >> 20) * 10 + ((dr_value & (0b1111 << 16)) >> 16));
-    time->month = (uint8_t) (((dr_value & (0b1 << 12)) >> 12) * 10 + ((dr_value & (0b1111 << 8)) >> 8));
-    time->date = (uint8_t) (((dr_value & (0b11 << 4)) >> 4) * 10 + (dr_value & 0b1111));
-    time->hours = (uint8_t) (((tr_value & (0b11 << 20)) >> 20) * 10 + ((tr_value & (0b1111 << 16)) >> 16));
-    time->minutes = (uint8_t) (((tr_value & (0b111 << 12)) >> 12) * 10 + ((tr_value & (0b1111 << 8)) >> 8));
-    time->seconds = (uint8_t) (((tr_value & (0b111 << 4)) >> 4) * 10 + (tr_value & 0b1111));
+    time->year = (uint16_t) (2000 + (((dr_value >> 20) & 0b1111) * 10) + ((dr_value >> 16) & 0b1111));
+    time->month = (uint8_t) ((((dr_value >> 12) & 0b1) * 10) + ((dr_value >> 8) & 0b1111));
+    time->date = (uint8_t) ((((dr_value >> 4) & 0b11) * 10) + (dr_value & 0b1111));
+    time->hours = (uint8_t) ((((tr_value >> 20) & 0b11) * 10) + ((tr_value >> 16) & 0b1111));
+    time->minutes = (uint8_t) ((((tr_value >> 12) & 0b111) * 10) + ((tr_value >> 8) & 0b1111));
+    time->seconds = (uint8_t) ((((tr_value >> 4) & 0b111) * 10) + (tr_value & 0b1111));
 errors:
     return status;
 }

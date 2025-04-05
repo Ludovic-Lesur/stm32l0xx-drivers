@@ -18,7 +18,7 @@
 /*** GPIO structures ***/
 
 /*!******************************************************************
- * \enum GPIO_pin_t
+ * \struct GPIO_pin_t
  * \brief GPIO pin descriptor.
  *******************************************************************/
 typedef struct {

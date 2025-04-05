@@ -191,9 +191,9 @@ RCC_status_t RCC_get_status(RCC_clock_t clock, uint8_t* clock_is_ready);
 /*!******************************************************************
  * \fn RCC_status_t RCC_set_mco(RCC_clock_t mco_clock, RCC_mco_prescaler_t mco_prescaler, const GPIO_pin_t* mco_gpio)
  * \brief Set MCO clock output signal.
- * \param[in]   clock: Clock to select.
- * \param[in]   prescaler: Clock output prescaler.
- * \param[in]   gpio: Optional GPIO to link to MCO.
+ * \param[in]   mco_clock: Clock to select.
+ * \param[in]   mco_prescaler: Clock output prescaler.
+ * \param[in]   mco_gpio: Optional GPIO to link to MCO.
  * \param[out]  none
  * \retval      Function execution status.
  *******************************************************************/

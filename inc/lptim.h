@@ -46,7 +46,7 @@ typedef enum {
 /*** LPTIM functions ***/
 
 /*!******************************************************************
- * \fn void LPTIM_init(uint8_t nvic_priority)
+ * \fn LPTIM_status_t LPTIM_init(uint8_t nvic_priority)
  * \brief Init LPTIM peripheral for delay operation.
  * \param[in]   nvic_priority: Interrupt priority.
  * \param[out]  none

@@ -27,6 +27,7 @@ typedef enum {
     LPTIM_ERROR_DELAY_MODE,
     LPTIM_ERROR_ARR_TIMEOUT,
     LPTIM_ERROR_CLOCK_SOURCE,
+    LPTIM_ERROR_CLOCK_PRESCALER,
     LPTIM_ERROR_ALREADY_RUNNING,
     // Last base value.
     LPTIM_ERROR_BASE_LAST = ERROR_BASE_STEP
@@ -42,6 +43,22 @@ typedef enum {
     LPTIM_DELAY_MODE_STOP,
     LPTIM_DELAY_MODE_LAST
 } LPTIM_delay_mode_t;
+
+/*!******************************************************************
+ * \enum LPTIM_clock_prescaler_t
+ * \brief LPTIM clock prescalers list.
+ *******************************************************************/
+typedef enum {
+    LPTIM_CLOCK_PRESCALER_1 = 0,
+    LPTIM_CLOCK_PRESCALER_2,
+    LPTIM_CLOCK_PRESCALER_4,
+    LPTIM_CLOCK_PRESCALER_8,
+    LPTIM_CLOCK_PRESCALER_16,
+    LPTIM_CLOCK_PRESCALER_32,
+    LPTIM_CLOCK_PRESCALER_64,
+    LPTIM_CLOCK_PRESCALER_128,
+    LPTIM_CLOCK_PRESCALER_LAST
+} LPTIM_clock_prescaler_t;
 
 /*** LPTIM functions ***/
 
@@ -72,6 +89,33 @@ LPTIM_status_t LPTIM_de_init(void);
  * \retval      Function execution status.
  *******************************************************************/
 LPTIM_status_t LPTIM_delay_milliseconds(uint32_t delay_ms, LPTIM_delay_mode_t delay_mode);
+
+/*!******************************************************************
+ * \fn LPTIM_status_t LPTIM_start(LPTIM_clock_prescaler_t prescaler)
+ * \brief Start LPTIM counter.
+ * \param[in]   prescaler: Low speed input clock prescaler.
+ * \param[out]  none
+ * \retval      Function execution status.
+ *******************************************************************/
+LPTIM_status_t LPTIM_start(LPTIM_clock_prescaler_t prescaler);
+
+/*!******************************************************************
+ * \fn LPTIM_status_t LPTIM_stop(void)
+ * \brief Stop LPTIM counter.
+ * \param[in]   none
+ * \param[out]  none
+ * \retval      Function execution status.
+ *******************************************************************/
+LPTIM_status_t LPTIM_stop(void);
+
+/*!******************************************************************
+ * \fn uint32_t LPTIM_get_counter(void)
+ * \brief Get LPTIM counter.
+ * \param[in]   none
+ * \param[out]  none
+ * \retval      Current LPTIM counter value.
+ *******************************************************************/
+uint32_t LPTIM_get_counter(void);
 
 /*******************************************************************/
 #define LPTIM_exit_error(base) { ERROR_check_exit(lptim_status, LPTIM_SUCCESS, base) }

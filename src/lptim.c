@@ -23,10 +23,13 @@
 
 #define LPTIM_TIMEOUT_COUNT     1000000
 
-#define LPTIM_ARR_MAX_VALUE     0xFFFF
+#define LPTIM_ARR_MASK          0x0000FFFF
+#define LPTIM_ARR_MAX_VALUE     LPTIM_ARR_MASK
 
 #define LPTIM_DELAY_MS_MIN      2
 #define LPTIM_DELAY_MS_MAX      ((LPTIM_ARR_MAX_VALUE * 1000) / (lptim_ctx.clock_frequency_hz))
+
+#define LPTIM_CNT_MASK          0x0000FFFF
 
 /*** LPTIM local structures ***/
 
@@ -79,6 +82,67 @@ static void __attribute__((optimize("-O0"))) _LPTIM_reset(void) {
     RCC->APB1RSTR |= (0b1 << 31);
     for (count = 0; count < 100; count++);
     RCC->APB1RSTR &= ~(0b1 << 31);
+    // Disable peripheral clock.
+    RCC->APB1ENR &= ~(0b1 << 31); // LPTIM1EN='0'.
+    // Force APB clock at the end of delay.
+    RCC->CCIPR &= ~(0b11 << 18); // LPTIM1SEL='00'.
+    // Reset running flag.
+    lptim_ctx.flags.running = 0;
+}
+
+/*******************************************************************/
+static LPTIM_status_t _LPTIM_init(LPTIM_clock_prescaler_t prescaler, uint32_t arr_value) {
+    // Local variables.
+    LPTIM_status_t status = LPTIM_SUCCESS;
+    uint32_t loop_count = 0;
+    uint32_t arr = 0;
+    // Check parameters.
+    if (prescaler >= LPTIM_CLOCK_PRESCALER_LAST) {
+        status = LPTIM_ERROR_CLOCK_PRESCALER;
+        goto errors;
+    }
+    // Force APB clock to access registers.
+    RCC->CCIPR &= ~(0b11 << 18); // LPTIM1SEL='00'.
+    // Enable peripheral clock.
+    RCC->APB1ENR |= (0b1 << 31); // LPTIM1EN='1'.
+    // Configure prescaler.
+    LPTIM1->CFGR |= (prescaler << 9);
+    // Reset flags.
+    LPTIM1->ICR |= (0b1 << 4) | (0b1 << 1);
+    // Enable peripheral.
+    LPTIM1->CR |= (0b1 << 0); // ENABLE='1'.
+    // Write ARR.
+    arr = ((LPTIM1->ARR) & ~(LPTIM_ARR_MASK));
+    arr |= (arr_value & LPTIM_ARR_MASK);
+    LPTIM1->ARR = arr;
+    // Wait for ARR write operation to complete.
+    while (((LPTIM1->ISR) & (0b1 << 4)) == 0) {
+        loop_count++;
+        if (loop_count > LPTIM_TIMEOUT_COUNT) {
+            status = LPTIM_ERROR_ARR_TIMEOUT;
+            goto errors;
+        }
+    }
+    // Select clock source.
+#if (STM32L0XX_DRIVERS_RCC_LSE_MODE == 0)
+    RCC->CCIPR |= (0b01 << 18);
+#elif (STM32L0XX_DRIVERS_RCC_LSE_MODE == 1)
+    switch (lptim_ctx.clock_source) {
+    case RCC_CLOCK_LSE:
+        RCC->CCIPR |= (0b11 << 18);
+        break;
+    case RCC_CLOCK_LSI:
+        RCC->CCIPR |= (0b01 << 18);
+        break;
+    default:
+        status = LPTIM_ERROR_CLOCK_SOURCE;
+        goto errors;
+    }
+#else
+    RCC->CCIPR |= (0b11 << 18);
+#endif
+errors:
+    return status;
 }
 
 /*** LPTIM functions ***/
@@ -144,8 +208,6 @@ errors:
 LPTIM_status_t LPTIM_delay_milliseconds(uint32_t delay_ms, LPTIM_delay_mode_t delay_mode) {
     // Local variables.
     LPTIM_status_t status = LPTIM_SUCCESS;
-    uint32_t arr = 0;
-    uint32_t loop_count = 0;
     // Check state.
     if (lptim_ctx.flags.init == 0) {
         status = LPTIM_ERROR_UNINITIALIZED;
@@ -160,56 +222,18 @@ LPTIM_status_t LPTIM_delay_milliseconds(uint32_t delay_ms, LPTIM_delay_mode_t de
         status = LPTIM_ERROR_DELAY_UNDERFLOW;
         goto errors;
     }
-    // Check if delay is not already running (protect from interrupt call).
+    // Check if delay is not already running.
     if (lptim_ctx.flags.running != 0) {
         status = LPTIM_ERROR_ALREADY_RUNNING;
         goto end;
     }
+    // Init peripheral.
+    status = _LPTIM_init(LPTIM_CLOCK_PRESCALER_8, (((delay_ms - 1) * lptim_ctx.clock_frequency_hz) / (1000)));
+    if (status != LPTIM_SUCCESS) goto errors;
+    // Enable interrupt.
+    LPTIM1->IER |= (0b1 << 1); // ARRMIE='1'.
     // Set running flag.
     lptim_ctx.flags.running = 1;
-    // Force APB clock to access registers.
-    RCC->CCIPR &= ~(0b11 << 18); // LPTIM1SEL='00'.
-    // Enable peripheral clock.
-    RCC->APB1ENR |= (0b1 << 31); // LPTIM1EN='1'.
-    // Configure peripheral.
-    LPTIM1->CFGR |= (0b011 << 9); // Prescaler = 8.
-    LPTIM1->IER |= (0b1 << 1); // ARRMIE='1'.
-    // Reset flags.
-    LPTIM1->ICR |= (0b1 << 4) | (0b1 << 1);
-    // Enable peripheral.
-    LPTIM1->CR |= (0b1 << 0); // ENABLE='1'.
-    // Compute ARR value.
-    arr = (LPTIM1->ARR);
-    arr &= 0xFFFF0000;
-    arr |= ((((delay_ms - 1) * lptim_ctx.clock_frequency_hz) / (1000)) & 0x0000FFFF);
-    // Write register.
-    LPTIM1->ARR = arr;
-    // Wait for ARR write operation to complete.
-    while (((LPTIM1->ISR) & (0b1 << 4)) == 0) {
-        loop_count++;
-        if (loop_count > LPTIM_TIMEOUT_COUNT) {
-            status = LPTIM_ERROR_ARR_TIMEOUT;
-            goto errors;
-        }
-    }
-    // Select clock source.
-#if (STM32L0XX_DRIVERS_RCC_LSE_MODE == 0)
-    RCC->CCIPR |= (0b01 << 18);
-#elif (STM32L0XX_DRIVERS_RCC_LSE_MODE == 1)
-    switch (lptim_ctx.clock_source) {
-    case RCC_CLOCK_LSE:
-        RCC->CCIPR |= (0b11 << 18);
-        break;
-    case RCC_CLOCK_LSI:
-        RCC->CCIPR |= (0b01 << 18);
-        break;
-    default:
-        status = LPTIM_ERROR_CLOCK_SOURCE;
-        goto errors;
-    }
-#else
-    RCC->CCIPR |= (0b11 << 18);
-#endif
     // Clear wake-up flag.
     lptim_ctx.flags.wake_up = 0;
     // Start timer.
@@ -247,12 +271,42 @@ LPTIM_status_t LPTIM_delay_milliseconds(uint32_t delay_ms, LPTIM_delay_mode_t de
 errors:
     // Reset peripheral.
     _LPTIM_reset();
-    // Disable peripheral clock.
-    RCC->APB1ENR &= ~(0b1 << 31); // LPTIM1EN='0'.
-    // Force APB clock at the end of delay.
-    RCC->CCIPR &= ~(0b11 << 18); // LPTIM1SEL='00'.
-    // Reset running flag.
-    lptim_ctx.flags.running = 0;
 end:
     return status;
+}
+
+/*******************************************************************/
+LPTIM_status_t LPTIM_start(LPTIM_clock_prescaler_t prescaler) {
+    // Local variables.
+    LPTIM_status_t status = LPTIM_SUCCESS;
+    // Check if delay is not already running.
+    if (lptim_ctx.flags.running != 0) {
+        status = LPTIM_ERROR_ALREADY_RUNNING;
+        goto errors;
+    }
+    // Init peripheral.
+    status = _LPTIM_init(prescaler, LPTIM_ARR_MAX_VALUE);
+    if (status != LPTIM_SUCCESS) goto errors;
+    // Set running flag.
+    lptim_ctx.flags.running = 1;
+    // Start timer.
+    LPTIM1->CR |= (0b1 << 2); // CNTSTRT='1'.
+errors:
+    return status;
+}
+
+/*******************************************************************/
+LPTIM_status_t LPTIM_stop(void) {
+    // Local variables.
+    LPTIM_status_t status = LPTIM_SUCCESS;
+    // Stop timer.
+    LPTIM1->CR &= ~(0b1 << 0); // ENABLE='0'.
+    // Reset peripheral.
+    _LPTIM_reset();
+    return status;
+}
+
+/*******************************************************************/
+uint32_t LPTIM_get_counter(void) {
+    return ((LPTIM1->CNT) & LPTIM_CNT_MASK);
 }

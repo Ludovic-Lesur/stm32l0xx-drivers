@@ -96,11 +96,6 @@ static LPTIM_status_t _LPTIM_init(LPTIM_clock_prescaler_t prescaler, uint32_t ar
     LPTIM_status_t status = LPTIM_SUCCESS;
     uint32_t loop_count = 0;
     uint32_t arr = 0;
-    // Check parameters.
-    if (prescaler >= LPTIM_CLOCK_PRESCALER_LAST) {
-        status = LPTIM_ERROR_CLOCK_PRESCALER;
-        goto errors;
-    }
     // Force APB clock to access registers.
     RCC->CCIPR &= ~(0b11 << 18); // LPTIM1SEL='00'.
     // Enable peripheral clock.
@@ -283,6 +278,11 @@ LPTIM_status_t LPTIM_start(LPTIM_clock_prescaler_t prescaler) {
     if (lptim_ctx.flags.running != 0) {
         status = LPTIM_ERROR_ALREADY_RUNNING;
         goto errors;
+    }
+    // Check parameters.
+    if (prescaler >= LPTIM_CLOCK_PRESCALER_LAST) {
+       status = LPTIM_ERROR_CLOCK_PRESCALER;
+       goto errors;
     }
     // Init peripheral.
     status = _LPTIM_init(prescaler, LPTIM_ARR_MAX_VALUE);

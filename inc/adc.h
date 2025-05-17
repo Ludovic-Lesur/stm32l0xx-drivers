@@ -5,6 +5,12 @@
  *      Author: Ludo
  */
 
+#ifndef STM32L0XX_DRIVERS_DISABLE_FLAGS_FILE
+#include "stm32l0xx_drivers_flags.h"
+#endif
+
+#ifndef STM32L0XX_DRIVERS_DISABLE
+
 #ifndef __ADC_H__
 #define __ADC_H__
 
@@ -165,3 +171,5 @@ uint32_t ADC_get_dr_register_address(void);
 #define ADC_stack_exit_error(base, code) { ERROR_check_stack_exit(adc_status, ADC_SUCCESS, base, code) }
 
 #endif /* __ADC_H__ */
+
+#endif /* STM32L0XX_DRIVERS_DISABLE */

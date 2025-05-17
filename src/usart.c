@@ -5,13 +5,16 @@
  *      Author: Ludo
  */
 
+#ifndef STM32L0XX_DRIVERS_DISABLE_FLAGS_FILE
+#include "stm32l0xx_drivers_flags.h"
+#endif
+
+#ifndef STM32L0XX_DRIVERS_DISABLE
+
 #include "usart.h"
 
 #ifndef STM32L0XX_REGISTERS_DISABLE_FLAGS_FILE
 #include "stm32l0xx_registers_flags.h"
-#endif
-#ifndef STM32L0XX_DRIVERS_DISABLE_FLAGS_FILE
-#include "stm32l0xx_drivers_flags.h"
 #endif
 #include "exti.h"
 #include "gpio.h"
@@ -319,3 +322,5 @@ uint32_t USART_get_rdr_register_address(USART_instance_t instance) {
 errors:
     return rdr_address;
 }
+
+#endif /* STM32L0XX_DRIVERS_DISABLE */

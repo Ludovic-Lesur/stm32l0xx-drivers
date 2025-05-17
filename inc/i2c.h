@@ -5,6 +5,12 @@
  *      Author: Ludo
  */
 
+#ifndef STM32L0XX_DRIVERS_DISABLE_FLAGS_FILE
+#include "stm32l0xx_drivers_flags.h"
+#endif
+
+#ifndef STM32L0XX_DRIVERS_DISABLE
+
 #ifndef __I2C_H__
 #define __I2C_H__
 
@@ -121,3 +127,5 @@ I2C_status_t I2C_read(I2C_instance_t instance, uint8_t slave_address, uint8_t* d
 #define I2C_stack_exit_error(base, code) { ERROR_check_stack_exit(i2c_status, I2C_SUCCESS, base, code) }
 
 #endif /* __I2C_H__ */
+
+#endif /* STM32L0XX_DRIVERS_DISABLE */

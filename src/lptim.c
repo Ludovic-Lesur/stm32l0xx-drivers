@@ -5,11 +5,14 @@
  *      Author: Ludo
  */
 
-#include "lptim.h"
-
 #ifndef STM32L0XX_DRIVERS_DISABLE_FLAGS_FILE
 #include "stm32l0xx_drivers_flags.h"
 #endif
+
+#ifndef STM32L0XX_DRIVERS_DISABLE
+
+#include "lptim.h"
+
 #include "exti.h"
 #include "iwdg.h"
 #include "lptim_registers.h"
@@ -310,3 +313,5 @@ LPTIM_status_t LPTIM_stop(void) {
 uint32_t LPTIM_get_counter(void) {
     return ((LPTIM1->CNT) & LPTIM_CNT_MASK);
 }
+
+#endif /* STM32L0XX_DRIVERS_DISABLE */

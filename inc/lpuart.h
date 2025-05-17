@@ -5,12 +5,15 @@
  *      Author: Ludo
  */
 
-#ifndef __LPUART_H__
-#define __LPUART_H__
-
 #ifndef STM32L0XX_DRIVERS_DISABLE_FLAGS_FILE
 #include "stm32l0xx_drivers_flags.h"
 #endif
+
+#ifndef STM32L0XX_DRIVERS_DISABLE
+
+#ifndef __LPUART_H__
+#define __LPUART_H__
+
 #include "error.h"
 #include "gpio.h"
 #include "types.h"
@@ -148,3 +151,5 @@ uint32_t LPUART_get_rdr_register_address(void);
 #define LPUART_stack_exit_error(base, code) { ERROR_check_stack_exit(lpuart_status, LPUART_SUCCESS, base, code) }
 
 #endif /* __LPUART_H__ */
+
+#endif /* STM32L0XX_DRIVERS_DISABLE */

@@ -5,11 +5,14 @@
  *      Author: Ludo
  */
 
-#include "rtc.h"
-
 #ifndef STM32L0XX_DRIVERS_DISABLE_FLAGS_FILE
 #include "stm32l0xx_drivers_flags.h"
 #endif
+
+#ifndef STM32L0XX_DRIVERS_DISABLE
+
+#include "rtc.h"
+
 #include "exti.h"
 #include "nvic.h"
 #include "rcc_registers.h"
@@ -402,3 +405,5 @@ errors:
     return status;
 }
 #endif
+
+#endif /* STM32L0XX_DRIVERS_DISABLE */

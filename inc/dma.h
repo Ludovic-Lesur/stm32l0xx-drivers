@@ -5,14 +5,17 @@
  *      Author: Ludo
  */
 
+#ifndef STM32L0XX_DRIVERS_DISABLE_FLAGS_FILE
+#include "stm32l0xx_drivers_flags.h"
+#endif
+
+#ifndef STM32L0XX_DRIVERS_DISABLE
+
 #ifndef __DMA_H__
 #define __DMA_H__
 
 #ifndef STM32L0XX_REGISTERS_DISABLE_FLAGS_FILE
 #include "stm32l0xx_registers_flags.h"
-#endif
-#ifndef STM32L0XX_DRIVERS_DISABLE_FLAGS_FILE
-#include "stm32l0xx_drivers_flags.h"
 #endif
 #include "error.h"
 #include "types.h"
@@ -221,3 +224,5 @@ DMA_status_t DMA_get_number_of_transfered_data(DMA_channel_t channel, uint16_t* 
 #endif /* STM32L0XX_DRIVERS_DMA_CHANNEL_MASK */
 
 #endif /* __DMA_H__ */
+
+#endif /* STM32L0XX_DRIVERS_DISABLE */

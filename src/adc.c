@@ -5,6 +5,12 @@
  *      Author: Ludo
  */
 
+#ifndef STM32L0XX_DRIVERS_DISABLE_FLAGS_FILE
+#include "stm32l0xx_drivers_flags.h"
+#endif
+
+#ifndef STM32L0XX_DRIVERS_DISABLE
+
 #include "adc.h"
 
 #include "adc_registers.h"
@@ -290,3 +296,5 @@ uint32_t ADC_get_dr_register_address(void) {
     uint32_t dr_address = ((uint32_t) &(ADC1->DR));
     return dr_address;
 }
+
+#endif /* STM32L0XX_DRIVERS_DISABLE */

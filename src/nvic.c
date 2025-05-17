@@ -5,6 +5,12 @@
  *      Author: Ludo
  */
 
+#ifndef STM32L0XX_DRIVERS_DISABLE_FLAGS_FILE
+#include "stm32l0xx_drivers_flags.h"
+#endif
+
+#ifndef STM32L0XX_DRIVERS_DISABLE
+
 #include "nvic.h"
 
 #include "nvic_registers.h"
@@ -62,3 +68,5 @@ void NVIC_set_priority(NVIC_interrupt_t irq_index, uint8_t priority) {
 errors:
     return;
 }
+
+#endif /* STM32L0XX_DRIVERS_DISABLE */

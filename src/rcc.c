@@ -5,11 +5,14 @@
  *      Author: Ludo
  */
 
-#include "rcc.h"
-
 #ifndef STM32L0XX_DRIVERS_DISABLE_FLAGS_FILE
 #include "stm32l0xx_drivers_flags.h"
 #endif
+
+#ifndef STM32L0XX_DRIVERS_DISABLE
+
+#include "rcc.h"
+
 #include "error.h"
 #include "flash.h"
 #include "gpio.h"
@@ -564,3 +567,5 @@ RCC_status_t RCC_set_mco(RCC_clock_t mco_clock, RCC_mco_prescaler_t mco_prescale
 errors:
     return status;
 }
+
+#endif /* STM32L0XX_DRIVERS_DISABLE */

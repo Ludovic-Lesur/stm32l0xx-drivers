@@ -5,12 +5,15 @@
  *      Author: Ludo
  */
 
-#ifndef __EXTI_H__
-#define __EXTI_H__
-
 #ifndef STM32L0XX_DRIVERS_DISABLE_FLAGS_FILE
 #include "stm32l0xx_drivers_flags.h"
 #endif
+
+#ifndef STM32L0XX_DRIVERS_DISABLE
+
+#ifndef __EXTI_H__
+#define __EXTI_H__
+
 #include "gpio.h"
 #include "types.h"
 
@@ -199,3 +202,5 @@ void EXTI_clear_gpio_flag(const GPIO_pin_t* gpio);
 #endif
 
 #endif /* __EXTI_H__ */
+
+#endif /* STM32L0XX_DRIVERS_DISABLE */

@@ -5,12 +5,15 @@
  *      Author: Ludo
  */
 
-#ifndef __NVM_H__
-#define __NVM_H__
-
 #ifndef STM32L0XX_DRIVERS_DISABLE_FLAGS_FILE
 #include "stm32l0xx_drivers_flags.h"
 #endif
+
+#ifndef STM32L0XX_DRIVERS_DISABLE
+
+#ifndef __NVM_H__
+#define __NVM_H__
+
 #include "error.h"
 #include "types.h"
 
@@ -64,3 +67,5 @@ NVM_status_t NVM_write_byte(uint32_t address, uint8_t data);
 #define NVM_stack_exit_error(base, code) { ERROR_check_stack_exit(nvm_status, NVM_SUCCESS, base, code) }
 
 #endif /* __NVM_H__ */
+
+#endif /* STM32L0XX_DRIVERS_DISABLE */

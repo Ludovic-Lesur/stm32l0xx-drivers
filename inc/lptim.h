@@ -5,6 +5,12 @@
  *      Author: Ludo
  */
 
+#ifndef STM32L0XX_DRIVERS_DISABLE_FLAGS_FILE
+#include "stm32l0xx_drivers_flags.h"
+#endif
+
+#ifndef STM32L0XX_DRIVERS_DISABLE
+
 #ifndef __LPTIM_H__
 #define __LPTIM_H__
 
@@ -127,3 +133,5 @@ uint32_t LPTIM_get_counter(void);
 #define LPTIM_stack_exit_error(base, code) { ERROR_check_stack_exit(lptim_status, LPTIM_SUCCESS, base, code) }
 
 #endif /* __LPTIM_H__ */
+
+#endif /* STM32L0XX_DRIVERS_DISABLE */

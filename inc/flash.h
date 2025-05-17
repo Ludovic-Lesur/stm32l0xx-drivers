@@ -5,6 +5,12 @@
  *      Author: Ludo
  */
 
+#ifndef STM32L0XX_DRIVERS_DISABLE_FLAGS_FILE
+#include "stm32l0xx_drivers_flags.h"
+#endif
+
+#ifndef STM32L0XX_DRIVERS_DISABLE
+
 #ifndef __FLASH_H__
 #define __FLASH_H__
 
@@ -47,3 +53,5 @@ FLASH_status_t FLASH_set_latency(uint8_t wait_states);
 #define FLASH_stack_exit_error(base, code) { ERROR_check_stack_exit(flash_status, FLASH_SUCCESS, base, code) }
 
 #endif /* __FLASH_H__ */
+
+#endif /* STM32L0XX_DRIVERS_DISABLE */

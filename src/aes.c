@@ -5,6 +5,12 @@
  *      Author: Ludo
  */
 
+#ifndef STM32L0XX_DRIVERS_DISABLE_FLAGS_FILE
+#include "stm32l0xx_drivers_flags.h"
+#endif
+
+#ifndef STM32L0XX_DRIVERS_DISABLE
+
 #include "aes.h"
 
 #include "aes_registers.h"
@@ -121,3 +127,5 @@ AES_status_t AES_encrypt(uint8_t* data_in, uint8_t* data_out, uint8_t* key) {
 errors:
     return status;
 }
+
+#endif /* STM32L0XX_DRIVERS_DISABLE */

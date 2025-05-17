@@ -5,6 +5,12 @@
  *      Author: Ludo
  */
 
+#ifndef STM32L0XX_DRIVERS_DISABLE_FLAGS_FILE
+#include "stm32l0xx_drivers_flags.h"
+#endif
+
+#ifndef STM32L0XX_DRIVERS_DISABLE
+
 #include "spi.h"
 
 #ifndef STM32L0XX_REGISTERS_DISABLE_FLAGS_FILE
@@ -230,3 +236,5 @@ void __attribute__((optimize("-O0"))) SPI_write_8(SPI_instance_t instance, uint8
 void __attribute__((optimize("-O0"))) SPI_write_16(SPI_instance_t instance, uint16_t tx_data) {
     _SPI_write(instance, tx_data, uint16_t);
 }
+
+#endif /* STM32L0XX_DRIVERS_DISABLE */

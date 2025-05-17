@@ -5,6 +5,12 @@
  *      Author: Ludo
  */
 
+#ifndef STM32L0XX_DRIVERS_DISABLE_FLAGS_FILE
+#include "stm32l0xx_drivers_flags.h"
+#endif
+
+#ifndef STM32L0XX_DRIVERS_DISABLE
+
 #ifndef __SPI_H__
 #define __SPI_H__
 
@@ -179,3 +185,5 @@ void SPI_write_16(SPI_instance_t instance, uint16_t tx_data);
 #define SPI_stack_exit_error(base, code) { ERROR_check_stack_exit(spi_status, SPI_SUCCESS, base, code) }
 
 #endif /* __SPI_H__ */
+
+#endif /* STM32L0XX_DRIVERS_DISABLE */

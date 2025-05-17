@@ -5,6 +5,12 @@
  *      Author: Ludo
  */
 
+#ifndef STM32L0XX_DRIVERS_DISABLE_FLAGS_FILE
+#include "stm32l0xx_drivers_flags.h"
+#endif
+
+#ifndef STM32L0XX_DRIVERS_DISABLE
+
 #include "gpio.h"
 
 #include "gpio_registers.h"
@@ -225,3 +231,5 @@ void __attribute__((optimize("-O0"))) GPIO_toggle(const GPIO_pin_t* gpio) {
     // Toggle ODR bit.
     gpio->port->ODR ^= (0b1 << (gpio->pin));
 }
+
+#endif /* STM32L0XX_DRIVERS_DISABLE */

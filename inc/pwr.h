@@ -5,6 +5,12 @@
  *      Author: Ludo
  */
 
+#ifndef STM32L0XX_DRIVERS_DISABLE_FLAGS_FILE
+#include "stm32l0xx_drivers_flags.h"
+#endif
+
+#ifndef STM32L0XX_DRIVERS_DISABLE
+
 #ifndef __PWR_H__
 #define __PWR_H__
 
@@ -98,3 +104,5 @@ uint8_t PWR_get_reset_flags(void);
 void PWR_clear_reset_flags(void);
 
 #endif /* __PWR_H__ */
+
+#endif /* STM32L0XX_DRIVERS_DISABLE */

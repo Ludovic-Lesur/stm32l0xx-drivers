@@ -38,6 +38,7 @@ Here is the versions compatibility table:
 | **Flag name** | **Value** | **Description** |
 |:---:|:---:|:---:|
 | `STM32L0XX_DRIVERS_DISABLE_FLAGS_FILE` | `defined` / `undefined` | Disable the `stm32l0xx_drivers_flags.h` header file inclusion when compilation flags are given in the project settings or by command line. |
+| `STM32L0XX_DRIVERS_DISABLE` | `defined` / `undefined` | Disable the STM32L0xx drivers. |
 | `STM32L0XX_DRIVERS_DMA_CHANNEL_MASK` | `0x00` to `0x7F` | 7-bits field which defines the enabled DMA channels. |
 | `STM32L0XX_DRIVERS_EXTI_GPIO_MASK` | `0x0000` to `0xFFFF` | 16-bits field which defines the enabled EXTI GPIO lines. |
 | `STM32L0XX_DRIVERS_I2C_FAST_MODE` | `defined` / `undefined` | Enable or disable the I2C fast mode (400kHz SCL frequency). |

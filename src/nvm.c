@@ -5,11 +5,14 @@
  *      Author: Ludo
  */
 
-#include "nvm.h"
-
 #ifndef STM32L0XX_DRIVERS_DISABLE_FLAGS_FILE
 #include "stm32l0xx_drivers_flags.h"
 #endif
+
+#ifndef STM32L0XX_DRIVERS_DISABLE
+
+#include "nvm.h"
+
 #include "flash_registers.h"
 #include "rcc_registers.h"
 #include "types.h"
@@ -138,3 +141,5 @@ errors:
     RCC->AHBENR &= ~(0b1 << 8); // MIFEN='0'.
     return status;
 }
+
+#endif /* STM32L0XX_DRIVERS_DISABLE */

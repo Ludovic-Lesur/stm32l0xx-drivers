@@ -5,13 +5,16 @@
  *      Author: Ludo
  */
 
+#ifndef STM32L0XX_DRIVERS_DISABLE_FLAGS_FILE
+#include "stm32l0xx_drivers_flags.h"
+#endif
+
+#ifndef STM32L0XX_DRIVERS_DISABLE
+
 #include "dma.h"
 
 #ifndef STM32L0XX_REGISTERS_DISABLE_FLAGS_FILE
 #include "stm32l0xx_registers_flags.h"
-#endif
-#ifndef STM32L0XX_DRIVERS_DISABLE_FLAGS_FILE
-#include "stm32l0xx_drivers_flags.h"
 #endif
 #include "dma_registers.h"
 #include "nvic.h"
@@ -381,3 +384,5 @@ errors:
 }
 
 #endif /* STM32L0XX_DRIVERS_DMA_CHANNEL_MASK */
+
+#endif /* STM32L0XX_DRIVERS_DISABLE */

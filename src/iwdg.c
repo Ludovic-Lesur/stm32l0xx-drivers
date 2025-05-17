@@ -5,6 +5,12 @@
  *      Author: Ludo
  */
 
+#ifndef STM32L0XX_DRIVERS_DISABLE_FLAGS_FILE
+#include "stm32l0xx_drivers_flags.h"
+#endif
+
+#ifndef STM32L0XX_DRIVERS_DISABLE
+
 #include "iwdg.h"
 
 #include "iwdg_registers.h"
@@ -44,3 +50,5 @@ void IWDG_reload(void) {
     // Reload counter.
     IWDG->KR = 0x0000AAAA;
 }
+
+#endif /* STM32L0XX_DRIVERS_DISABLE */

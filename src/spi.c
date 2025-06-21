@@ -83,6 +83,7 @@ static SPI_context_t spi_ctx[SPI_INSTANCE_LAST] = {
         /* Dummy read to DR to clear RXNE flag */ \
         rx_data[transfer_idx] = (*spi_dr_ptr); \
         /* Wait for TXE flag */ \
+        loop_count = 0; \
         while (((SPI_DESCRIPTOR[instance].peripheral->SR) & (0b1 << 1)) == 0) { \
             /* Wait for TXE='1' or timeout */ \
             loop_count++; \
@@ -94,7 +95,6 @@ static SPI_context_t spi_ctx[SPI_INSTANCE_LAST] = {
         /* Send TX data */ \
         (*spi_dr_ptr) = tx_data[transfer_idx]; \
         /* Wait for incoming data */ \
-        loop_count = 0; \
         while (((SPI_DESCRIPTOR[instance].peripheral->SR) & (0b1 << 0)) == 0) { \
             /* Wait for RXNE='1' or timeout */ \
             loop_count++; \

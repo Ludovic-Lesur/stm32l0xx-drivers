@@ -26,7 +26,7 @@
 
 /*** USART local macros ***/
 
-#define USART_TIMEOUT_COUNT         100000
+#define USART_TIMEOUT_COUNT         1000000
 
 #define USART_REGISTER_MASK_BRR     0x0000FFFF
 #define USART_REGISTER_MASK_TDR     0x000000FF
@@ -298,6 +298,7 @@ USART_status_t USART_write(USART_instance_t instance, uint8_t* data, uint32_t da
         reg_value |= (uint32_t) (data[idx] & USART_REGISTER_MASK_TDR);
         USART_DESCRIPTOR[instance].peripheral->TDR = reg_value;
         // Wait for transmission to complete.
+        loop_count = 0;
         while (((USART_DESCRIPTOR[instance].peripheral->ISR) & (0b1 << 7)) == 0) {
             // Wait for TXE='1' or timeout.
             loop_count++;

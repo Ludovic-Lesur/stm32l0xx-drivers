@@ -105,8 +105,8 @@ void PWR_enter_deepsleep_mode(PWR_deepsleep_mode_t deepsleep_mode) {
     // Clear wake-up flag.
     PWR->CR |= (0b1 << 2); // CWUF='1'.
     // Clear all EXTI, RTC and peripherals interrupt pending bits.
-    RCC->CICR |= 0x000001BF;
-    EXTI->PR |= 0x007BFFFF;
+    RCC->CICR = 0x000001BF;
+    EXTI->PR = 0x007BFFFF;
     RTC->ISR &= 0xFFFF005F;
     NVIC->ICPR = 0xFFFFFFFF;
     // Enter deep sleep mode.

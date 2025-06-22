@@ -59,7 +59,7 @@ static ADC_status_t _ADC_single_conversion(ADC_channel_t channel, int32_t* adc_d
     ADC1->CHSELR &= 0xFFF80000; // Reset all bits.
     ADC1->CHSELR |= (0b1 << channel);
     // Clear conversion flags.
-    ADC1->ISR |= (0b1111 << 1);
+    ADC1->ISR = (0b1111 << 1);
     // Start conversion.
     ADC1->CR |= (0b1 << 2); // ADSTART='1'.
     // Wait for the conversion to complete.
@@ -82,7 +82,7 @@ static ADC_status_t _ADC_disable(void) {
     ADC_status_t status = ADC_SUCCESS;
     uint32_t loop_count = 0;
     // Clear all flags.
-    ADC1->ISR |= 0x0000089F;
+    ADC1->ISR = 0x0000089F;
     // Check ADC state.
     if (((ADC1->CR) & (0b1 << 0)) == 0) goto errors;
     // Disable ADC.

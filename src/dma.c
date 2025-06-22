@@ -108,7 +108,7 @@ static DMA_context_t dma_ctx = {
             dma_ctx.channel_ctx[channel].tc_irq_callback(); \
         } \
         /* Clear flag */ \
-        DMA1->IFCR |= (0b1111 << (channel << 2)); \
+        DMA1->IFCR = (0b1111 << (channel << 2)); \
     } \
 }
 
@@ -294,7 +294,7 @@ DMA_status_t DMA_start(DMA_channel_t channel) {
     _DMA_check_channel(channel);
     _DMA_check_channel_state(channel);
     // Clear all flags.
-    DMA1->IFCR |= (0b1111 << (channel << 2));
+    DMA1->IFCR = (0b1111 << (channel << 2));
     // Enable interrupt.
     NVIC_enable_interrupt(DMA_CHANNEL_DESCRIPTOR[channel].nvic_interrupt);
     // Update mask.
@@ -321,7 +321,7 @@ DMA_status_t DMA_stop(DMA_channel_t channel) {
         NVIC_disable_interrupt(DMA_CHANNEL_DESCRIPTOR[channel].nvic_interrupt);
     }
     // Clear all flags.
-    DMA1->IFCR |= (0b1111 << (channel << 2));
+    DMA1->IFCR = (0b1111 << (channel << 2));
 errors:
     return status;
 }

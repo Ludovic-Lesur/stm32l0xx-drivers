@@ -95,7 +95,7 @@ static EXTI_context_t exti_ctx = {
             exti_ctx.gpio_ctx[pin].edge_irq_callback(); \
         } \
         /* Clear flag */ \
-        EXTI->PR |= (0b1 << pin); \
+        EXTI->PR = (0b1 << pin); \
     } \
 }
 
@@ -191,7 +191,7 @@ static void _EXTI_set_trigger(EXTI_line_t line, EXTI_trigger_t trigger) {
         goto errors;
     }
     // Clear flag.
-    EXTI->PR |= (0b1 << line);
+    EXTI->PR = (0b1 << line);
 errors:
     return;
 }
@@ -206,13 +206,13 @@ void EXTI_init(void) {
     EXTI->IMR &= (~EXTI_REGISTER_MASK_IMR_EMR);
     EXTI->EMR &= (~EXTI_REGISTER_MASK_IMR_EMR);
     // Clear all flags.
-    EXTI->PR |= EXTI_REGISTER_MASK_PR;
+    EXTI->PR = EXTI_REGISTER_MASK_PR;
 }
 
 /*******************************************************************/
 void EXTI_de_init(void) {
     // Clear all flags.
-    EXTI->PR |= EXTI_REGISTER_MASK_PR;
+    EXTI->PR = EXTI_REGISTER_MASK_PR;
     // Mask all sources.
     EXTI->IMR &= (~EXTI_REGISTER_MASK_IMR_EMR);;
     EXTI->EMR &= (~EXTI_REGISTER_MASK_IMR_EMR);;
@@ -237,7 +237,7 @@ void EXTI_disable_line(EXTI_line_t line) {
 /*******************************************************************/
 void EXTI_clear_line_flag(EXTI_line_t line) {
     // Clear flag.
-    EXTI->PR |= (0b1 << line);
+    EXTI->PR = (0b1 << line);
 }
 
 #if ((STM32L0XX_DRIVERS_EXTI_GPIO_MASK & EXTI_GPIO_MASK_ALL) != 0)
@@ -305,7 +305,7 @@ void EXTI_clear_gpio_flag(const GPIO_pin_t* gpio) {
     // Local variables.
     uint8_t line_idx = (gpio->pin);
     // Clear flag.
-    EXTI->PR |= (0b1 << line_idx);
+    EXTI->PR = (0b1 << line_idx);
 }
 #endif
 

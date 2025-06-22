@@ -72,7 +72,7 @@ void __attribute__((optimize("-O0"))) LPTIM1_IRQHandler(void) {
             lptim_ctx.flags.wake_up = 1;
         }
         // Clear flag.
-        LPTIM1->ICR |= (0b1 << 1);
+        LPTIM1->ICR = (0b1 << 1);
     }
     EXTI_clear_line_flag(EXTI_LINE_LPTIM1);
 }
@@ -106,7 +106,7 @@ static LPTIM_status_t _LPTIM_init(LPTIM_clock_prescaler_t prescaler, uint32_t ar
     // Configure prescaler.
     LPTIM1->CFGR |= (prescaler << 9);
     // Reset flags.
-    LPTIM1->ICR |= (0b1 << 4) | (0b1 << 1);
+    LPTIM1->ICR = ((0b1 << 4) | (0b1 << 1));
     // Enable peripheral.
     LPTIM1->CR |= (0b1 << 0); // ENABLE='1'.
     // Write ARR.

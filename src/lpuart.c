@@ -66,7 +66,7 @@ void __attribute__((optimize("-O0"))) LPUART1_IRQHandler(void) {
     // Overrun error interrupt.
     if (((LPUART1->ISR) & (0b1 << 3)) != 0) {
         // Clear ORE flag.
-        LPUART1->ICR |= (0b1 << 3);
+        LPUART1->ICR = (0b1 << 3);
     }
     EXTI_clear_line_flag(EXTI_LINE_LPUART1);
 }

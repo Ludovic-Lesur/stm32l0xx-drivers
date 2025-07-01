@@ -201,6 +201,7 @@ I2C_status_t I2C_write(I2C_instance_t instance, uint8_t slave_address, uint8_t* 
         if (((I2C_DESCRIPTOR[instance].peripheral->ISR) & (0b1 << 1)) != 0) {
             // Send next byte.
             I2C_DESCRIPTOR[instance].peripheral->TXDR = data[idx];
+            loop_count = 0;
             idx++;
         }
         // Exit if timeout.
@@ -291,8 +292,9 @@ I2C_status_t I2C_read(I2C_instance_t instance, uint8_t slave_address, uint8_t* d
     while (idx < data_size_bytes) {
         // Wait for incoming data (RXNE='1').
         if (((I2C_DESCRIPTOR[instance].peripheral->ISR) & (0b1 << 2)) != 0) {
-            // Fill RX buffer with new byte */
+            // Fill RX buffer with new byte.
             data[idx] = (uint8_t) (I2C_DESCRIPTOR[instance].peripheral->RXDR);
+            loop_count = 0;
             idx++;
         }
         // Exit if timeout.

@@ -73,7 +73,7 @@ static I2C_status_t _I2C_clear(I2C_instance_t instance) {
     LPTIM_exit_error(I2C_ERROR_BASE_LPTIM);
     // Enable peripheral and clear all flags.
     I2C_DESCRIPTOR[instance].peripheral->CR1 |= (0b1 << 0); // PE='1'.
-    I2C_DESCRIPTOR[instance].peripheral->ICR |= 0x00003F38;
+    I2C_DESCRIPTOR[instance].peripheral->ICR = 0x00003F38;
 errors:
     return status;
 }
@@ -234,7 +234,7 @@ I2C_status_t I2C_write(I2C_instance_t instance, uint8_t slave_address, uint8_t* 
             }
         }
         // Clear flag.
-        I2C_DESCRIPTOR[instance].peripheral->ICR |= (0b1 << 5); // STOPCF='1'.
+        I2C_DESCRIPTOR[instance].peripheral->ICR = (0b1 << 5); // STOPCF='1'.
     }
 errors:
     return status;
@@ -317,7 +317,7 @@ I2C_status_t I2C_read(I2C_instance_t instance, uint8_t slave_address, uint8_t* d
         }
     }
     // Clear flag.
-    I2C_DESCRIPTOR[instance].peripheral->ICR |= (0b1 << 5); // STOPCF='1'.
+    I2C_DESCRIPTOR[instance].peripheral->ICR = (0b1 << 5); // STOPCF='1'.
 errors:
     return status;
 }

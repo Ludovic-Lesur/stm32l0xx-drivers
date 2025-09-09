@@ -88,6 +88,8 @@ static RCC_status_t _RCC_enable_lse(void) {
     // Local variables.
     RCC_status_t status = RCC_SUCCESS;
     uint32_t loop_count = 0;
+    // Set drive level to medium low.
+    RCC->CSR |= (0b01 << 11);
     // Enable LSE (32.768kHz crystal).
     RCC->CSR |= (0b1 << 8); // LSEON='1'.
     // Wait for LSE to be stable.
@@ -110,6 +112,8 @@ errors:
 #if (STM32L0XX_DRIVERS_RCC_LSE_MODE == 2)
 /*******************************************************************/
 static void _RCC_enable_lse(void) {
+    // Set drive level to medium low.
+    RCC->CSR |= (0b01 << 11);
     // Enable LSE (32.768kHz crystal).
     RCC->CSR |= (0b1 << 8); // LSEON='1'.
     // Enable interrupt.

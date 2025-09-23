@@ -26,7 +26,7 @@
 
 /*** USART local macros ***/
 
-#define USART_TIMEOUT_COUNT         1000000
+#define USART_TIMEOUT_COUNT         100000
 
 #define USART_REGISTER_MASK_BRR     0x0000FFFF
 #define USART_REGISTER_MASK_TDR     0x000000FF

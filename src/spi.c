@@ -23,7 +23,7 @@
 
 /*** SPI local macros ***/
 
-#define SPI_ACCESS_TIMEOUT_COUNT    1000000
+#define SPI_ACCESS_TIMEOUT_COUNT    10000
 
 /*** SPI local structures ***/
 

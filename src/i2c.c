@@ -25,7 +25,7 @@
 
 /*** I2C local macros ***/
 
-#define I2C_ACCESS_TIMEOUT_COUNT    1000000
+#define I2C_ACCESS_TIMEOUT_COUNT    100000
 
 /*** I2C local structures ***/
 

@@ -187,6 +187,11 @@ I2C_status_t I2C_write(I2C_instance_t instance, uint8_t slave_address, uint8_t* 
     I2C_DESCRIPTOR[instance].peripheral->CR2 |= (0b1 << 13); // START='1'.
     loop_count = 0;
     while (((I2C_DESCRIPTOR[instance].peripheral->CR2) & (0b1 << 13)) != 0) {
+        // Exit if a NACK is received.
+        if (((I2C_DESCRIPTOR[instance].peripheral->ISR) & (0b1 << 4)) != 0) {
+            status = I2C_ERROR_NACK_RECEIVED;
+            goto errors;
+        }
         // Wait for START bit to be cleared by hardware or timeout.
         loop_count++;
         if (loop_count > I2C_ACCESS_TIMEOUT_COUNT) {
@@ -280,6 +285,11 @@ I2C_status_t I2C_read(I2C_instance_t instance, uint8_t slave_address, uint8_t* d
     I2C_DESCRIPTOR[instance].peripheral->CR2 |= (0b1 << 13); // START='1'.
     loop_count = 0;
     while (((I2C_DESCRIPTOR[instance].peripheral->CR2) & (0b1 << 13)) != 0) {
+        // Exit if a NACK is received.
+        if (((I2C_DESCRIPTOR[instance].peripheral->ISR) & (0b1 << 4)) != 0) {
+            status = I2C_ERROR_NACK_RECEIVED;
+            goto errors;
+        }
         // Wait for START bit to be cleared by hardware or timeout.
         loop_count++;
         if (loop_count > I2C_ACCESS_TIMEOUT_COUNT) {

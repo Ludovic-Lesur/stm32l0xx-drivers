@@ -38,12 +38,13 @@
 
 /*******************************************************************/
 typedef union {
+    uint8_t all;
     struct {
+        unsigned unused :5;
         unsigned wake_up :1;
         unsigned running :1;
         unsigned init : 1;
-    };
-    uint8_t all;
+    } __attribute__((scalar_storage_order("big-endian"))) __attribute__((packed));
 } LPTIM_flags_t;
 
 /*******************************************************************/

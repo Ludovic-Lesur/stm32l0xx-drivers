@@ -87,13 +87,15 @@ typedef enum {
  * \brief DMA configuration flags.
  *******************************************************************/
 typedef union {
+    uint8_t all;
     struct {
+        unsigned unused :5;
         unsigned circular_mode :1;
         unsigned peripheral_increment :1;
         unsigned memory_increment :1;
-    };
-    uint8_t all;
+    } __attribute__((scalar_storage_order("big-endian"))) __attribute__((packed));
 } DMA_flags_t;
+
 
 /*!******************************************************************
  * \enum DMA_data_size_t

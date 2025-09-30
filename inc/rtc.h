@@ -83,11 +83,11 @@ typedef enum {
  * \brief RTC alarm field type.
  *******************************************************************/
 typedef union {
+    uint8_t all;
     struct {
         unsigned mask :1;
         unsigned value :7;
-    };
-    uint8_t all;
+    } __attribute__((scalar_storage_order("big-endian"))) __attribute__((packed));
 } RTC_alarm_field_t;
 #endif
 

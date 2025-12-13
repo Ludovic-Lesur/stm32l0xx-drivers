@@ -6,6 +6,7 @@ This repository contains the **peripherals drivers** of the STM32L0xx MCUs.
 
 The drivers rely on:
 
+* An external `types.h` header file defining the **standard C types** of the targeted MCU.
 * The **STM32L0xx linker scripts** defined in the [stm32l0xx-device](https://github.com/Ludovic-Lesur/stm32l0xx-device) repository.
 * The **STM32L0xx registers** defined in the [stm32l0xx-registers](https://github.com/Ludovic-Lesur/stm32l0xx-registers) repository.
 * The **embedded utility functions** defined in the [embedded-utils](https://github.com/Ludovic-Lesur/embedded-utils) repository.

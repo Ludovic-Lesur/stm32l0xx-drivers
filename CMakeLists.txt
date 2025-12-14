@@ -49,7 +49,7 @@ if(${BUILD_MODE} STREQUAL STATIC)
     add_compilation_flag(STM32L0XX_DRIVERS_USART_DISABLE_TX_0 "Disable the transmission of byte 0x00 if defined." ON)
     
     # Remove OFF flags from list and keep flags set to value 0.
-    foreach(FLAG ${COMPILATION_FLAGS_LIST} )
+    foreach(FLAG ${COMPILATION_FLAGS_LIST})
         if((NOT ${FLAG} STREQUAL OFF) AND (NOT ${FLAG} STREQUAL ON))
             set(${FLAG} "(${${FLAG}})")
         endif()

@@ -61,7 +61,7 @@ Here is the versions compatibility table:
 | `STM32L0XX_DRIVERS_TIM_MODE_MASK` | `0x00` to `0x1F`| 5-bits field which defines the enabled timer operation modes: `0` = standard `1` = multi-channel `2` = calibration `3` = PWM `4` = one pulse. |
 | `STM32L0XX_DRIVERS_USART_DISABLE_TX_0` | `defined` / `undefined` | Disable the transmission of byte 0x00 if defined. |
 
-## Build
+# Build
 
 A static library can be compiled by command line with `cmake`.
 

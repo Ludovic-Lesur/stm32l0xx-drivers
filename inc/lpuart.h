@@ -133,13 +133,13 @@ LPUART_status_t LPUART_disable_rx(void);
 LPUART_status_t LPUART_write(uint8_t* data, uint32_t data_size_bytes);
 
 /*!******************************************************************
- * \fn uint32_t LPUART_get_rdr_register_address(void)
+ * \fn LPUART_status_t LPUART_get_rdr_register_address(uint32_t* rdr_register_address)
  * \brief Get LPUART RDR register address.
  * \param[in]   none
- * \param[out]  none
- * \retval      RDR register address.
+ * \param[out]  rdr_register_address: Pointer to integer that will contain the USART RDR register address.
+ * \retval      Function execution status.
  *******************************************************************/
-uint32_t LPUART_get_rdr_register_address(void);
+LPUART_status_t LPUART_get_rdr_register_address(uint32_t* rdr_register_address);
 
 /*******************************************************************/
 #define LPUART_exit_error(base) { ERROR_check_exit(lpuart_status, LPUART_SUCCESS, base) }

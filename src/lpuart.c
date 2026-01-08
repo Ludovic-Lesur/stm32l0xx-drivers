@@ -342,9 +342,17 @@ errors:
 }
 
 /*******************************************************************/
-uint32_t LPUART_get_rdr_register_address(void) {
-    uint32_t rdr_address = ((uint32_t) &(LPUART1->RDR));
-    return rdr_address;
+LPUART_status_t LPUART_get_rdr_register_address(uint32_t* rdr_register_address) {
+    // Local variables.
+    LPUART_status_t status = LPUART_SUCCESS;
+    // Check parameter.
+    if (rdr_register_address == NULL) {
+        status = LPUART_ERROR_NULL_PARAMETER;
+        goto errors;
+    }
+    (*rdr_register_address) = ((uint32_t) &(LPUART1->RDR));
+errors:
+    return status;
 }
 
 #endif /* STM32L0XX_DRIVERS_DISABLE */

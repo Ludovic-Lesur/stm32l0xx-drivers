@@ -133,13 +133,13 @@ USART_status_t USART_disable_rx(USART_instance_t instance);
 USART_status_t USART_write(USART_instance_t instance, uint8_t* data, uint32_t data_size_bytes);
 
 /*!******************************************************************
- * \fn uint32_t USART_get_rdr_register_address(USART_instance_t instance)
+ * \fn USART_status_t USART_get_rdr_register_address(USART_instance_t instance, uint32_t* rdr_register_address)
  * \brief Get USART RDR register address.
  * \param[in]   instance: USART instance to read.
- * \param[out]  none
- * \retval      RDR register address.
+ * \param[out]  rdr_register_address: Pointer to integer that will contain the USART RDR register address.
+ * \retval      Function execution status.
  *******************************************************************/
-uint32_t USART_get_rdr_register_address(USART_instance_t instance);
+USART_status_t USART_get_rdr_register_address(USART_instance_t instance, uint32_t* rdr_register_address);
 
 /*******************************************************************/
 #define USART_exit_error(base) { ERROR_check_exit(usart_status, USART_SUCCESS, base) }

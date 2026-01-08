@@ -313,15 +313,22 @@ errors:
 }
 
 /*******************************************************************/
-uint32_t USART_get_rdr_register_address(USART_instance_t instance) {
+USART_status_t USART_get_rdr_register_address(USART_instance_t instance, uint32_t* rdr_register_address) {
     // Local variables.
-    uint32_t rdr_address = 0;
-    // Check instance.
-    if (instance >= USART_INSTANCE_LAST) goto errors;
+    USART_status_t status = USART_SUCCESS;
+    // Check parameters.
+    if (instance >= USART_INSTANCE_LAST) {
+        status = USART_ERROR_INSTANCE;
+        goto errors;
+    }
+    if (rdr_register_address == NULL) {
+        status = USART_ERROR_NULL_PARAMETER;
+        goto errors;
+    }
     // Update address.
-    rdr_address = ((uint32_t) &(USART_DESCRIPTOR[instance].peripheral->RDR));
+    (*rdr_register_address) = ((uint32_t) &(USART_DESCRIPTOR[instance].peripheral->RDR));
 errors:
-    return rdr_address;
+    return status;
 }
 
 #endif /* STM32L0XX_DRIVERS_DISABLE */

@@ -1326,18 +1326,16 @@ errors:
 #endif
 
 /*******************************************************************/
-uint32_t TIM_get_ccr_register_address(TIM_instance_t instance, TIM_channel_t channel) {
+TIM_status_t TIM_get_ccr_register_address(TIM_instance_t instance, TIM_channel_t channel, uint32_t* ccr_register_address) {
     // Local variables.
     TIM_status_t status = TIM_SUCCESS;
-    uint32_t ccr_address = 0;
     // Check instance and channel.
     _TIM_check_instance(instance);
     _TIM_check_channel(instance, channel);
     // Update address.
-    ccr_address = ((uint32_t) &(TIM_DESCRIPTOR[instance].peripheral->CCRx[channel]));
+    (*ccr_register_address) = ((uint32_t) &(TIM_DESCRIPTOR[instance].peripheral->CCRx[channel]));
 errors:
-    UNUSED(status);
-    return ccr_address;
+    return status;
 }
 
 #endif /* STM32L0XX_DRIVERS_TIM_MODE_MASK */

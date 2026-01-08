@@ -153,13 +153,13 @@ ADC_status_t ADC_compute_tmcu(int32_t vmcu_mv, int32_t tmcu_12bits, int32_t* tmc
 int32_t ADC_get_vrefint_voltage_mv(void);
 
 /*!******************************************************************
- * \fn uint32_t ADC_get_dr_register_address(void)
- * \brief Get ADC data register address.
+ * \fn ADC_status_t ADC_get_master_dr_register_address(uint32_t* dr_register_address)
+ * \brief Get master ADC data register address.
  * \param[in]   none
- * \param[out]  none
- * \retval      DR register address.
+ * \param[out]  dr_register_address: Pointer to integer that will contain the ADC DR register address.
+ * \retval      Function execution status.
  *******************************************************************/
-uint32_t ADC_get_dr_register_address(void);
+ADC_status_t ADC_get_dr_register_address(uint32_t* dr_register_address);
 
 /*******************************************************************/
 #define ADC_exit_error(base) { ERROR_check_exit(adc_status, ADC_SUCCESS, base) }

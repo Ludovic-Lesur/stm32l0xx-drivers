@@ -292,9 +292,18 @@ int32_t ADC_get_vrefint_voltage_mv(void) {
 }
 
 /*******************************************************************/
-uint32_t ADC_get_dr_register_address(void) {
-    uint32_t dr_address = ((uint32_t) &(ADC1->DR));
-    return dr_address;
+ADC_status_t ADC_get_dr_register_address(uint32_t* dr_register_address) {
+    // Local variables.
+    ADC_status_t status = ADC_SUCCESS;
+    // Check parameter.
+    if (dr_register_address == NULL) {
+        status = ADC_ERROR_NULL_PARAMETER;
+        goto errors;
+    }
+    // Update address.
+    (*dr_register_address) = ((uint32_t) &(ADC1->DR));
+errors:
+    return status;
 }
 
 #endif /* STM32L0XX_DRIVERS_DISABLE */

@@ -399,8 +399,8 @@ TIM_status_t TIM_OPM_de_init(TIM_instance_t instance, TIM_gpio_t* pins);
  * \brief Perform a single output pulse.
  * \param[in]   instance: Timer instance to use.
  * \param[in]   channels_mask: Channels to use.
- * \param[in]   delay_us: Delay between function call and pulse start in us. Warning: this setting will be applied to all channels of the timer instance.
- * \param[in]   pulse_duration_us: Pulse duration in us. Warning: this setting will be applied to all channels of the timer instance.
+ * \param[in]   delay_us: Delay between function call and pulse start in microsecond. Warning: this setting will be applied to all channels of the timer instance.
+ * \param[in]   pulse_duration_us: Pulse duration in microsecond. Warning: this setting will be applied to all channels of the timer instance.
  * \param[in]   internal_irq_enable: Enable or disable internal pulse completion interrupt (optionally used to wake-up the core at the end of the pulse).
  * \param[out]  none
  * \retval      Function execution status.

@@ -516,7 +516,6 @@ static TIM_status_t _TIM_compute_psc_arr(TIM_instance_t instance, uint32_t tim_c
     for (idx = 0; idx <= TIM_PSC_POWER_MAX; idx++) {
         // Try next power of 2.
         psc = (0b1 << idx);
-        // Compute ARR.
 #if (STM32L0XX_DRIVERS_TIM_PRECISION == 0)
         // Compute timer input clock.
         tim_clock_mhz = ((tim_clock_hz) / (MATH_POWER_10[6] * psc));
@@ -544,7 +543,7 @@ static TIM_status_t _TIM_compute_psc_arr(TIM_instance_t instance, uint32_t tim_c
             TIM_DESCRIPTOR[instance].peripheral->ARR = reg_value;
             // Update computed value.
             if (computed_arr != NULL) {
-                (*computed_arr) = (uint32_t) arr;
+                (*computed_arr) = ((uint32_t) arr);
             }
             // Update status and exit.
             status = TIM_SUCCESS;
@@ -1151,7 +1150,6 @@ TIM_status_t TIM_PWM_set_waveform(TIM_instance_t instance, TIM_channel_t channel
     uint32_t period_value = 0;
     TIM_unit_t period_unit = TIM_UNIT_US;
 #endif
-
     // Check instance, mode and channel.
     _TIM_check_instance(instance);
     _TIM_check_mode(instance, TIM_MODE_PWM);
@@ -1175,7 +1173,7 @@ TIM_status_t TIM_PWM_set_waveform(TIM_instance_t instance, TIM_channel_t channel
 #else
     tmp_u64 = ((uint64_t) 1000000000000);
     tmp_u64 /= ((uint64_t) frequency_mhz);
-    period_value = (uint32_t) (tmp_u64);
+    period_value = ((uint32_t) tmp_u64);
 #endif
     status = TIM_COMPUTE_PSC_ARR(&arr);
     if (status != TIM_SUCCESS) goto errors;
@@ -1318,7 +1316,7 @@ TIM_status_t TIM_OPM_make_pulse(TIM_instance_t instance, uint8_t channels_mask, 
     // Directly exit if there is mask is null.
     if (channels_mask == 0) goto errors;
     // Check parameters.
-    if ((pulse_duration_us == 0) && (pulse_duration_us > (MATH_U32_MAX >> 1))) {
+    if ((pulse_duration_us == 0) || (pulse_duration_us > (MATH_U32_MAX >> 1))) {
         status = TIM_ERROR_PULSE;
         goto errors;
     }
@@ -1352,7 +1350,7 @@ TIM_status_t TIM_OPM_make_pulse(TIM_instance_t instance, uint8_t channels_mask, 
 #else
     tmp_u64 = (((uint64_t) delay_us) * ((uint64_t) (arr + 1)));
     tmp_u64 /= (((uint64_t) delay_us) + ((uint64_t) pulse_duration_us));
-    ccr = (uint32_t) tmp_u64;
+    ccr = ((uint32_t) tmp_u64);
 #endif
     // Channels loop.
     for (idx = 0; idx < TIM_DESCRIPTOR[instance].number_of_channels; idx++) {

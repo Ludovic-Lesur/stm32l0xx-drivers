@@ -79,7 +79,7 @@ static LPUART_status_t _LPUART_set_baud_rate(uint32_t baud_rate) {
     uint32_t lpuart_clock_hz = 0;
     uint64_t brr = 0;
     uint32_t reg_value = 0;
-#if (STM32L0XX_DRIVERS_RCC_LSE_MODE != 0)
+#if (STM32L0XX_DRIVERS_RCC_LSE_MODE == 1)
     uint8_t lse_status = 0;
 #endif
     // Ensure peripheral is disabled.
@@ -90,7 +90,7 @@ static LPUART_status_t _LPUART_set_baud_rate(uint32_t baud_rate) {
     // Use HSI.
     RCC->CCIPR |= (0b10 << 10); // LPUART1SEL='10'.
     lpuart_clock = RCC_CLOCK_HSI;
-#else
+#elif (STM32L0XX_DRIVERS_RCC_LSE_MODE == 1)
     // Get LSE status.
     RCC_get_status(RCC_CLOCK_LSE, &lse_status);
     // Check LSE status and baud rate.
@@ -104,6 +104,10 @@ static LPUART_status_t _LPUART_set_baud_rate(uint32_t baud_rate) {
         RCC->CCIPR |= (0b10 << 10); // LPUART1SEL='10'.
         lpuart_clock = RCC_CLOCK_HSI;
     }
+#else
+    // Use LSE.
+    RCC->CCIPR |= (0b11 << 10); // LPUART1SEL='11'.
+    lpuart_clock = RCC_CLOCK_LSE;
 #endif
     // Get clock source frequency.
     RCC_get_frequency_hz(lpuart_clock, &lpuart_clock_hz);

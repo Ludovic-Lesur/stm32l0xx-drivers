@@ -59,6 +59,7 @@ typedef enum {
     TIM_ERROR_FREQUENCY,
     TIM_ERROR_DUTY_CYCLE,
     TIM_ERROR_PULSE,
+    TIM_ERROR_DELAY,
     // Low level drivers errors.
     TIM_ERROR_BASE_RCC = ERROR_BASE_STEP,
     TIM_ERROR_BASE_MATH = (TIM_ERROR_BASE_RCC + RCC_ERROR_BASE_LAST),
@@ -121,6 +122,7 @@ typedef enum {
     TIM_POLARITY_LAST
 } TIM_polarity_t;
 
+#if (STM32L0XX_DRIVERS_TIM_PRECISION > 0)
 /*!******************************************************************
  * \enum TIM_unit_t
  * \brief Timer unit list
@@ -131,6 +133,7 @@ typedef enum {
     TIM_UNIT_MS,
     TIM_UNIT_LAST
 } TIM_unit_t;
+#endif
 
 /*!******************************************************************
  * \struct TIM_channel_gpio_t
@@ -183,6 +186,7 @@ TIM_status_t TIM_STD_de_init(TIM_instance_t instance);
 #endif
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_STANDARD) != 0)
+#if (STM32L0XX_DRIVERS_TIM_PRECISION > 0)
 /*!******************************************************************
  * \fn TIM_status_t TIM_STD_start(TIM_instance_t instance, uint32_t period_value, TIM_unit_t period_unit, TIM_completion_irq_cb_t irq_callback)
  * \brief Start a timer in standard mode.
@@ -194,6 +198,18 @@ TIM_status_t TIM_STD_de_init(TIM_instance_t instance);
  * \retval      none
  *******************************************************************/
 TIM_status_t TIM_STD_start(TIM_instance_t instance, uint32_t period_value, TIM_unit_t period_unit, TIM_completion_irq_cb_t irq_callback);
+#else
+/*!******************************************************************
+ * \fn TIM_status_t TIM_STD_start(TIM_instance_t instance, uint32_t period_us, TIM_completion_irq_cb_t irq_callback)
+ * \brief Start a timer in standard mode.
+ * \param[in]   instance: Timer instance to use.
+ * \param[in]   period_us: Timer period in microseconds.
+ * \param[in]   irq_callback: Function to call on timer completion interrupt.
+ * \param[out]  none
+ * \retval      none
+ *******************************************************************/
+TIM_status_t TIM_STD_start(TIM_instance_t instance, uint32_t period_us, TIM_completion_irq_cb_t irq_callback);
+#endif
 #endif
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_STANDARD) != 0)
@@ -379,17 +395,17 @@ TIM_status_t TIM_OPM_de_init(TIM_instance_t instance, TIM_gpio_t* pins);
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_OPM) != 0)
 /*!******************************************************************
- * \fn TIM_status_t TIM_OPM_make_pulse(TIM_instance_t instance, uint8_t channels_mask, uint32_t delay_ns, uint32_t pulse_duration_ns)
+ * \fn TIM_status_t TIM_OPM_make_pulse(TIM_instance_t instance, uint8_t channels_mask, uint32_t delay_us, uint32_t pulse_duration_us)
  * \brief Perform a single output pulse.
  * \param[in]   instance: Timer instance to use.
  * \param[in]   channels_mask: Channels to use.
- * \param[in]   delay_ns: Delay between function call and pulse start in ns. Warning: this setting will be applied to all channels of the timer instance.
- * \param[in]   pulse_duration_ns: Pulse duration in ns. Warning: this setting will be applied to all channels of the timer instance.
+ * \param[in]   delay_us: Delay between function call and pulse start in us. Warning: this setting will be applied to all channels of the timer instance.
+ * \param[in]   pulse_duration_us: Pulse duration in us. Warning: this setting will be applied to all channels of the timer instance.
  * \param[in]   internal_irq_enable: Enable or disable internal pulse completion interrupt (optionally used to wake-up the core at the end of the pulse).
  * \param[out]  none
  * \retval      Function execution status.
  *******************************************************************/
-TIM_status_t TIM_OPM_make_pulse(TIM_instance_t instance, uint8_t channels_mask, uint32_t delay_ns, uint32_t pulse_duration_ns, uint8_t internal_irq_enable);
+TIM_status_t TIM_OPM_make_pulse(TIM_instance_t instance, uint8_t channels_mask, uint32_t delay_us, uint32_t pulse_duration_us, uint8_t internal_irq_enable);
 #endif
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_OPM) != 0)

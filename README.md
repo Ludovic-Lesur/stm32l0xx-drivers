@@ -61,6 +61,7 @@ Here is the versions compatibility table:
 | `STM32L0XX_DRIVERS_RTC_WAKEUP_PERIOD_SECONDS` | `<value>` | RTC wakeup period in seconds. |
 | `STM32L0XX_DRIVERS_RTC_ALARM_MASK` | `0x00` to `0x03`| 2-bits field which defines the enabled RTC alarms. |
 | `STM32L0XX_DRIVERS_TIM_MODE_MASK` | `0x00` to `0x1F`| 5-bits field which defines the enabled timer operation modes: `0` = standard `1` = multi-channel `2` = calibration `3` = PWM `4` = one pulse. |
+| `STM32L0XX_DRIVERS_TIM_PRECISION` | `0` / `1` | Timers precision mode: `0` = microsecond, `1` = nanosecond. |
 | `STM32L0XX_DRIVERS_USART_DISABLE_TX_0` | `defined` / `undefined` | Disable the transmission of byte 0x00 if defined. |
 
 # Build

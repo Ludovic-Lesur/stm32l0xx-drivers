@@ -33,6 +33,12 @@
 #define LPUART_BRR_VALUE_MIN                0x00300
 #define LPUART_BRR_VALUE_MAX                LPUART_REGISTER_MASK_BRR
 
+#if (STM32L0XX_DRIVERS_RCC_LSE_MODE == 2)
+#define LPUART_BRR_TYPE                     uint32_t
+#else
+#define LPUART_BRR_TYPE                     uint64_t
+#endif
+
 /*** LPUART local structures ***/
 
 /*******************************************************************/
@@ -77,7 +83,7 @@ static LPUART_status_t _LPUART_set_baud_rate(uint32_t baud_rate) {
     LPUART_status_t status = LPUART_SUCCESS;
     RCC_clock_t lpuart_clock;
     uint32_t lpuart_clock_hz = 0;
-    uint64_t brr = 0;
+    LPUART_BRR_TYPE brr = 0;
     uint32_t reg_value = 0;
 #if (STM32L0XX_DRIVERS_RCC_LSE_MODE == 1)
     uint8_t lse_status = 0;
@@ -112,8 +118,8 @@ static LPUART_status_t _LPUART_set_baud_rate(uint32_t baud_rate) {
     // Get clock source frequency.
     RCC_get_frequency_hz(lpuart_clock, &lpuart_clock_hz);
     // Compute register value.
-    brr = ((uint64_t) lpuart_clock_hz) << 8;
-    brr /= (uint64_t) baud_rate;
+    brr = (((LPUART_BRR_TYPE) lpuart_clock_hz) << 8);
+    brr /= ((LPUART_BRR_TYPE) baud_rate);
     // Check value.
     if ((brr < LPUART_BRR_VALUE_MIN) || (brr > LPUART_BRR_VALUE_MAX)) {
         status = LPUART_ERROR_BAUD_RATE;

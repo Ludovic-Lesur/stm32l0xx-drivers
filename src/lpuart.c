@@ -25,7 +25,7 @@
 
 #define LPUART_TIMEOUT_COUNT                1000000
 
-#define LPUART_BAUD_RATE_CLOCK_THRESHOLD    4000
+#define LPUART_BAUD_RATE_LSE_MAX            2400
 
 #define LPUART_REGISTER_MASK_BRR            0x000FFFFF
 #define LPUART_REGISTER_MASK_TDR            0x000000FF
@@ -33,10 +33,10 @@
 #define LPUART_BRR_VALUE_MIN                0x00300
 #define LPUART_BRR_VALUE_MAX                LPUART_REGISTER_MASK_BRR
 
-#if (STM32L0XX_DRIVERS_RCC_LSE_MODE == 2)
-#define LPUART_BRR_TYPE                     uint32_t
-#else
+#if ((STM32L0XX_DRIVERS_RCC_LSE_MODE <= 1) || (defined STM32L0XX_DRIVERS_LPUART_HIGH_BAUD_RATE))
 #define LPUART_BRR_TYPE                     uint64_t
+#else
+#define LPUART_BRR_TYPE                     uint32_t
 #endif
 
 /*** LPUART local structures ***/
@@ -85,7 +85,7 @@ static LPUART_status_t _LPUART_set_baud_rate(uint32_t baud_rate) {
     uint32_t lpuart_clock_hz = 0;
     LPUART_BRR_TYPE brr = 0;
     uint32_t reg_value = 0;
-#if (STM32L0XX_DRIVERS_RCC_LSE_MODE == 1)
+#if ((STM32L0XX_DRIVERS_RCC_LSE_MODE == 1) || (defined STM32L0XX_DRIVERS_LPUART_HIGH_BAUD_RATE))
     uint8_t lse_status = 0;
 #endif
     // Ensure peripheral is disabled.
@@ -96,11 +96,11 @@ static LPUART_status_t _LPUART_set_baud_rate(uint32_t baud_rate) {
     // Use HSI.
     RCC->CCIPR |= (0b10 << 10); // LPUART1SEL='10'.
     lpuart_clock = RCC_CLOCK_HSI;
-#elif (STM32L0XX_DRIVERS_RCC_LSE_MODE == 1)
+#elif ((STM32L0XX_DRIVERS_RCC_LSE_MODE == 1) || (defined STM32L0XX_DRIVERS_LPUART_HIGH_BAUD_RATE))
     // Get LSE status.
     RCC_get_status(RCC_CLOCK_LSE, &lse_status);
     // Check LSE status and baud rate.
-    if ((baud_rate < LPUART_BAUD_RATE_CLOCK_THRESHOLD) && (lse_status != 0)) {
+    if ((baud_rate < LPUART_BAUD_RATE_LSE_MAX) && (lse_status != 0)) {
         // Use LSE.
         RCC->CCIPR |= (0b11 << 10); // LPUART1SEL='11'.
         lpuart_clock = RCC_CLOCK_LSE;
@@ -111,6 +111,11 @@ static LPUART_status_t _LPUART_set_baud_rate(uint32_t baud_rate) {
         lpuart_clock = RCC_CLOCK_HSI;
     }
 #else
+    // Check baud rate.
+    if (baud_rate > LPUART_BAUD_RATE_LSE_MAX) {
+        status = LPUART_ERROR_BAUD_RATE;
+        goto errors;
+    }
     // Use LSE.
     RCC->CCIPR |= (0b11 << 10); // LPUART1SEL='11'.
     lpuart_clock = RCC_CLOCK_LSE;

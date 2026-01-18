@@ -100,7 +100,7 @@ static LPUART_status_t _LPUART_set_baud_rate(uint32_t baud_rate) {
     // Get LSE status.
     RCC_get_status(RCC_CLOCK_LSE, &lse_status);
     // Check LSE status and baud rate.
-    if ((baud_rate < LPUART_BAUD_RATE_LSE_MAX) && (lse_status != 0)) {
+    if ((baud_rate <= LPUART_BAUD_RATE_LSE_MAX) && (lse_status != 0)) {
         // Use LSE.
         RCC->CCIPR |= (0b11 << 10); // LPUART1SEL='11'.
         lpuart_clock = RCC_CLOCK_LSE;

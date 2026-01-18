@@ -15,6 +15,7 @@ Here is the versions compatibility table:
 
 | **stm32l0xx-drivers** | **stm32l0xx-device** | **stm32l0xx-registers** | **embedded-utils** |
 |:---:|:---:|:---:|:---:|
+| [sw8.0](https://github.com/Ludovic-Lesur/stm32l0xx-drivers/releases/tag/sw8.0) | >= [sw2.0](https://github.com/Ludovic-Lesur/stm32l0xx-device/releases/tag/sw2.0) | >= [sw5.0](https://github.com/Ludovic-Lesur/stm32l0xx-registers/releases/tag/sw5.0) | >= [sw7.0](https://github.com/Ludovic-Lesur/embedded-utils/releases/tag/sw7.0) |
 | [sw7.16](https://github.com/Ludovic-Lesur/stm32l0xx-drivers/releases/tag/sw7.16) | >= [sw2.0](https://github.com/Ludovic-Lesur/stm32l0xx-device/releases/tag/sw2.0) | >= [sw5.0](https://github.com/Ludovic-Lesur/stm32l0xx-registers/releases/tag/sw5.0) | >= [sw7.0](https://github.com/Ludovic-Lesur/embedded-utils/releases/tag/sw7.0) |
 | [sw7.15](https://github.com/Ludovic-Lesur/stm32l0xx-drivers/releases/tag/sw7.15) | >= [sw2.0](https://github.com/Ludovic-Lesur/stm32l0xx-device/releases/tag/sw2.0) | >= [sw5.0](https://github.com/Ludovic-Lesur/stm32l0xx-registers/releases/tag/sw5.0) | >= [sw7.0](https://github.com/Ludovic-Lesur/embedded-utils/releases/tag/sw7.0) |
 | [sw7.14](https://github.com/Ludovic-Lesur/stm32l0xx-drivers/releases/tag/sw7.14) | >= [sw2.0](https://github.com/Ludovic-Lesur/stm32l0xx-device/releases/tag/sw2.0) | >= [sw5.0](https://github.com/Ludovic-Lesur/stm32l0xx-registers/releases/tag/sw5.0) | >= [sw7.0](https://github.com/Ludovic-Lesur/embedded-utils/releases/tag/sw7.0) |
@@ -88,7 +89,7 @@ cmake -DCMAKE_TOOLCHAIN_FILE="<toolchain_file_path>" \
       -DSTM32L0XX_DRIVERS_RTC_WAKEUP_PERIOD_SECONDS=10 \
       -DSTM32L0XX_DRIVERS_RTC_ALARM_MASK=0x03 \
       -DSTM32L0XX_DRIVERS_TIM_MODE_MASK=0x1F \
-      -DSTM32L0XX_DRIVERS_TIM_PRECISION=0 \
+      -DSTM32L0XX_DRIVERS_TIM_PRECISION=1 \
       -DSTM32L0XX_DRIVERS_USART_DISABLE_TX_0=ON \
       -G "Unix Makefiles" ..
 make all

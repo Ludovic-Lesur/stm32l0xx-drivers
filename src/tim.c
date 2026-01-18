@@ -37,6 +37,12 @@
 #define TIM_ARR_VALUE_MIN                   0x0001
 #define TIM_ARR_VALUE_MAX                   TIM_REGISTER_MASK_ARR_PSC_CCR
 
+#if (STM32L0XX_DRIVERS_TIM_PRECISION > 0)
+#define TIM_PSC_POWER_MAX                   16
+#else
+#define TIM_PSC_POWER_MAX                   12
+#endif
+
 #define TIM_CNT_VALUE_MAX                   TIM_REGISTER_MASK_ARR_PSC_CCR
 
 #define TIM_MCH_TARGET_TRIGGER_CLOCK_HZ     2048
@@ -53,12 +59,11 @@
 #define TIM_CAL_MEDIAN_FILTER_SIZE          9
 #define TIM_CAL_CENTER_AVERAGE_SIZE         3
 
+#define TIM_OPM_PULSE_US_MAX                (MATH_U32_MAX >> 1)
 #if (STM32L0XX_DRIVERS_TIM_PRECISION > 0)
-#define TIM_PSC_POWER_MAX                   16
-#define TIM_COMPUTE_PSC_ARR(computed_arr)   _TIM_compute_psc_arr(instance, tim_clock_hz, period_value, period_unit, computed_arr);
+#define TIM_OPM_DELAY_US_MAX                (MATH_U32_MAX >> 1)
 #else
-#define TIM_PSC_POWER_MAX                   12
-#define TIM_COMPUTE_PSC_ARR(computed_arr)   _TIM_compute_psc_arr(instance, tim_clock_hz, period_us, computed_arr);
+#define TIM_OPM_DELAY_US_MAX                MATH_U16_MAX
 #endif
 
 /*** TIM local structures ***/
@@ -469,11 +474,7 @@ static void __attribute__((optimize("-O0"))) _TIM_reset(TIM_instance_t instance)
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & (TIM_MODE_MASK_STANDARD | TIM_MODE_MASK_PWM | TIM_MODE_MASK_OPM)) != 0)
 /*******************************************************************/
-#if (STM32L0XX_DRIVERS_TIM_PRECISION > 0)
 static TIM_status_t _TIM_compute_psc_arr(TIM_instance_t instance, uint32_t tim_clock_hz, uint32_t period_value, TIM_unit_t period_unit, uint32_t* computed_arr) {
-#else
-static TIM_status_t _TIM_compute_psc_arr(TIM_instance_t instance, uint32_t tim_clock_hz, uint32_t period_us, uint32_t* computed_arr) {
-#endif
     // Local variables.
     TIM_status_t status = TIM_ERROR_ARR_VALUE;
     uint32_t psc = 0;
@@ -488,28 +489,27 @@ static TIM_status_t _TIM_compute_psc_arr(TIM_instance_t instance, uint32_t tim_c
     uint64_t expected_period_ns = 0;
 #endif
     // Check parameters.
-    if (tim_clock_hz == 0) goto errors;
-#if (STM32L0XX_DRIVERS_TIM_PRECISION == 0)
-    if (period_us == 0) goto errors;
-#else
-    if (period_value == 0) goto errors;
-#endif
+    if ((tim_clock_hz == 0) || (period_value == 0)) goto errors;
     // Check unit.
-#if (STM32L0XX_DRIVERS_TIM_PRECISION > 0)
     switch (period_unit) {
-    case TIM_UNIT_NS:
-        tim_unit_factor = 1;
-        break;
     case TIM_UNIT_US:
+#if (STM32L0XX_DRIVERS_TIM_PRECISION > 0)
         tim_unit_factor = MATH_POWER_10[3];
+#endif
         break;
+#if (STM32L0XX_DRIVERS_TIM_PRECISION > 0)
     case TIM_UNIT_MS:
         tim_unit_factor = MATH_POWER_10[6];
         break;
+    case TIM_UNIT_NS:
+        tim_unit_factor = 1;
+        break;
+#endif
     default:
         status = TIM_ERROR_UNIT;
         goto errors;
     }
+#if (STM32L0XX_DRIVERS_TIM_PRECISION > 0)
     expected_period_ns = (((uint64_t) period_value) * ((uint64_t) tim_unit_factor));
 #endif
     // Search prescaler to reach expected period.
@@ -522,9 +522,9 @@ static TIM_status_t _TIM_compute_psc_arr(TIM_instance_t instance, uint32_t tim_c
         // Check prescaler.
         if (tim_clock_mhz == 0) continue;
         // Check if period if reachable.
-        if (period_us > (TIM_ARR_VALUE_MAX / tim_clock_mhz)) continue;
+        if (period_value > (TIM_ARR_VALUE_MAX / tim_clock_mhz)) continue;
         // Compute ARR.
-        arr = (period_us * tim_clock_mhz);
+        arr = (period_value * tim_clock_mhz);
 #else
         // Compute ARR.
         arr = (expected_period_ns * ((uint64_t) tim_clock_hz));
@@ -618,11 +618,7 @@ errors:
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_STANDARD) != 0)
 /*******************************************************************/
-#if (STM32L0XX_DRIVERS_TIM_PRECISION > 0)
 TIM_status_t TIM_STD_start(TIM_instance_t instance, uint32_t period_value, TIM_unit_t period_unit, TIM_completion_irq_cb_t irq_callback) {
-#else
-TIM_status_t TIM_STD_start(TIM_instance_t instance, uint32_t period_us, TIM_completion_irq_cb_t irq_callback) {
-#endif
     // Local variables.
     TIM_status_t status = TIM_SUCCESS;
     uint32_t tim_clock_hz = 0;
@@ -632,7 +628,7 @@ TIM_status_t TIM_STD_start(TIM_instance_t instance, uint32_t period_us, TIM_comp
     // Get clock source frequency.
     RCC_get_frequency_hz(RCC_CLOCK_SYSTEM, &tim_clock_hz);
     // Compute ARR and PSC values.
-    status = TIM_COMPUTE_PSC_ARR(NULL);
+    status = _TIM_compute_psc_arr(instance, tim_clock_hz, period_value, period_unit, NULL);
     if (status != TIM_SUCCESS) goto errors;
     // Generate event to update registers.
     TIM_DESCRIPTOR[instance].peripheral->EGR |= (0b1 << 0); // UG='1'.
@@ -1143,12 +1139,10 @@ TIM_status_t TIM_PWM_set_waveform(TIM_instance_t instance, TIM_channel_t channel
     uint32_t tim_clock_hz = 0;
     uint32_t arr = 0;
     uint32_t reg_value = 0;
-#if (STM32L0XX_DRIVERS_TIM_PRECISION == 0)
-    uint32_t period_us = 0;
-#else
-    uint64_t tmp_u64 = 0;
     uint32_t period_value = 0;
-    TIM_unit_t period_unit = TIM_UNIT_US;
+    TIM_unit_t period_unit = TIM_UNIT_LAST;
+#if (STM32L0XX_DRIVERS_TIM_PRECISION > 0)
+    uint64_t tmp_u64 = 0;
 #endif
     // Check instance, mode and channel.
     _TIM_check_instance(instance);
@@ -1169,13 +1163,15 @@ TIM_status_t TIM_PWM_set_waveform(TIM_instance_t instance, TIM_channel_t channel
     TIM_DESCRIPTOR[instance].peripheral->CR1 |= (0b1 << 1);
     // Compute PSC and ARR values.
 #if (STM32L0XX_DRIVERS_TIM_PRECISION == 0)
-    period_us = (MATH_POWER_10[9] / frequency_mhz);
+    period_value = (MATH_POWER_10[9] / frequency_mhz);
+    period_unit = TIM_UNIT_US;
 #else
     tmp_u64 = ((uint64_t) 1000000000000);
     tmp_u64 /= ((uint64_t) frequency_mhz);
     period_value = ((uint32_t) tmp_u64);
+    period_unit = TIM_UNIT_NS;
 #endif
-    status = TIM_COMPUTE_PSC_ARR(&arr);
+    status = _TIM_compute_psc_arr(instance, tim_clock_hz, period_value, period_unit, &arr);
     if (status != TIM_SUCCESS) goto errors;
     // Set duty cycle.
     reg_value = (TIM_DESCRIPTOR[instance].peripheral->CCRx[channel] & (~TIM_REGISTER_MASK_ARR_PSC_CCR));
@@ -1299,11 +1295,7 @@ TIM_status_t TIM_OPM_make_pulse(TIM_instance_t instance, uint8_t channels_mask, 
     // Local variables.
     TIM_status_t status = TIM_SUCCESS;
     uint32_t tim_clock_hz = 0;
-#if (STM32L0XX_DRIVERS_TIM_PRECISION == 0)
-    uint32_t period_us = (delay_us + pulse_duration_us);
-#else
-    uint32_t period_value = (delay_us + pulse_duration_us);
-    TIM_unit_t period_unit = TIM_UNIT_US;
+#if (STM32L0XX_DRIVERS_TIM_PRECISION > 0)
     uint64_t tmp_u64 = 0;
 #endif
     uint32_t arr = 0;
@@ -1316,15 +1308,11 @@ TIM_status_t TIM_OPM_make_pulse(TIM_instance_t instance, uint8_t channels_mask, 
     // Directly exit if there is mask is null.
     if (channels_mask == 0) goto errors;
     // Check parameters.
-    if ((pulse_duration_us == 0) || (pulse_duration_us > (MATH_U32_MAX >> 1))) {
+    if ((pulse_duration_us == 0) || (pulse_duration_us > TIM_OPM_PULSE_US_MAX)) {
         status = TIM_ERROR_PULSE;
         goto errors;
     }
-#if (STM32L0XX_DRIVERS_TIM_PRECISION == 0)
-    if (delay_us > MATH_U16_MAX) {
-#else
-    if (delay_us > (MATH_U32_MAX >> 1)) {
-#endif
+    if (delay_us > TIM_OPM_DELAY_US_MAX) {
         status = TIM_ERROR_DELAY;
         goto errors;
     }
@@ -1342,7 +1330,7 @@ TIM_status_t TIM_OPM_make_pulse(TIM_instance_t instance, uint8_t channels_mask, 
         NVIC_disable_interrupt(TIM_DESCRIPTOR[instance].nvic_interrupt);
     }
     // Compute PSC and ARR values.
-    status = TIM_COMPUTE_PSC_ARR(&arr);
+    status = _TIM_compute_psc_arr(instance, tim_clock_hz, (delay_us + pulse_duration_us), TIM_UNIT_US, &arr);
     if (status != TIM_SUCCESS) goto errors;
     // Compute CCR value.
 #if (STM32L0XX_DRIVERS_TIM_PRECISION == 0)

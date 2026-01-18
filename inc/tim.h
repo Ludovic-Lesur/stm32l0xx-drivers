@@ -122,18 +122,18 @@ typedef enum {
     TIM_POLARITY_LAST
 } TIM_polarity_t;
 
-#if (STM32L0XX_DRIVERS_TIM_PRECISION > 0)
 /*!******************************************************************
  * \enum TIM_unit_t
  * \brief Timer unit list
  *******************************************************************/
 typedef enum {
-    TIM_UNIT_NS = 0,
-    TIM_UNIT_US,
+    TIM_UNIT_US = 0,
+#if (STM32L0XX_DRIVERS_TIM_PRECISION > 0)
     TIM_UNIT_MS,
+    TIM_UNIT_NS,
+#endif
     TIM_UNIT_LAST
 } TIM_unit_t;
-#endif
 
 /*!******************************************************************
  * \struct TIM_channel_gpio_t
@@ -186,7 +186,6 @@ TIM_status_t TIM_STD_de_init(TIM_instance_t instance);
 #endif
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_STANDARD) != 0)
-#if (STM32L0XX_DRIVERS_TIM_PRECISION > 0)
 /*!******************************************************************
  * \fn TIM_status_t TIM_STD_start(TIM_instance_t instance, uint32_t period_value, TIM_unit_t period_unit, TIM_completion_irq_cb_t irq_callback)
  * \brief Start a timer in standard mode.
@@ -198,18 +197,6 @@ TIM_status_t TIM_STD_de_init(TIM_instance_t instance);
  * \retval      none
  *******************************************************************/
 TIM_status_t TIM_STD_start(TIM_instance_t instance, uint32_t period_value, TIM_unit_t period_unit, TIM_completion_irq_cb_t irq_callback);
-#else
-/*!******************************************************************
- * \fn TIM_status_t TIM_STD_start(TIM_instance_t instance, uint32_t period_us, TIM_completion_irq_cb_t irq_callback)
- * \brief Start a timer in standard mode.
- * \param[in]   instance: Timer instance to use.
- * \param[in]   period_us: Timer period in microseconds.
- * \param[in]   irq_callback: Function to call on timer completion interrupt.
- * \param[out]  none
- * \retval      none
- *******************************************************************/
-TIM_status_t TIM_STD_start(TIM_instance_t instance, uint32_t period_us, TIM_completion_irq_cb_t irq_callback);
-#endif
 #endif
 
 #if ((STM32L0XX_DRIVERS_TIM_MODE_MASK & TIM_MODE_MASK_STANDARD) != 0)

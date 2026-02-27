@@ -124,24 +124,24 @@ ADC_status_t ADC_de_init(void);
 ADC_status_t ADC_convert_channel(ADC_channel_t channel, int32_t* adc_data_12bits);
 
 /*!******************************************************************
- * \fn ADC_status_t ADC_compute_vmcu(int32_t_t ref_voltage_12bits, int32_t_t ref_voltage_mv, int32_t* vmcu_mv)
+ * \fn ADC_status_t ADC_compute_mcu_voltage(int32_t_t reference_voltage_12bits, int32_t_t reference_voltage_mv, int32_t* mcu_voltage_mv)
  * \brief Compute MCU voltage.
- * \param[in]   ref_voltage_12bits: Reference voltage 12-bits raw data from ADC.
- * \param[in]   ref_voltage_mv: Reference voltage in mV.
- * \param[out]  vmcu_mv: Pointer to integer that will contain the MCU voltage in mV.
+ * \param[in]   reference_voltage_12bits: Reference voltage 12-bits raw data from ADC.
+ * \param[in]   reference_voltage_mv: Reference voltage in mV.
+ * \param[out]  mcu_voltage_mv: Pointer to integer that will contain the MCU voltage in mV.
  * \retval      Function execution status.
  *******************************************************************/
-ADC_status_t ADC_compute_vmcu(int32_t ref_voltage_12bits, int32_t ref_voltage_mv, int32_t* vmcu_mv);
+ADC_status_t ADC_compute_mcu_voltage(int32_t reference_voltage_12bits, int32_t reference_voltage_mv, int32_t* mcu_voltage_mv);
 
 /*!******************************************************************
- * \fn ADC_status_t ADC_compute_tmcu(int32_t vmcu_mv, int32_t_t tmcu_12bits, int32_t* tmcu_degrees)
+ * \fn ADC_status_t ADC_compute_mcu_temperature(int32_t mcu_voltage_mv, int32_t_t mcu_temperature_12bits, int32_t* mcu_temperature_degrees)
  * \brief Compute MCU temperature.
- * \param[in]   vmcu_mv: MCU supply voltage in mV.
- * \param[in]   tmcu_12bits: Temperature sensor 12-bits raw data from ADC.
- * \param[out]  tmcu_degrees: Pointer to integer that will contain MCU temperature in 2's complement format.
+ * \param[in]   mcu_voltage_mv: MCU supply voltage in mV.
+ * \param[in]   mcu_temperature_12bits: Temperature sensor 12-bits raw data from ADC.
+ * \param[out]  mcu_temperature_degrees: Pointer to integer that will contain MCU temperature in 2's complement format.
  * \retval      Function execution status.
  *******************************************************************/
-ADC_status_t ADC_compute_tmcu(int32_t vmcu_mv, int32_t tmcu_12bits, int32_t* tmcu_degrees);
+ADC_status_t ADC_compute_mcu_temperature(int32_t mcu_voltage_mv, int32_t mcu_temperature_12bits, int32_t* mcu_temperature_degrees);
 
 /*!******************************************************************
  * \fn int32_t ADC_get_vrefint_voltage_mv(void)

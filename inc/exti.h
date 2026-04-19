@@ -81,7 +81,7 @@ typedef enum {
  * \brief EXTI trigger modes.
  *******************************************************************/
 typedef enum {
-    EXTI_TRIGGER_RISING_EDGE,
+    EXTI_TRIGGER_RISING_EDGE = 0,
     EXTI_TRIGGER_FALLING_EDGE,
     EXTI_TRIGGER_ANY_EDGE,
     EXTI_TRIGGER_LAST

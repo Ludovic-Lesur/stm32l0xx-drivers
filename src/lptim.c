@@ -16,6 +16,7 @@
 #include "exti.h"
 #include "iwdg.h"
 #include "lptim_registers.h"
+#include "maths.h"
 #include "nvic.h"
 #include "pwr.h"
 #include "rcc.h"
@@ -28,6 +29,8 @@
 
 #define LPTIM_ARR_MASK          0x0000FFFF
 #define LPTIM_ARR_MAX_VALUE     LPTIM_ARR_MASK
+
+#define LPTIM_CMP_MASK          0x0000FFFF
 
 #define LPTIM_DELAY_MS_MIN      2
 #define LPTIM_DELAY_MS_MAX      ((LPTIM_ARR_MAX_VALUE * 1000) / (lptim_ctx.clock_frequency_hz))
@@ -271,6 +274,55 @@ errors:
     // Reset peripheral.
     _LPTIM_reset();
 end:
+    return status;
+}
+
+/*******************************************************************/
+LPTIM_status_t LPTIM_set_waveform(uint32_t frequency_mhz, uint8_t duty_cycle_percent) {
+    // Local variables.
+    LPTIM_status_t status = LPTIM_SUCCESS;
+    uint32_t arr_value = 0;
+    uint32_t cmp_value = 0;
+    uint32_t cmp = 0;
+    // Check parameters.
+    if (frequency_mhz == 0) {
+        status = LPTIM_ERROR_FREQUENCY;
+        goto errors;
+    }
+    if (duty_cycle_percent > MATH_PERCENT_MAX) {
+        status = LPTIM_ERROR_DUTY_CYCLE;
+        goto errors;
+    }
+    // Compute ARR value.
+    arr_value = ((lptim_ctx.clock_frequency_hz * 1000) / (frequency_mhz));
+    // Check ARR range.
+    if (arr_value >= LPTIM_ARR_MAX_VALUE) {
+        status = LPTIM_ERROR_FREQUENCY;
+        goto errors;
+    }
+    // Init peripheral.
+    status = _LPTIM_init(LPTIM_CLOCK_PRESCALER_8, arr_value);
+    if (status != LPTIM_SUCCESS) goto errors;
+    // Compute compare value.
+    cmp_value = (((arr_value + 1) - (((arr_value + 1) * duty_cycle_percent) / (MATH_PERCENT_MAX))) & LPTIM_CMP_MASK);
+    // Write compare register.
+    cmp = ((LPTIM1->CMP) & ~(LPTIM_CMP_MASK));
+    cmp |= (cmp_value & LPTIM_CMP_MASK);
+    LPTIM1->CMP = cmp;
+    // Check duty cycle.
+    if (duty_cycle_percent == 0) {
+        // Stop timer.
+        LPTIM1->CR &= ~(0b1 << 0); // ENABLE='0'.
+        // Reset peripheral.
+        _LPTIM_reset();
+    }
+    else {
+        // Set running flag.
+        lptim_ctx.flags.running = 1;
+        // Start timer.
+        LPTIM1->CR |= (0b1 << 2); // CNTSTRT='1'.
+    }
+errors:
     return status;
 }
 

@@ -34,6 +34,8 @@ typedef enum {
     LPTIM_ERROR_ARR_TIMEOUT,
     LPTIM_ERROR_CLOCK_SOURCE,
     LPTIM_ERROR_CLOCK_PRESCALER,
+    LPTIM_ERROR_FREQUENCY,
+    LPTIM_ERROR_DUTY_CYCLE,
     LPTIM_ERROR_ALREADY_RUNNING,
     // Last base value.
     LPTIM_ERROR_BASE_LAST = ERROR_BASE_STEP
@@ -95,6 +97,16 @@ LPTIM_status_t LPTIM_de_init(void);
  * \retval      Function execution status.
  *******************************************************************/
 LPTIM_status_t LPTIM_delay_milliseconds(uint32_t delay_ms, LPTIM_delay_mode_t delay_mode);
+
+/*!******************************************************************
+ * \fn LPTIM_status_t LPTIM_set_waveform(uint32_t frequency_mhz, uint8_t duty_cycle_percent)
+ * \brief Set LPTIM in PWM mode.
+ * \param[in]   frequency_mhz: PWM frequency in mHz.
+ * \param[in]   duty_cycle_percent: PWM duty cycle in percent. Value 0 disables the signal.
+ * \param[out]  none
+ * \retval      Function execution status.
+ *******************************************************************/
+LPTIM_status_t LPTIM_set_waveform(uint32_t frequency_mhz, uint8_t duty_cycle_percent);
 
 /*!******************************************************************
  * \fn LPTIM_status_t LPTIM_start(LPTIM_clock_prescaler_t prescaler)

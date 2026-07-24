@@ -31,6 +31,16 @@
 #define RTC_REGISTER_MASK_DR    0x00FFFF3F
 #define RTC_REGISTER_MASK_TR    0x007F7F7F
 
+#define RTC_YEAR_MIN            2000
+#define RTC_YEAR_MAX            2099
+#define RTC_MONTH_MIN           1
+#define RTC_MONTH_MAX           12
+#define RTC_DATE_MIN            1
+#define RTC_DATE_MAX            31
+#define RTC_HOURS_MAX           23
+#define RTC_MINUTES_MAX         59
+#define RTC_SECONDS_MAX         59
+
 /*** RTC local structures ***/
 
 /*******************************************************************/
@@ -343,9 +353,19 @@ RTC_status_t RTC_set_time(RTC_time_t* time) {
         status = RTC_ERROR_NULL_PARAMETER;
         goto errors;
     }
+    if (((time->year) < RTC_YEAR_MIN) || ((time->year) > RTC_YEAR_MAX) ||
+        ((time->month) < RTC_MONTH_MIN) || ((time->month) > RTC_MONTH_MAX) ||
+        ((time->date) < RTC_DATE_MIN) || ((time->date) > RTC_DATE_MAX)){
+        status = RTC_ERROR_DATE;
+        goto errors;
+    }
+    if (((time->hours) > RTC_HOURS_MAX) || ((time->minutes) > RTC_MINUTES_MAX) || ((time->seconds) > RTC_SECONDS_MAX)) {
+        status = RTC_ERROR_TIME;
+        goto errors;
+    }
     // Year.
-    tens = (uint8_t) (((time->year) - 2000) / 10);
-    units = (uint8_t) (((time->year) - 2000) - (tens * 10));
+    tens = (uint8_t) (((time->year) - RTC_YEAR_MIN) / 10);
+    units = (uint8_t) (((time->year) - RTC_YEAR_MIN) - (tens * 10));
     dr_value |= (tens << 20) | (units << 16);
     // Week day.
     dr_value |= (0b1 << 13);

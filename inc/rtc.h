@@ -49,6 +49,8 @@ typedef enum {
     RTC_ERROR_WAKEUP_TIMER_REGISTER_ACCESS,
     RTC_ERROR_ALARM,
     RTC_ERROR_ALARM_MODE,
+    RTC_ERROR_DATE,
+    RTC_ERROR_TIME,
     // Last base value.
     RTC_ERROR_BASE_LAST = ERROR_BASE_STEP
 } RTC_status_t;

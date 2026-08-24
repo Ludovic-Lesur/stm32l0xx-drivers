@@ -45,6 +45,8 @@
 
 #define TIM_CNT_VALUE_MAX                   TIM_REGISTER_MASK_ARR_PSC_CCR
 
+#define TIM_PWM_FREQUENCY_THRESHOLD_MHZ     250
+
 #define TIM_MCH_TARGET_TRIGGER_CLOCK_HZ     2048
 #define TIM_MCH_PRESCALER_ETRF_LSE          1
 #define TIM_MCH_PRESCALER_PSC_LSE           ((tim_clock_hz) / (TIM_MCH_TARGET_TRIGGER_CLOCK_HZ * TIM_MCH_PRESCALER_ETRF_LSE))
@@ -1166,10 +1168,18 @@ TIM_status_t TIM_PWM_set_waveform(TIM_instance_t instance, TIM_channel_t channel
     period_value = (MATH_POWER_10[9] / frequency_mhz);
     period_unit = TIM_UNIT_US;
 #else
-    tmp_u64 = ((uint64_t) 1000000000000);
-    tmp_u64 /= ((uint64_t) frequency_mhz);
-    period_value = ((uint32_t) tmp_u64);
-    period_unit = TIM_UNIT_NS;
+    if (frequency_mhz < TIM_PWM_FREQUENCY_THRESHOLD_MHZ) {
+        // Period cannot be computed at nano-second precision because it would require more than 32-bits.
+        period_value = (MATH_POWER_10[9] / frequency_mhz);
+        period_unit = TIM_UNIT_US;
+    }
+    else {
+        // Period can be computed at nano-second precision.
+        tmp_u64 = ((uint64_t) 1000000000000);
+        tmp_u64 /= ((uint64_t) frequency_mhz);
+        period_value = ((uint32_t) tmp_u64);
+        period_unit = TIM_UNIT_NS;
+    }
 #endif
     status = _TIM_compute_psc_arr(instance, tim_clock_hz, period_value, period_unit, &arr);
     if (status != TIM_SUCCESS) goto errors;

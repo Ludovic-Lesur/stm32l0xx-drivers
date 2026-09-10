@@ -38,7 +38,7 @@ static uint32_t _NVIC_get_primask_bit(void)  {
     // Local variables.
     uint32_t result;
     // Read core bit.
-    __asm volatile ("MRS %0, primask_ns" : "=r" (result));
+    __asm volatile ("MRS %0, primask" : "=r" (result));
     return result;
 }
 

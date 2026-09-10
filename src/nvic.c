@@ -25,12 +25,41 @@ extern uint32_t __Vectors;
 
 #define NVIC_PRIORITY_MIN   3
 
+/*** NVIC local functions ***/
+
+/*******************************************************************/
+static void _NVIC_set_primask_bit(uint32_t primask_bit)  {
+    // Set core bit.
+    __asm volatile ("MSR primask, %0" : : "r" (primask_bit) : "memory");
+}
+
+/*******************************************************************/
+static uint32_t _NVIC_get_primask_bit(void)  {
+    // Local variables.
+    uint32_t result;
+    // Read core bit.
+    __asm volatile ("MRS %0, primask_ns" : "=r" (result));
+    return result;
+}
+
 /*** NVIC functions ***/
 
 /*******************************************************************/
 void NVIC_init(void) {
     // Init vector table address.
     SCB->VTOR = (uint32_t) &__Vectors;
+}
+
+/*******************************************************************/
+void NVIC_set_global_interrupts(uint8_t enable) {
+    // Set PRIMASK bit.
+    _NVIC_set_primask_bit((enable == 0) ? 1 : 0);
+}
+
+/*******************************************************************/
+uint8_t NVIC_get_global_interrupts(void) {
+    // Read PRIMASK bit.
+    return (((_NVIC_get_primask_bit() & 0x00000001) == 0) ? 1 : 0);
 }
 
 /*******************************************************************/

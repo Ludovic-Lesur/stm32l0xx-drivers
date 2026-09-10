@@ -93,6 +93,28 @@ void NVIC_disable_interrupt(NVIC_interrupt_t irq_index);
  *******************************************************************/
 void NVIC_set_priority(NVIC_interrupt_t irq_index, uint8_t priority);
 
+/*!******************************************************************
+ * \fn void NVIC_enable_interrupts(void)
+ * \brief Enable interruptions globally.
+ * \param[in]   none
+ * \param[out]  none
+ * \retval      none
+ *******************************************************************/
+#define NVIC_enable_interrupts(void) { \
+    __asm volatile ("cpsie i" : : : "memory"); \
+}
+
+/*!******************************************************************
+ * \fn void NVIC_disable_interrupts(void)
+ * \brief Disable interruptions globally.
+ * \param[in]   none
+ * \param[out]  none
+ * \retval      none
+ *******************************************************************/
+#define NVIC_disable_interrupts(void) { \
+    __asm volatile ("cpsid i" : : : "memory"); \
+}
+
 #endif /* __NVIC_H__ */
 
 #endif /* STM32L0XX_DRIVERS_DISABLE */

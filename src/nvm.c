@@ -28,7 +28,7 @@ extern uint32_t __eeprom_size_bytes__;
 #define NVM_EEPROM_ADDRESS      ((uint32_t) &__eeprom_address__)
 #define NVM_EEPROM_SIZE_BYTES   ((uint32_t) &__eeprom_size_bytes__)
 
-#define NVM_ERROR_FLAGS_MASK    0x00032F00
+#define NVM_ERROR_FLAGS_MASK    0x00032F02
 
 #define NVM_TIMEOUT_COUNT       1000000
 
@@ -45,14 +45,11 @@ static NVM_status_t _NVM_check_busy(NVM_status_t timeout_error_code) {
         loop_count++;
         if (loop_count > NVM_TIMEOUT_COUNT) {
             status = timeout_error_code;
-            goto errors;
         }
     }
-    // Clear end of operation flag.
-    if ((FLASH->SR) & (0b1 << 1)) {
-        FLASH->SR = (0b1 << 1);
-    }
-errors:
+    // Clear all status flags.
+    FLASH->SR = NVM_ERROR_FLAGS_MASK;
+    // Return status.
     return status;
 }
 
@@ -101,8 +98,9 @@ NVM_status_t NVM_read_byte(uint32_t address, uint8_t* data) {
         status = NVM_ERROR_NULL_PARAMETER;
         goto end;
     }
-    // Enable peripheral.
+    // Disable all interrupts.
     NVIC_set_global_interrupts(0);
+    // Enable peripheral.
     RCC->AHBENR |= (0b1 << 8); // MIFEN='1'.
     // Check there is no pending operation.
     status = _NVM_check_busy(NVM_ERROR_READ_READY);
@@ -112,6 +110,7 @@ NVM_status_t NVM_read_byte(uint32_t address, uint8_t* data) {
 errors:
     // Disable peripheral.
     RCC->AHBENR &= ~(0b1 << 8); // MIFEN='0'.
+    // Restore interrupts.
     NVIC_set_global_interrupts(global_interrupts);
 end:
     return status;
@@ -129,8 +128,9 @@ NVM_status_t NVM_write_byte(uint32_t address, uint8_t data) {
         status = NVM_ERROR_OVERFLOW;
         goto end;
     }
-    // Enable peripheral.
+    // Disable all interrupts.
     NVIC_set_global_interrupts(0);
+    // Enable peripheral.
     RCC->AHBENR |= (0b1 << 8); // MIFEN='1'.
     // Unlock memory.
     status = _NVM_unlock();
@@ -138,8 +138,6 @@ NVM_status_t NVM_write_byte(uint32_t address, uint8_t data) {
     // Check there is no pending operation.
     status = _NVM_check_busy(NVM_ERROR_WRITE_READY);
     if (status != NVM_SUCCESS) goto errors;
-    // Clear errors flags.
-    FLASH->SR = NVM_ERROR_FLAGS_MASK;
     // Write data.
     (*((uint8_t*) (absolute_address))) = data;
     // Wait the end of operation.
@@ -156,6 +154,7 @@ errors:
     _NVM_lock();
     // Disable peripheral.
     RCC->AHBENR &= ~(0b1 << 8); // MIFEN='0'.
+    // Restore interrupts.
     NVIC_set_global_interrupts(global_interrupts);
 end:
     return status;

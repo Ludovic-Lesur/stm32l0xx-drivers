@@ -55,22 +55,27 @@ typedef enum {
 /*** NVM functions ***/
 
 /*!******************************************************************
- * \fn NVM_status_t NVM_read_byte(uint32_t address, uint8_t* data)
- * \brief Read byte in NVM.
+ * \fn NVM_status_t NVM_read(uint32_t address, void* data, uint8_t data_size, NVM_data_type_t data_type)
+ * \brief Read data from NVM.
  * \param[in]   address: Relative address to read (starting from 0).
- * \param[out]  data: Pointer to byte that will contain the read value.
+ * \param[in]   data_size: Number of elements to read.
+ * \param[in]   data_type: Type of the elements to read.
+ * \param[out]  data: Pointer to array that will contain the read data.
  * \retval      Function execution status.
  *******************************************************************/
 NVM_status_t NVM_read(uint32_t address, void* data, uint8_t data_size, NVM_data_type_t data_type);
 
 /*!******************************************************************
- * \fn NVM_status_t NVM_write_byte(uint32_t address, uint8_t data)
- * \brief Write byte in NVM.
+ * \fn NVM_status_t NVM_write(uint32_t address, void* data, uint8_t data_size, NVM_data_type_t data_type)
+ * \brief Write data to NVM.
  * \param[in]   address: Relative address to write (starting from 0).
- * \param[out]  data: Byte to write.
+ * \param[in]   data: Pointer to the array to write.
+ * \param[in]   data_size: Number of elements to write.
+ * \param[in]   data_type: Type of the elements to write.
+ * \param[out]  none
  * \retval      Function execution status.
  *******************************************************************/
-NVM_status_t NVM_write_byte(uint32_t address, uint8_t data);
+NVM_status_t NVM_write(uint32_t address, void* data, uint8_t data_size, NVM_data_type_t data_type);
 
 /*******************************************************************/
 #define NVM_exit_error(base) { ERROR_check_exit(nvm_status, NVM_SUCCESS, base) }

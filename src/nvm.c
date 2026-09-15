@@ -51,7 +51,7 @@ extern uint32_t __eeprom_size_bytes__;
     } \
     if (data_type >= NVM_DATA_TYPE_LAST) { \
         status = NVM_ERROR_DATA_TYPE; \
-        goto errors; \
+        goto end; \
     } \
 }
 
@@ -86,6 +86,7 @@ static NVM_status_t _NVM_check_busy(NVM_status_t timeout_error_code) {
         loop_count++;
         if (loop_count > NVM_TIMEOUT_COUNT) {
             status = timeout_error_code;
+            break;
         }
     }
     // Clear all status flags.

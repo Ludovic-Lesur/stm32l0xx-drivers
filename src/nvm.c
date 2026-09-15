@@ -28,7 +28,7 @@ extern uint32_t __eeprom_size_bytes__;
 #define NVM_EEPROM_ADDRESS      ((uint32_t) &__eeprom_address__)
 #define NVM_EEPROM_SIZE_BYTES   ((uint32_t) &__eeprom_size_bytes__)
 
-#define NVM_ERROR_FLAGS_MASK    0x00032F02
+#define NVM_ERROR_FLAGS_MASK    0x00032F00
 
 #define NVM_TIMEOUT_COUNT       1000000
 
@@ -85,13 +85,25 @@ static NVM_status_t _NVM_check_busy(NVM_status_t timeout_error_code) {
         // Wait till BSY='1' or timeout.
         loop_count++;
         if (loop_count > NVM_TIMEOUT_COUNT) {
+            // Exit with error.
             status = timeout_error_code;
-            break;
+            goto errors;
         }
     }
-    // Clear all status flags.
-    FLASH->SR = NVM_ERROR_FLAGS_MASK;
-    // Return status.
+    // Check end of operation flag.
+    if ((FLASH->SR & (0b1 << 1)) != 0) {
+        // Clear flag.
+        FLASH->SR = (0b1 << 1);
+    }
+    // Check error flags.
+    if (((FLASH->SR) & NVM_ERROR_FLAGS_MASK) != 0) {
+        // Clear flags and return error.
+        FLASH->SR = NVM_ERROR_FLAGS_MASK;
+        // Exit with error.
+        status = NVM_ERROR_WRITE_OPERATION;
+        goto errors;
+    }
+errors:
     return status;
 }
 

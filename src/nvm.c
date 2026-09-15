@@ -35,6 +35,47 @@ extern uint32_t __eeprom_size_bytes__;
 /*** NVM local functions ***/
 
 /*******************************************************************/
+#define _NVM_check_parameters(void) { \
+    /* Check parameters */ \
+    if (address >= NVM_EEPROM_SIZE_BYTES) { \
+        status = NVM_ERROR_ADDRESS; \
+        goto end; \
+    } \
+    if (data == NULL) { \
+        status = NVM_ERROR_NULL_PARAMETER; \
+        goto end; \
+    } \
+    if (data_size == 0) { \
+        status = NVM_ERROR_DATA_SIZE; \
+        goto end; \
+    } \
+    if (data_type >= NVM_DATA_TYPE_LAST) { \
+        status = NVM_ERROR_DATA_TYPE; \
+        goto errors; \
+    } \
+}
+
+/*******************************************************************/
+#define _NVM_read(type) { \
+    /* Read data */ \
+    ((type*) data)[idx] = *((type*) (absolute_address)); \
+}
+
+/*******************************************************************/
+#define _NVM_write_verify(type) { \
+    /* Write data */ \
+    (*((type*) (absolute_address))) = ((type*) data)[idx]; \
+    /* Wait the end of operation */ \
+    status = _NVM_check_busy(NVM_ERROR_WRITE_COMPLETION); \
+    if (status != NVM_SUCCESS) goto errors; \
+    /* Verify write operation */ \
+    if ((*((type*) (absolute_address))) != ((type*) data)[idx]) { \
+        status = NVM_ERROR_WRITE_VERIFY; \
+        goto errors; \
+    } \
+}
+
+/*******************************************************************/
 static NVM_status_t _NVM_check_busy(NVM_status_t timeout_error_code) {
     // Local variables.
     NVM_status_t status = NVM_SUCCESS;
@@ -84,29 +125,42 @@ static void _NVM_lock(void) {
 /*** NVM functions ***/
 
 /*******************************************************************/
-NVM_status_t NVM_read_byte(uint32_t address, uint8_t* data) {
+NVM_status_t NVM_read(uint32_t address, void* data, uint8_t data_size, NVM_data_type_t data_type) {
     // Local variables.
     NVM_status_t status = NVM_SUCCESS;
-    uint32_t absolute_address = (NVM_EEPROM_ADDRESS + address);
+    uint32_t absolute_base_address = (NVM_EEPROM_ADDRESS + address);
+    uint32_t absolute_address = 0;
     uint8_t global_interrupts = NVIC_get_global_interrupts();
+    uint32_t idx = 0;
     // Check parameters.
-    if (address >= NVM_EEPROM_SIZE_BYTES) {
-        status = NVM_ERROR_OVERFLOW;
-        goto end;
-    }
-    if (data == NULL) {
-        status = NVM_ERROR_NULL_PARAMETER;
-        goto end;
-    }
+    _NVM_check_parameters();
     // Disable all interrupts.
     NVIC_set_global_interrupts(0);
     // Enable peripheral.
     RCC->AHBENR |= (0b1 << 8); // MIFEN='1'.
-    // Check there is no pending operation.
-    status = _NVM_check_busy(NVM_ERROR_READ_READY);
-    if (status != NVM_SUCCESS) goto errors;
-    // Read data.
-    (*data) = *((uint8_t*) (absolute_address));
+    // Data loop.
+    for (idx = 0; idx < data_size; idx++) {
+        // Check there is no pending operation.
+        status = _NVM_check_busy(NVM_ERROR_READ_READY);
+        if (status != NVM_SUCCESS) goto errors;
+        // Compute absolute address.
+        absolute_address = (absolute_base_address + (idx << data_type));
+        // Read data.
+        switch (data_type) {
+        case NVM_DATA_TYPE_BYTE:
+            _NVM_read(uint8_t);
+            break;
+        case NVM_DATA_TYPE_SHORT:
+            _NVM_read(uint16_t);
+            break;
+        case NVM_DATA_TYPE_LONG:
+            _NVM_read(uint32_t);
+            break;
+        default:
+            status = NVM_ERROR_DATA_TYPE;
+            goto errors;
+        }
+    }
 errors:
     // Disable peripheral.
     RCC->AHBENR &= ~(0b1 << 8); // MIFEN='0'.
@@ -117,17 +171,15 @@ end:
 }
 
 /*******************************************************************/
-NVM_status_t NVM_write_byte(uint32_t address, uint8_t data) {
+NVM_status_t NVM_write(uint32_t address, void* data, uint8_t data_size, NVM_data_type_t data_type) {
     // Local variables.
     NVM_status_t status = NVM_SUCCESS;
-    uint32_t absolute_address = (NVM_EEPROM_ADDRESS + address);
+    uint32_t absolute_base_address = (NVM_EEPROM_ADDRESS + address);
+    uint32_t absolute_address = 0;
     uint8_t global_interrupts = NVIC_get_global_interrupts();
-    uint8_t read_data = 0;
+    uint16_t idx = 0;
     // Check parameters.
-    if (address >= NVM_EEPROM_SIZE_BYTES) {
-        status = NVM_ERROR_OVERFLOW;
-        goto end;
-    }
+    _NVM_check_parameters();
     // Disable all interrupts.
     NVIC_set_global_interrupts(0);
     // Enable peripheral.
@@ -135,19 +187,28 @@ NVM_status_t NVM_write_byte(uint32_t address, uint8_t data) {
     // Unlock memory.
     status = _NVM_unlock();
     if (status != NVM_SUCCESS) goto errors;
-    // Check there is no pending operation.
-    status = _NVM_check_busy(NVM_ERROR_WRITE_READY);
-    if (status != NVM_SUCCESS) goto errors;
-    // Write data.
-    (*((uint8_t*) (absolute_address))) = data;
-    // Wait the end of operation.
-    status = _NVM_check_busy(NVM_ERROR_WRITE_COMPLETION);
-    if (status != NVM_SUCCESS) goto errors;
-    // Verify write operation.
-    read_data = *((uint8_t*) (absolute_address));
-    if (read_data != data) {
-        status = NVM_ERROR_WRITE_VERIFY;
-        goto errors;
+    // Data loop.
+    for (idx = 0; idx < data_size; idx++) {
+        // Check there is no pending operation.
+        status = _NVM_check_busy(NVM_ERROR_WRITE_READY);
+        if (status != NVM_SUCCESS) goto errors;
+        // Compute absolute address.
+        absolute_address = (absolute_base_address + (idx << data_type));
+        // Write data.
+        switch (data_type) {
+        case NVM_DATA_TYPE_BYTE:
+            _NVM_write_verify(uint8_t);
+            break;
+        case NVM_DATA_TYPE_SHORT:
+            _NVM_write_verify(uint16_t);
+            break;
+        case NVM_DATA_TYPE_LONG:
+            _NVM_write_verify(uint32_t);
+            break;
+        default:
+            status = NVM_ERROR_DATA_TYPE;
+            goto errors;
+        }
     }
 errors:
     // Lock memory.

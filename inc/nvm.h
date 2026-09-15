@@ -27,7 +27,8 @@ typedef enum {
     // Driver errors.
     NVM_SUCCESS = 0,
     NVM_ERROR_NULL_PARAMETER,
-    NVM_ERROR_OVERFLOW,
+    NVM_ERROR_DATA_TYPE,
+    NVM_ERROR_DATA_SIZE,
     NVM_ERROR_ADDRESS,
     NVM_ERROR_UNLOCK_READY,
     NVM_ERROR_UNLOCK_SEQUENCE,
@@ -39,6 +40,17 @@ typedef enum {
     NVM_ERROR_BASE_LAST = ERROR_BASE_STEP
 } NVM_status_t;
 
+/*!******************************************************************
+ * \enum NVM_data_type_t
+ * \brief NVM data types list.
+ *******************************************************************/
+typedef enum {
+    NVM_DATA_TYPE_BYTE = 0,
+    NVM_DATA_TYPE_SHORT,
+    NVM_DATA_TYPE_LONG,
+    NVM_DATA_TYPE_LAST
+} NVM_data_type_t;
+
 /*** NVM functions ***/
 
 /*!******************************************************************
@@ -48,7 +60,7 @@ typedef enum {
  * \param[out]  data: Pointer to byte that will contain the read value.
  * \retval      Function execution status.
  *******************************************************************/
-NVM_status_t NVM_read_byte(uint32_t address, uint8_t* data);
+NVM_status_t NVM_read(uint32_t address, void* data, uint8_t data_size, NVM_data_type_t data_type);
 
 /*!******************************************************************
  * \fn NVM_status_t NVM_write_byte(uint32_t address, uint8_t data)

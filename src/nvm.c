@@ -36,19 +36,29 @@ extern uint32_t __eeprom_size_bytes__;
 
 /*******************************************************************/
 #define _NVM_check_parameters(void) { \
-    /* Check parameters */ \
+    /* Check base address */ \
     if (address >= NVM_EEPROM_SIZE_BYTES) { \
-        status = NVM_ERROR_ADDRESS; \
+        status = NVM_ERROR_ADDRESS_RANGE; \
         goto end; \
     } \
+    /* Check data type */ \
     if (data_type >= NVM_DATA_TYPE_LAST) { \
         status = NVM_ERROR_DATA_TYPE; \
         goto end; \
     } \
-    if ((address + (((uint32_t) data_size) * (1 << ((uint32_t) data_type)))) > NVM_EEPROM_SIZE_BYTES) { \
-        status = NVM_ERROR_ADDRESS; \
+    /* Compute data size in bytes */ \
+    uint32_t data_size_bytes = (1 << ((uint32_t) data_type)); \
+    /* Check address range */ \
+    if ((address + (((uint32_t) data_size) * data_size_bytes)) > NVM_EEPROM_SIZE_BYTES) { \
+        status = NVM_ERROR_ADDRESS_RANGE; \
         goto end; \
     } \
+    /* Check address alignment */ \
+    if ((address % data_size_bytes != 0)) { \
+        status = NVM_ERROR_ADDRESS_ALIGNMENT; \
+        goto end; \
+    } \
+    /* Check data */ \
     if (data == NULL) { \
         status = NVM_ERROR_NULL_PARAMETER; \
         goto end; \

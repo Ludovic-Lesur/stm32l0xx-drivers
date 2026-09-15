@@ -45,7 +45,7 @@ extern uint32_t __eeprom_size_bytes__;
         status = NVM_ERROR_DATA_TYPE; \
         goto end; \
     } \
-    if ((address + (((uint32_t) data_size) * (1 << ((uint32_t) data_type)))) >= NVM_EEPROM_SIZE_BYTES) { \
+    if ((address + (((uint32_t) data_size) * (1 << ((uint32_t) data_type)))) > NVM_EEPROM_SIZE_BYTES) { \
         status = NVM_ERROR_ADDRESS; \
         goto end; \
     } \

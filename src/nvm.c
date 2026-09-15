@@ -41,16 +41,20 @@ extern uint32_t __eeprom_size_bytes__;
         status = NVM_ERROR_ADDRESS; \
         goto end; \
     } \
+    if (data_type >= NVM_DATA_TYPE_LAST) { \
+        status = NVM_ERROR_DATA_TYPE; \
+        goto end; \
+    } \
+    if ((address + (((uint32_t) data_size) * (1 << ((uint32_t) data_type)))) >= NVM_EEPROM_SIZE_BYTES) { \
+        status = NVM_ERROR_ADDRESS; \
+        goto end; \
+    } \
     if (data == NULL) { \
         status = NVM_ERROR_NULL_PARAMETER; \
         goto end; \
     } \
     if (data_size == 0) { \
         status = NVM_ERROR_DATA_SIZE; \
-        goto end; \
-    } \
-    if (data_type >= NVM_DATA_TYPE_LAST) { \
-        status = NVM_ERROR_DATA_TYPE; \
         goto end; \
     } \
 }
@@ -190,7 +194,7 @@ NVM_status_t NVM_write(uint32_t address, void* data, uint8_t data_size, NVM_data
     uint32_t absolute_base_address = (NVM_EEPROM_ADDRESS + address);
     uint32_t absolute_address = 0;
     uint8_t global_interrupts = NVIC_get_global_interrupts();
-    uint16_t idx = 0;
+    uint32_t idx = 0;
     // Check parameters.
     _NVM_check_parameters();
     // Disable all interrupts.
